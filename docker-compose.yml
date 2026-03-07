@@ -3,7 +3,7 @@ version: "3.9"
 services:
   frontend:
     build: .
-    container_name: pocket-space
+    container_name: stitch
     ports:
       - "5173:5173"
     volumes:
