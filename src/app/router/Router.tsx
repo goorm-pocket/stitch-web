@@ -1,0 +1,22 @@
+import BoardPage from "../../pages/BoardPage/BoardPage";
+import ArchivePage from "../../pages/ArchivePage/ArchivePage";
+import CreatePostPage from "../../pages/CreatePostPage/CreatePostPage";
+import FriendPage from "../../pages/FriendPage/FriendPage";
+import SettingPage from "../../pages/SettingPage/SettingPage";
+import { Route, Routes } from "react-router";
+
+const Router = () => {
+  return (
+    <Routes>
+      <Route>
+        <Route index element={<BoardPage />} />
+        <Route path="/archive" element={<ArchivePage />} />
+        <Route path="/createpost" element={<CreatePostPage />} />
+        <Route path="/friend" element={<FriendPage />} />
+        <Route path="setting" element={<SettingPage />} />
+      </Route>
+    </Routes>
+  );
+};
+
+export default Router;
