@@ -4,11 +4,12 @@ import CreatePostPage from "../../pages/CreatePostPage/CreatePostPage";
 import FriendPage from "../../pages/FriendPage/FriendPage";
 import SettingPage from "../../pages/SettingPage/SettingPage";
 import { Route, Routes } from "react-router";
+import Layout from "../layout/Layout";
 
 const Router = () => {
   return (
     <Routes>
-      <Route>
+      <Route element={<Layout />}>
         <Route index element={<BoardPage />} />
         <Route path="/archive" element={<ArchivePage />} />
         <Route path="/createpost" element={<CreatePostPage />} />
