@@ -1,8 +1,8 @@
 import styled from "styled-components";
-import Logo from "../../../assets/logo.svg";
-import BoardIcon from "../../../assets/board-icon.svg";
-import FriendIcon from "../../../assets/friend-icon.svg";
-import ArchiveIcon from "../../../assets/archive-icon.svg";
+import Logo from "../../assets/logo.svg";
+import BoardIcon from "../../assets/board-icon.svg";
+import FriendIcon from "../../assets/friend-icon.svg";
+import ArchiveIcon from "../../assets/archive-icon.svg";
 import { NavLink, useNavigate } from "react-router";
 
 const Header = () => {
