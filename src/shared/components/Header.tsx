@@ -48,6 +48,7 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   border-bottom: 1px solid ${({ theme }) => theme.colors.sub};
   padding: 0 24px;
+  background-color: white;
 `;
 
 const Left = styled.div`
@@ -78,7 +79,7 @@ const NavItem = styled(NavLink)`
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.icon};
   gap: 2px;
 
   &:hover {
