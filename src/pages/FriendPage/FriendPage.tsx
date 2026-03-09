@@ -7,6 +7,10 @@ const FriendPage = () => {
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
   return (
     <Container>
+      <TitleContainer>
+        <Title>Friend</Title>
+        <Description>Manage your friend community</Description>
+      </TitleContainer>
       <RequestInputContainer>
         <RequestText>Search and Add Friends</RequestText>
         <RequestInputBox>
@@ -48,6 +52,24 @@ const Container = styled.main`
   flex-direction: column;
   width: 900px;
   padding: 16px 32px;
+`;
+
+const TitleContainer = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 30px;
+`;
+
+const Title = styled.div`
+  font-size: 30px;
+  font-weight: bold;
+  color: ${({ theme }) => theme.colors.text_primary};
+`;
+
+const Description = styled.div`
+  font-size: 16px;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const RequestInputContainer = styled(StitchedBox)`
