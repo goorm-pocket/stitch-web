@@ -21,6 +21,7 @@ const MyPage = () => {
             </BadgeContainer>
           </ProfileTextBox>
         </Left>
+
         <Right>
           <SettingButton>Settings</SettingButton>
         </Right>
@@ -35,14 +36,14 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   width: 1150px;
-  padding: 16px 32px;
-  gap: 32px;
+  padding: 12px 28px;
+  gap: 24px;
 `;
 
 const ProfileContainer = styled.div`
   position: relative;
   display: flex;
-  padding: 28px;
+  padding: 20px;
   background: white;
   align-items: center;
   justify-content: space-between;
@@ -52,7 +53,7 @@ const ProfileContainer = styled.div`
   &::before {
     content: "";
     position: absolute;
-    inset: 8px;
+    inset: 6px;
     border: 2px dashed ${({ theme }) => theme.colors.sub};
     border-radius: 8px;
     pointer-events: none;
@@ -62,7 +63,7 @@ const ProfileContainer = styled.div`
 const Left = styled.div`
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 `;
 
 const Right = styled.div`
@@ -71,8 +72,8 @@ const Right = styled.div`
 `;
 
 const Avator = styled.img`
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
@@ -81,33 +82,34 @@ const Avator = styled.img`
 const ProfileTextBox = styled.div``;
 
 const ProfileName = styled.div`
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
 const ProfileDescription = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const BadgeContainer = styled.div`
-  margin-top: 10px;
+  margin-top: 8px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
 `;
 
 const Badge = styled.div`
   background: ${({ theme }) => theme.colors.sub};
-  padding: 10px 16px;
+  padding: 6px 12px;
   border-radius: 9999px;
-  font-size: 16px;
+  font-size: 13px;
   color: ${({ theme }) => theme.colors.text_secondary};
   font-weight: bold;
 `;
 
 const BadgeNumber = styled.span`
   color: ${({ theme }) => theme.colors.primary};
+
   &::after {
     content: " ";
   }
@@ -118,16 +120,16 @@ const Button = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   border: none;
   border-radius: 4px;
-  padding: 10px;
+  padding: 8px;
   cursor: pointer;
 `;
 
 const SettingButton = styled(Button)`
-  width: 130px;
-  height: 40px;
+  width: 110px;
+  height: 34px;
   background: ${({ theme }) => theme.colors.primary};
 `;
