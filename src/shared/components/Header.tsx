@@ -25,9 +25,9 @@ const Header = () => {
             <NavText>Friends</NavText>
           </NavItem>
 
-          <NavItem to="/archive">
+          <NavItem to="/mypage">
             <NavIcon as={ArchiveIcon} />
-            <NavText>Archive</NavText>
+            <NavText>MyPage</NavText>
           </NavItem>
         </NavBar>
         <AvatorBox>
