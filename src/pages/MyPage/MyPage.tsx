@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import Archive from "../../features/Archive/Archive";
 
 const MyPage = () => {
   return (
@@ -26,6 +27,7 @@ const MyPage = () => {
           <SettingButton>Settings</SettingButton>
         </Right>
       </ProfileContainer>
+      <Archive />
     </Container>
   );
 };
@@ -35,7 +37,7 @@ export default MyPage;
 const Container = styled.main`
   display: flex;
   flex-direction: column;
-  width: 1150px;
+  width: 900px;
   padding: 12px 28px;
   gap: 24px;
 `;
