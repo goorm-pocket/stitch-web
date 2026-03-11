@@ -15,9 +15,9 @@ const Header = () => {
       </Left>
       <Right>
         <NavBar>
-          <NavItem to="/">
+          <NavItem to="/pocket">
             <NavIcon as={BoardIcon} />
-            <NavText>Board</NavText>
+            <NavText>Pocket</NavText>
           </NavItem>
 
           <NavItem to="/friend">
