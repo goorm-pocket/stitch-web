@@ -52,13 +52,13 @@ const Container = styled.main`
   flex-direction: column;
   width: 900px;
   padding: 16px 32px;
+  gap: 32px;
 `;
 
 const TitleContainer = styled.section`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 30px;
 `;
 
 const Title = styled.div`
@@ -80,7 +80,6 @@ const RequestInputContainer = styled(StitchedBox)`
   height: 125px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   padding: 20px;
-  margin-bottom: 32px;
 `;
 
 const RequestText = styled.div`
@@ -131,7 +130,6 @@ const ButtonContainer = styled.div`
   display: flex;
   justify-content: start;
   height: 56px;
-  margin-bottom: 32px;
 `;
 
 const ButtonBox = styled.div`
@@ -162,7 +160,6 @@ const FriendListContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-bottom: 32px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
