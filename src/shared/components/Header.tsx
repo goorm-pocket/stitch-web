@@ -31,7 +31,9 @@ const Header = () => {
           </NavItem>
         </NavBar>
         <AvatorBox>
-          <Avator></Avator>
+          <NavItem to="/login">
+            <Avator></Avator>
+          </NavItem>
         </AvatorBox>
       </Right>
     </HeaderContainer>
