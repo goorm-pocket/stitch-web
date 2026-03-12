@@ -1,5 +1,5 @@
 import BoardPage from "../../pages/BoardPage/BoardPage";
-import ArchivePage from "../../pages/ArchivePage/ArchivePage";
+import MyPage from "../../pages/MyPage/MyPage";
 import CreatePostPage from "../../pages/CreatePostPage/CreatePostPage";
 import FriendPage from "../../pages/FriendPage/FriendPage";
 import SettingPage from "../../pages/SettingPage/SettingPage";
@@ -12,7 +12,7 @@ const Router = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<BoardPage />} />
-        <Route path="/archive" element={<ArchivePage />} />
+        <Route path="/mypage" element={<MyPage />} />
         <Route path="/createpost" element={<CreatePostPage />} />
         <Route path="/friend" element={<FriendPage />} />
         <Route path="/login" element={<LoginPage />} />

@@ -28,9 +28,9 @@ const Header = () => {
             <NavText>Friends</NavText>
           </NavItem>
 
-          <NavItem to="/archive" $disabled={isLoginPage}>
+          <NavItem to="/mypage" $disabled={isLoginPage}>
             <NavIcon as={ArchiveIcon} />
-            <NavText>Archive</NavText>
+            <NavText>My Page</NavText>
           </NavItem>
         </NavBar>
         <AvatorBox>
