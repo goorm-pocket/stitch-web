@@ -30,7 +30,7 @@ const Header = () => {
 
           <NavItem to="/mypage" $disabled={isHomePage}>
             <NavIcon as={ArchiveIcon} />
-            <NavText>MyPage</NavText>
+            <NavText>My Page</NavText>
           </NavItem>
         </NavBar>
         <AvatorBox>

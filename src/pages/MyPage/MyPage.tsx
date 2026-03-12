@@ -1,7 +1,12 @@
 import styled from "styled-components";
 import Archive from "../../features/Archive/Archive";
+import SettingsIcon from "../../assets/setting-icon.svg";
+import { useNavigate } from "react-router";
+import { ProfileStitchedBox } from "../../shared/ui/StitchedBox";
 
 const MyPage = () => {
+  const navigate = useNavigate();
+
   return (
     <Container>
       <ProfileContainer>
@@ -24,7 +29,10 @@ const MyPage = () => {
         </Left>
 
         <Right>
-          <SettingButton>Settings</SettingButton>
+          <SettingButton onClick={() => navigate("/setting")}>
+            <SettingIcon as={SettingsIcon} />
+            Settings
+          </SettingButton>
         </Right>
       </ProfileContainer>
       <Archive />
@@ -42,24 +50,17 @@ const Container = styled.main`
   gap: 24px;
 `;
 
-const ProfileContainer = styled.div`
+const ProfileContainer = styled(ProfileStitchedBox)`
   position: relative;
   display: flex;
-  padding: 20px;
-  background: white;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 6px;
-    border: 2px dashed ${({ theme }) => theme.colors.sub};
-    border-radius: 8px;
-    pointer-events: none;
-  }
+  width: 100%;
+  height: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  margin-bottom: 32px;
 `;
 
 const Left = styled.div`
@@ -130,8 +131,28 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-const SettingButton = styled(Button)`
-  width: 110px;
-  height: 34px;
-  background: ${({ theme }) => theme.colors.primary};
+const SettingButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: ${({ theme }) => theme.colors.sub};
+  border: none;
+  border-radius: 8px;
+
+  color: white;
+  font-size: 12px;
+
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+`;
+
+const SettingIcon = styled.svg`
+  color: currentColor;
+  margin-right: 5px;
 `;
