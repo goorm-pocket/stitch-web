@@ -3,37 +3,40 @@ import Logo from "../../assets/logo.svg";
 import BoardIcon from "../../assets/board-icon.svg";
 import FriendIcon from "../../assets/friend-icon.svg";
 import ArchiveIcon from "../../assets/archive-icon.svg";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate, useLocation } from "react-router";
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
   return (
     <HeaderContainer>
-      <Left onClick={() => navigate("/")}>
+      <Left onClick={() => !isLoginPage && navigate("/")} $disabled={isLoginPage}>
         <Logo />
         <LogoText>Stitch</LogoText>
       </Left>
       <Right>
         <NavBar>
-          <NavItem to="/">
+          <NavItem to="/" $disabled={isLoginPage}>
             <NavIcon as={BoardIcon} />
             <NavText>Board</NavText>
           </NavItem>
 
-          <NavItem to="/friend">
+          <NavItem to="/friend" $disabled={isLoginPage}>
             <NavIcon as={FriendIcon} />
             <NavText>Friends</NavText>
           </NavItem>
 
-          <NavItem to="/archive">
+          <NavItem to="/archive" $disabled={isLoginPage}>
             <NavIcon as={ArchiveIcon} />
             <NavText>Archive</NavText>
           </NavItem>
         </NavBar>
         <AvatorBox>
-          <NavItem to="/login">
+          <AvatorItem to="/login">
             <Avator></Avator>
-          </NavItem>
+          </AvatorItem>
         </AvatorBox>
       </Right>
     </HeaderContainer>
@@ -53,12 +56,16 @@ const HeaderContainer = styled.header`
   background-color: white;
 `;
 
-const Left = styled.div`
+const Left = styled.div<{ $disabled: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
+
+  cursor: ${({ $disabled }) => ($disabled ? "default" : "pointer")};
+  opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
+  pointer-events: ${({ $disabled }) => ($disabled ? "none" : "auto")};
 `;
 
 const LogoText = styled.span`
@@ -77,7 +84,31 @@ const NavBar = styled.nav`
   gap: 14px;
 `;
 
-const NavItem = styled(NavLink)`
+const NavItem = styled(NavLink)<{ $disabled: boolean }>`
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: ${({ theme }) => theme.colors.icon};
+  gap: 2px;
+
+  ${({ $disabled }) =>
+    $disabled &&
+    `
+    pointer-events: none; 
+    opacity: 0.5;    
+    cursor: default;
+  `}
+
+  &:hover {
+    color: ${({ theme, $disabled }) => ($disabled ? "inherit" : theme.colors.primary)};
+  }
+
+  &.active {
+    color: ${({ theme, $disabled }) => ($disabled ? "inherit" : theme.colors.primary)};
+  }
+`;
+
+const AvatorItem = styled(NavLink)`
   display: flex;
   align-items: center;
   text-decoration: none;
