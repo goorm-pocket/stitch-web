@@ -53,9 +53,10 @@ const Container = styled.main`
 const ProfileContainer = styled(ProfileStitchedBox)`
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+
   width: 100%;
   height: 200px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -66,7 +67,7 @@ const ProfileContainer = styled(ProfileStitchedBox)`
 const Left = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 32px;
 `;
 
 const Right = styled.div`
@@ -75,30 +76,36 @@ const Right = styled.div`
 `;
 
 const Avator = styled.img`
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  border: 2px solid ${({ theme }) => theme.colors.border};
+  border: 4px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
 `;
 
-const ProfileTextBox = styled.div``;
+const ProfileTextBox = styled.div`
+  dispaly: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
 
 const ProfileName = styled.div`
-  font-size: 20px;
+  font-size: 28px;
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
-const ProfileDescription = styled.div`
-  font-size: 13px;
+const ProfileDescription = styled.p`
+  font-size: 16px;
   color: ${({ theme }) => theme.colors.text_secondary};
+  margin: 0;
+  margin-bottom: 20px;
 `;
 
 const BadgeContainer = styled.div`
   margin-top: 8px;
   display: flex;
-  gap: 6px;
+  gap: 10px;
 `;
 
 const Badge = styled.div`
@@ -116,19 +123,6 @@ const BadgeNumber = styled.span`
   &::after {
     content: " ";
   }
-`;
-
-const Button = styled.button`
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  border: none;
-  border-radius: 4px;
-  padding: 8px;
-  cursor: pointer;
 `;
 
 const SettingButton = styled.button`
