@@ -8,35 +8,33 @@ import { NavLink, useNavigate, useLocation } from "react-router";
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
+  const isHomePage = location.pathname === "/";
 
   return (
     <HeaderContainer>
-      <Left onClick={() => !isLoginPage && navigate("/")} $disabled={isLoginPage}>
+      <Left onClick={() => !isHomePage && navigate("/")} $disabled={isHomePage}>
         <Logo />
         <LogoText>Stitch</LogoText>
       </Left>
       <Right>
         <NavBar>
-          <NavItem to="/pocket" $disabled={isLoginPage}>
+          <NavItem to="/pocket" $disabled={isHomePage}>
             <NavIcon as={BoardIcon} />
             <NavText>Pocket</NavText>
           </NavItem>
 
-          <NavItem to="/friend" $disabled={isLoginPage}>
+          <NavItem to="/friend" $disabled={isHomePage}>
             <NavIcon as={FriendIcon} />
             <NavText>Friends</NavText>
           </NavItem>
 
-          <NavItem to="/mypage" $disabled={isLoginPage}>
+          <NavItem to="/mypage" $disabled={isHomePage}>
             <NavIcon as={ArchiveIcon} />
             <NavText>MyPage</NavText>
           </NavItem>
         </NavBar>
         <AvatorBox>
-          <AvatorItem to="/login">
-            <Avator></Avator>
-          </AvatorItem>
+          <Avator></Avator>
         </AvatorBox>
       </Right>
     </HeaderContainer>
