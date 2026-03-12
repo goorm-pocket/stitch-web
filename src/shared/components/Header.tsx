@@ -3,7 +3,7 @@ import Logo from "../../assets/logo.svg";
 import BoardIcon from "../../assets/board-icon.svg";
 import FriendIcon from "../../assets/friend-icon.svg";
 import ArchiveIcon from "../../assets/archive-icon.svg";
-import ProfileModal from "../../Modal/ProfileModal/ProfileModal";
+import ProfileModal from "../../features/ProfileModal/ProfileModal";
 import { NavLink, useNavigate, useLocation } from "react-router";
 import { useState } from "react";
 
@@ -12,7 +12,7 @@ const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-  //const toggleModal = () => setIsModalOpen(!isModalOpen);
+
   const location = useLocation();
   const isHomePage = location.pathname === "/";
 
