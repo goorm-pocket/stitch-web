@@ -12,23 +12,23 @@ const Header = () => {
 
   return (
     <HeaderContainer>
-      <Left onClick={() => !isHomePage && navigate("/")} $disabled={isHomePage}>
+      <Left onClick={() => navigate("/")}>
         <Logo />
         <LogoText>Stitch</LogoText>
       </Left>
       <Right>
         <NavBar>
-          <NavItem to="/pocket" $disabled={isHomePage}>
+          <NavItem to="/pocket">
             <NavIcon as={BoardIcon} />
             <NavText>Pocket</NavText>
           </NavItem>
 
-          <NavItem to="/friend" $disabled={isHomePage}>
+          <NavItem to="/friend">
             <NavIcon as={FriendIcon} />
             <NavText>Friends</NavText>
           </NavItem>
 
-          <NavItem to="/mypage" $disabled={isHomePage}>
+          <NavItem to="/mypage">
             <NavIcon as={ArchiveIcon} />
             <NavText>My Page</NavText>
           </NavItem>
@@ -54,16 +54,12 @@ const HeaderContainer = styled.header`
   background-color: white;
 `;
 
-const Left = styled.div<{ $disabled: boolean }>`
+const Left = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-
-  cursor: ${({ $disabled }) => ($disabled ? "default" : "pointer")};
-  opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
-  pointer-events: ${({ $disabled }) => ($disabled ? "none" : "auto")};
 `;
 
 const LogoText = styled.span`
@@ -82,27 +78,19 @@ const NavBar = styled.nav`
   gap: 14px;
 `;
 
-const NavItem = styled(NavLink)<{ $disabled: boolean }>`
+const NavItem = styled(NavLink)`
   display: flex;
   align-items: center;
   text-decoration: none;
   color: ${({ theme }) => theme.colors.icon};
   gap: 2px;
 
-  ${({ $disabled }) =>
-    $disabled &&
-    `
-    pointer-events: none; 
-    opacity: 0.5;    
-    cursor: default;
-  `}
-
   &:hover {
-    color: ${({ theme, $disabled }) => ($disabled ? "inherit" : theme.colors.primary)};
+    color: ${({ theme }) => theme.colors.primary};
   }
 
   &.active {
-    color: ${({ theme, $disabled }) => ($disabled ? "inherit" : theme.colors.primary)};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 

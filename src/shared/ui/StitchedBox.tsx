@@ -24,7 +24,7 @@ const ProfileStitchedStyle = css`
     content: "";
     position: absolute;
     inset: 8px;
-    border: 1px dashed ${({ theme }) => theme.colors.border2};
+    border: 2px dashed ${({ theme }) => theme.colors.border};
     border-radius: 8px;
     pointer-events: none;
   }
