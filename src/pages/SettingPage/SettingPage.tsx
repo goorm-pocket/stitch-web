@@ -11,62 +11,49 @@ import PrivacyIcon from "@/assets/settings/privacy-icon.svg";
 import NameIcon from "@/assets/settings/name-icon.svg";
 import BirthIcon from "@/assets/settings/birthday-icon.svg";
 import AgeIcon from "@/assets/settings/age-icon.svg";
-import { useState } from "react";
+
+import {
+  useGetNotificationSettingsQuery,
+  useGetPrivacySettingsQuery,
+} from "@/shared/hooks/useAuth";
+import type { NotificationSettings, PrivacySettings } from "@/shared/types/user.type";
+import type { ReactNode } from "react";
 
 const SettingPage = () => {
-  const notificationItems = [
+  const notificationItems: {
+    key: Exclude<keyof NotificationSettings, "pushEnabled">;
+    label: string;
+    icon: ReactNode;
+  }[] = [
     { key: "friendRequest", label: "Friend Request", icon: <FriendRequestIcon /> },
-    { key: "friendAccept", label: "Friend Acceptance", icon: <FriendAcceptIcon /> },
+    { key: "friendAccepted", label: "Friend Acceptance", icon: <FriendAcceptIcon /> },
     { key: "comment", label: "Comment", icon: <CommentIcon /> },
     { key: "mention", label: "Mention", icon: <MentionIcon /> },
-    { key: "like", label: "Like", icon: <LikeIcon /> },
+    { key: "postLike", label: "Post Like", icon: <LikeIcon /> },
     { key: "weeklyRecap", label: "Weekly Recap", icon: <RecapIcon /> },
-  ] as const;
+  ];
 
-  const privacyItems = [
-    { key: "privacy", label: "Account Privacy", icon: <PrivacyIcon /> },
-    { key: "name", label: "Real Name", icon: <NameIcon /> },
-    { key: "birth", label: "Birth Date", icon: <BirthIcon /> },
-    { key: "age", label: "Age Visibility", icon: <AgeIcon /> },
-  ] as const;
+  const privacyItems: {
+    key: Exclude<keyof PrivacySettings, "isPublic">;
+    label: string;
+    icon: ReactNode;
+  }[] = [
+    { key: "namePublic", label: "Real Name", icon: <NameIcon /> },
+    { key: "birthPublic", label: "Birth Date", icon: <BirthIcon /> },
+    { key: "agePublic", label: "Age Visibility", icon: <AgeIcon /> },
+  ];
 
-  // mock data
-  const [notificationEnabled, setNotificationEnabled] = useState(true);
-  const [privacyEnabled, setPrivacyEnabled] = useState(false);
+  // 알람 설정 데이터
+  const { data: notificationStatesData } = useGetNotificationSettingsQuery();
 
-  // mock data
-  const [notificationStates, setNotificationStates] = useState({
-    friendRequest: false,
-    friendAccept: false,
-    comment: false,
-    mention: false,
-    like: false,
-    weeklyRecap: false,
-  });
+  const notificationStates = notificationStatesData?.notificationSettings;
+  const notificationEnabled = notificationStates?.pushEnabled ?? false;
 
-  // mock data
-  const [privacyStates, setPrivacyStates] = useState({
-    privacy: true,
-    name: true,
-    birth: true,
-    age: true,
-  });
+  // 개인 정보 설정 데이터
+  const { data: privacyStatesData } = useGetPrivacySettingsQuery();
 
-  const handleNotificationItemToggle = (key: keyof typeof notificationStates) => {
-    if (!notificationEnabled) return;
-    setNotificationStates((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  const handlePrivacyItemToggle = (key: keyof typeof privacyStates) => {
-    if (!privacyEnabled) return;
-    setPrivacyStates((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  const privacyStates = privacyStatesData?.privacySettings;
+  const privacyEnabled = privacyStates?.isPublic ?? false;
 
   return (
     <Container>
@@ -74,10 +61,7 @@ const SettingPage = () => {
         <SectionHeader>
           <NotificationIcon />
           <div>Notification Settings</div>
-          <SectionToggle
-            checked={notificationEnabled}
-            onChange={() => setNotificationEnabled((prev) => !prev)}
-          />
+          <SectionToggle checked={notificationEnabled} />
         </SectionHeader>
 
         <SectionList $active={notificationEnabled}>
@@ -88,11 +72,7 @@ const SettingPage = () => {
                 <div>{item.label}</div>
               </SectionLeft>
 
-              <SectionToggle
-                checked={notificationStates[item.key]}
-                onChange={() => handleNotificationItemToggle(item.key)}
-                disabled={!notificationEnabled}
-              />
+              <SectionToggle disabled={!notificationEnabled} />
             </SectionItem>
           ))}
         </SectionList>
@@ -102,10 +82,7 @@ const SettingPage = () => {
         <SectionHeader>
           <PrivacyIcon />
           <div>Privacy Settings</div>
-          <SectionToggle
-            checked={privacyEnabled}
-            onChange={() => setPrivacyEnabled((prev) => !prev)}
-          />
+          <SectionToggle checked={privacyEnabled} />
         </SectionHeader>
 
         <SectionList $active={privacyEnabled}>
@@ -116,11 +93,7 @@ const SettingPage = () => {
                 <div>{item.label}</div>
               </SectionLeft>
 
-              <SectionToggle
-                checked={privacyStates[item.key]}
-                onChange={() => handlePrivacyItemToggle(item.key)}
-                disabled={!privacyEnabled}
-              />
+              <SectionToggle disabled={!privacyEnabled} />
             </SectionItem>
           ))}
         </SectionList>
