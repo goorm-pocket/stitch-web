@@ -3,10 +3,16 @@ import Logo from "../../assets/logo.svg";
 import BoardIcon from "../../assets/board-icon.svg";
 import FriendIcon from "../../assets/friend-icon.svg";
 import ArchiveIcon from "../../assets/archive-icon.svg";
+import ProfileModal from "../../Modal/ProfileModal/ProfileModal";
 import { NavLink, useNavigate, useLocation } from "react-router";
+import { useState } from "react";
 
 const Header = () => {
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+  //const toggleModal = () => setIsModalOpen(!isModalOpen);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
 
@@ -34,9 +40,17 @@ const Header = () => {
           </NavItem>
         </NavBar>
         <AvatorBox>
-          <Avator></Avator>
+          <AvatorButton onClick={openModal}>
+            <Avator></Avator>
+          </AvatorButton>
         </AvatorBox>
       </Right>
+
+      {isModalOpen && (
+        <ModalOverlay>
+          <ProfileModal onClose={closeModal} />
+        </ModalOverlay>
+      )}
     </HeaderContainer>
   );
 };
@@ -94,22 +108,6 @@ const NavItem = styled(NavLink)`
   }
 `;
 
-const AvatorItem = styled(NavLink)`
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: ${({ theme }) => theme.colors.icon};
-  gap: 2px;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &.active {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
 const NavIcon = styled.svg`
   color: currentColor;
 `;
@@ -134,4 +132,26 @@ const Avator = styled.img`
   border-radius: 50%;
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
+`;
+
+const AvatorButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 `;
