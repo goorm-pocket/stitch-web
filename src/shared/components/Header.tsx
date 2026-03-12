@@ -18,9 +18,9 @@ const Header = () => {
       </Left>
       <Right>
         <NavBar>
-          <NavItem to="/" $disabled={isLoginPage}>
+          <NavItem to="/pocket" $disabled={isLoginPage}>
             <NavIcon as={BoardIcon} />
-            <NavText>Board</NavText>
+            <NavText>Pocket</NavText>
           </NavItem>
 
           <NavItem to="/friend" $disabled={isLoginPage}>
@@ -28,9 +28,9 @@ const Header = () => {
             <NavText>Friends</NavText>
           </NavItem>
 
-          <NavItem to="/archive" $disabled={isLoginPage}>
+          <NavItem to="/mypage" $disabled={isLoginPage}>
             <NavIcon as={ArchiveIcon} />
-            <NavText>Archive</NavText>
+            <NavText>MyPage</NavText>
           </NavItem>
         </NavBar>
         <AvatorBox>

@@ -23,59 +23,69 @@ const FriendItem = () => {
 export default FriendItem;
 
 const Container = styled(StitchedBox)`
-  height: 100px;
+  min-height: 88px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: 14px 18px;
 `;
 
 const Left = styled.div`
   display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 14px;
 `;
 
 const Avator = styled.img`
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
+  flex-shrink: 0;
 `;
 
 const NameBox = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 3px;
 `;
 
 const NickName = styled.div`
   color: white;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
 `;
 
 const Name = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   color: ${({ theme }) => theme.colors.text_secondary};
+  line-height: 1.2;
 `;
 
 const Right = styled.div`
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 `;
 
 const Button = styled.button`
+  min-width: 72px;
+  height: 32px;
   color: white;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
+  font-size: 12px;
+  font-weight: 700;
   border: none;
-  border-radius: 4px;
-  padding: 10px;
+  border-radius: 6px;
+  padding: 0 12px;
   cursor: pointer;
+  white-space: nowrap;
 `;
 
 const RemoveButton = styled(Button)`
