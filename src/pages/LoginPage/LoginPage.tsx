@@ -1,7 +1,14 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
+import { useNavigate } from "react-router";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const handleLogin = () => {
+    //추후에 카카오 로그인 api 연동
+    navigate("/");
+  };
+
   return (
     <Container>
       <TitleContainer>
@@ -10,7 +17,7 @@ const LoginPage = () => {
       </TitleContainer>
       <ImageContainer></ImageContainer>
       <ButtonContainer>
-        <LoginButton>Login with Kakao</LoginButton>
+        <LoginButton onClick={handleLogin}>Login with Kakao</LoginButton>
       </ButtonContainer>
     </Container>
   );
