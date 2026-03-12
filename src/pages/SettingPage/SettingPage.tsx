@@ -125,6 +125,10 @@ const SettingPage = () => {
           ))}
         </SectionList>
       </SettingsSection>
+      <ActionSection>
+        <LogoutButton>Logout</LogoutButton>
+        <DeleteButton>Delete Account</DeleteButton>
+      </ActionSection>
     </Container>
   );
 };
@@ -220,5 +224,44 @@ const SectionToggle = styled.input.attrs({ type: "checkbox" })`
 
   &:disabled {
     cursor: not-allowed;
+  }
+`;
+
+const ActionSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+`;
+
+const LogoutButton = styled.button`
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text_primary};
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+  }
+`;
+
+const DeleteButton = styled.button`
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #fecaca;
   }
 `;
