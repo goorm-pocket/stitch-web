@@ -50,7 +50,7 @@ const Pocket = () => {
   const itemSize = Math.min(size.width * 0.2, 65);
 
   // 벽이랑 item 사이
-  const wallThickness = 15;
+  const wallThickness = 20;
 
   useEffect(() => {
     if (!wrapperRef.current) return;
@@ -274,14 +274,8 @@ const PocketArea = styled.div`
   overflow: hidden;
   background: ${({ theme }) => theme.colors.primary};
   border-top: 6px solid ${({ theme }) => theme.colors.sub};
-  border-left: 2px dashed #b9cedb;
-  border-right: 2px dashed #b9cedb;
-  border-bottom: 2px dashed #b9cedb;
   border-bottom-left-radius: 56px;
   border-bottom-right-radius: 56px;
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.25),
-    0 20px 50px rgba(0, 0, 0, 0.08);
 
   @media (max-width: 768px) {
     border-bottom-left-radius: 46px;
@@ -292,6 +286,29 @@ const PocketArea = styled.div`
     border-top-width: 5px;
     border-bottom-left-radius: 36px;
     border-bottom-right-radius: 36px;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    top: 0;
+    border: 1px dashed ${({ theme }) => theme.colors.sub};
+    border-top: none;
+    border-bottom-left-radius: 56px;
+    border-bottom-right-radius: 56px;
+    pointer-events: none;
+
+    @media (max-width: 768px) {
+      border-bottom-left-radius: 46px;
+      border-bottom-right-radius: 46px;
+    }
+
+    @media (max-width: 480px) {
+      border-top-width: 5px;
+      border-bottom-left-radius: 36px;
+      border-bottom-right-radius: 36px;
+    }
   }
 `;
 

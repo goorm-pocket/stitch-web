@@ -5,7 +5,7 @@ const PocketPage = () => {
   return (
     <Container>
       <TitleContainer>
-        <Title>Your Digital Pocket</Title>
+        <Title>Your Pocket</Title>
         <Subtitle>Discover what&apos;s tucked away in your space today.</Subtitle>
       </TitleContainer>
 
@@ -22,7 +22,7 @@ const Container = styled.main`
   align-items: center;
   width: 900px;
   padding: 16px 32px;
-  gap: 32px;
+  gap: 24px;
 `;
 
 const TitleContainer = styled.div`
@@ -43,4 +43,5 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: 16px;
   color: #64748b;
+  margin-bottom: 0;
 `;
