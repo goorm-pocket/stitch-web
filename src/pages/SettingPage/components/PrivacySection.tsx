@@ -2,7 +2,7 @@ import PrivacyIcon from "@/assets/settings/privacy-icon.svg";
 import NameIcon from "@/assets/settings/name-icon.svg";
 import BirthIcon from "@/assets/settings/birthday-icon.svg";
 import AgeIcon from "@/assets/settings/age-icon.svg";
-import type { PrivacySettings } from "@/shared/types/user.type";
+import type { PrivacyKey, PrivacySettings } from "@/shared/types/user.type";
 import type { ReactNode } from "react";
 
 import {
@@ -13,7 +13,10 @@ import {
   SectionToggle,
   SettingsSection,
 } from "../setting.styled";
-import { useGetPrivacySettingsQuery } from "@/shared/hooks/useUser";
+import {
+  useGetPrivacySettingsQuery,
+  usePatchPrivacySettingsMutation,
+} from "@/shared/hooks/useUser";
 
 const privacyItems: {
   key: Exclude<keyof PrivacySettings, "isPublic">;
@@ -28,15 +31,24 @@ const privacyItems: {
 const PrivacySection = () => {
   // 개인 정보 설정 데이터
   const { data: privacyStatesData } = useGetPrivacySettingsQuery();
+  const { mutate: patchPrivacySettings } = usePatchPrivacySettingsMutation();
 
   const privacyStates = privacyStatesData?.privacySettings;
   const privacyEnabled = privacyStates?.isPublic ?? false;
+
+  const handleToggle = async (privacy: PrivacyKey) => {
+    if (!privacyStates) return;
+
+    const toggle = !privacyStates[privacy];
+    await patchPrivacySettings({ privacySettings: { [privacy]: toggle } });
+  };
+
   return (
     <SettingsSection>
       <SectionHeader>
         <PrivacyIcon />
         <div>Privacy Settings</div>
-        <SectionToggle checked={privacyEnabled} />
+        <SectionToggle checked={privacyEnabled} onChange={() => handleToggle("isPublic")} />
       </SectionHeader>
 
       <SectionList $active={privacyEnabled}>
@@ -47,7 +59,7 @@ const PrivacySection = () => {
               <div>{item.label}</div>
             </SectionLeft>
 
-            <SectionToggle disabled={!privacyEnabled} />
+            <SectionToggle disabled={!privacyEnabled} onChange={() => handleToggle(item.key)} />
           </SectionItem>
         ))}
       </SectionList>
