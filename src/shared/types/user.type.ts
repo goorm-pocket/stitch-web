@@ -18,15 +18,16 @@ export interface MyProfile extends Profile {
   updateAt: string;
 }
 
-export interface NotificationSettings {
-  pushEnabled: boolean;
-  friendRequest: boolean;
-  friendAccepted: boolean;
-  comment: boolean;
-  mention: boolean;
-  postLike: boolean;
-  weeklyRecap: boolean;
-}
+export type NotificationKey =
+  | "pushEnabled"
+  | "friendRequest"
+  | "friendAccepted"
+  | "comment"
+  | "mention"
+  | "postLike"
+  | "weeklyRecap";
+
+export type NotificationSettings = Record<NotificationKey, boolean>;
 
 export interface PrivacySettings {
   isPublic: boolean;
