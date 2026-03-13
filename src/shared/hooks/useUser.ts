@@ -4,6 +4,7 @@ import {
   getPrivacySettings,
   patchNotificationSettings,
   patchPrivacySettings,
+  withdrawAccount,
 } from "../api/user";
 
 export function useGetNotificationSettingsQuery() {
@@ -39,5 +40,11 @@ export function usePatchPrivacySettingsMutation() {
     onSuccess: (data) => {
       queryClient.setQueryData(["privacy-settings"], data);
     },
+  });
+}
+
+export function useWithdrawAccountMutation() {
+  return useMutation({
+    mutationFn: withdrawAccount,
   });
 }
