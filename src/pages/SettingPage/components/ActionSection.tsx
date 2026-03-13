@@ -1,20 +1,27 @@
 import { useLogoutMutation } from "@/shared/hooks/useAuth";
+import { useWithdrawAccountMutation } from "@/shared/hooks/useUser";
 import { useNavigate } from "react-router";
 import styled from "styled-components";
 
 const ActionSection = () => {
   const navigate = useNavigate();
   const { mutateAsync: logout } = useLogoutMutation();
+  const { mutateAsync: withdraw } = useWithdrawAccountMutation();
 
   const handleLogout = async () => {
     await logout();
     navigate("/");
   };
 
+  const handleWithdraw = async () => {
+    await withdraw();
+    navigate("/");
+  };
+
   return (
     <Container>
       <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-      <DeleteButton>Delete Account</DeleteButton>
+      <DeleteButton onClick={handleWithdraw}>Delete Account</DeleteButton>
     </Container>
   );
 };
