@@ -1,4 +1,3 @@
-import { useGetNotificationSettingsQuery } from "@/shared/hooks/useAuth";
 import {
   SectionHeader,
   SectionItem,
@@ -17,6 +16,7 @@ import CommentIcon from "@/assets/settings/comment-icon.svg";
 import MentionIcon from "@/assets/settings/mention-icon.svg";
 import LikeIcon from "@/assets/settings/like-icon.svg";
 import RecapIcon from "@/assets/settings/recap-icon.svg";
+import { useGetNotificationSettingsQuery } from "@/shared/hooks/useUser";
 
 const notificationItems: {
   key: Exclude<keyof NotificationSettings, "pushEnabled">;
@@ -37,6 +37,7 @@ const NotificationSection = () => {
 
   const notificationStates = notificationStatesData?.notificationSettings;
   const notificationEnabled = notificationStates?.pushEnabled ?? false;
+
   return (
     <SettingsSection>
       <SectionHeader>
@@ -53,7 +54,10 @@ const NotificationSection = () => {
               <div>{item.label}</div>
             </SectionLeft>
 
-            <SectionToggle disabled={!notificationEnabled} />
+            <SectionToggle
+              disabled={!notificationEnabled}
+              checked={notificationStates ? notificationStates[item?.key] : false}
+            />
           </SectionItem>
         ))}
       </SectionList>

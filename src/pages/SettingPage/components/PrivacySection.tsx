@@ -4,7 +4,7 @@ import BirthIcon from "@/assets/settings/birthday-icon.svg";
 import AgeIcon from "@/assets/settings/age-icon.svg";
 import type { PrivacySettings } from "@/shared/types/user.type";
 import type { ReactNode } from "react";
-import { useGetPrivacySettingsQuery } from "@/shared/hooks/useAuth";
+
 import {
   SectionHeader,
   SectionItem,
@@ -13,6 +13,7 @@ import {
   SectionToggle,
   SettingsSection,
 } from "../setting.styled";
+import { useGetPrivacySettingsQuery } from "@/shared/hooks/useUser";
 
 const privacyItems: {
   key: Exclude<keyof PrivacySettings, "isPublic">;
