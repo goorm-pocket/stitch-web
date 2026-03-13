@@ -1,9 +1,19 @@
+import { useLogoutMutation } from "@/shared/hooks/useAuth";
+import { useNavigate } from "react-router";
 import styled from "styled-components";
 
 const ActionSection = () => {
+  const navigate = useNavigate();
+  const { mutateAsync: logout } = useLogoutMutation();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
   return (
     <Container>
-      <LogoutButton>Logout</LogoutButton>
+      <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
       <DeleteButton>Delete Account</DeleteButton>
     </Container>
   );
