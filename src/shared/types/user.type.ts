@@ -29,9 +29,6 @@ export type NotificationKey =
 
 export type NotificationSettings = Record<NotificationKey, boolean>;
 
-export interface PrivacySettings {
-  isPublic: boolean;
-  namePublic: boolean;
-  birthPublic: boolean;
-  agePublic: boolean;
-}
+export type PrivacyKey = "isPublic" | "namePublic" | "birthPublic" | "agePublic";
+
+export type PrivacySettings = Record<PrivacyKey, boolean>;
