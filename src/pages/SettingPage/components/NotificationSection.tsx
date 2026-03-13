@@ -42,11 +42,11 @@ const NotificationSection = () => {
   const notificationStates = notificationStatesData?.notificationSettings;
   const notificationEnabled = notificationStates?.pushEnabled ?? false;
 
-  const handleToggle = async (notification: NotificationKey) => {
+  const handleToggle = (notification: NotificationKey) => {
     if (!notificationStates) return;
 
     const toggle = !notificationStates[notification];
-    await patchNotificationSettings({ notificationSettings: { [notification]: toggle } });
+    patchNotificationSettings({ notificationSettings: { [notification]: toggle } });
   };
 
   return (

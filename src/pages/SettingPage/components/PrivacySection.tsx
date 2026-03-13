@@ -36,11 +36,11 @@ const PrivacySection = () => {
   const privacyStates = privacyStatesData?.privacySettings;
   const privacyEnabled = privacyStates?.isPublic ?? false;
 
-  const handleToggle = async (privacy: PrivacyKey) => {
+  const handleToggle = (privacy: PrivacyKey) => {
     if (!privacyStates) return;
 
     const toggle = !privacyStates[privacy];
-    await patchPrivacySettings({ privacySettings: { [privacy]: toggle } });
+    patchPrivacySettings({ privacySettings: { [privacy]: toggle } });
   };
 
   return (
