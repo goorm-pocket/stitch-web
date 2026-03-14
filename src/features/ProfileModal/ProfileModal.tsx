@@ -1,5 +1,6 @@
 import styled from "styled-components";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import Cropper from "react-easy-crop";
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -16,6 +17,14 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const [profileImg, setProfileImg] = useState<string | null>(null);
   const [emojiImg, setEmojiImg] = useState<string | null>(null); // 이모지 이미지 상태
 
+  //Crop
+  const [imageToCrop, setImageToCrop] = useState<{ url: string; type: "photo" | "emoji" } | null>(
+    null,
+  );
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,11 +33,38 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (type === "photo") setProfileImg(reader.result as string);
+        if (type === "photo") setImageToCrop({ url: reader.result as string, type });
         else setEmojiImg(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // 크롭 완료 핸들러
+  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  // 잘린 이미지를 생성하는 함수 (Canvas 활용)
+  const getCroppedImg = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return;
+
+    const image = new Image();
+    image.src = imageToCrop.url;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const { width, height, x, y } = croppedAreaPixels;
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx?.drawImage(image, x, y, width, height, 0, 0, width, height);
+
+    const base64Image = canvas.toDataURL("image/jpeg");
+    if (imageToCrop.type === "photo") setProfileImg(base64Image);
+    else setEmojiImg(base64Image);
+
+    setImageToCrop(null); // 크롭 창 닫기
   };
 
   //Required
@@ -48,6 +84,28 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
 
   return (
     <ModalContainer>
+      {imageToCrop && (
+        <CropOverlay>
+          <CropContainer>
+            <Cropper
+              image={imageToCrop.url}
+              crop={crop}
+              zoom={zoom}
+              aspect={1} // 1:1 비율 고정
+              cropShape="round" // 원형 가이드라인
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </CropContainer>
+          <CropButtonWrapper>
+            <CancelButton onClick={() => setImageToCrop(null)}>Cancel</CancelButton>
+            <EditModeButton onClick={getCroppedImg}>Save</EditModeButton>
+          </CropButtonWrapper>
+        </CropOverlay>
+      )}
+
       <CloseButton onClick={onClose}>&times;</CloseButton>
 
       <TitleContainer>
@@ -152,6 +210,35 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
 };
 
 export default ProfileModal;
+
+const CropOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 10;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+`;
+
+const CropContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 550px;
+  background: #333;
+  border-radius: 8px;
+`;
+
+const CropButtonWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: auto;
+`;
 
 const ModalContainer = styled.div`
   background: white;
