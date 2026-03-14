@@ -15,3 +15,16 @@ export interface Calendar {
   markers: CalendarMarker[];
   hasMultiplePosts: boolean; // postCount가 2 이상인지
 }
+
+export interface PocketBubbleType {
+  postId: string;
+  userId: string;
+  ownerType: "ME" | "FRIEND";
+  representative: {
+    type: "IMAGE" | "IMOGE";
+    value: string;
+  };
+  createdAt: string;
+  exposedAt: string;
+  read: boolean;
+}
