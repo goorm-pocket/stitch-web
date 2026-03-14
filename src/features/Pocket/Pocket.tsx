@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Matter from "matter-js";
 import styled from "styled-components";
+import PocketBubble from "./components/PocketBubble";
 
 type Item = {
   id: number;
@@ -52,6 +53,7 @@ const Pocket = () => {
   // 벽이랑 item 사이
   const wallThickness = 20;
 
+  // pocket의 size를 업데이트
   useEffect(() => {
     if (!wrapperRef.current) return;
 
@@ -88,7 +90,7 @@ const Pocket = () => {
     bodyMapRef.current = {};
 
     const engine = Matter.Engine.create();
-    engine.gravity.y = 0.7;
+    engine.gravity.y = 3;
     engineRef.current = engine;
 
     const world = engine.world;
@@ -127,6 +129,7 @@ const Pocket = () => {
 
     Matter.World.add(world, [leftWall, rightWall, topWall, bottomWall]);
 
+    // 버블들 초기 렌더링
     const bodies = items.map((item, index) => {
       const col = index % 4;
       const row = Math.floor(index / 4);
@@ -137,7 +140,7 @@ const Pocket = () => {
       const body = Matter.Bodies.circle(x, y, itemSize / 2, {
         restitution: 0.7,
         friction: 0.02,
-        frictionAir: 0.01,
+        frictionAir: 0.07,
         density: 0.002,
       });
 
@@ -228,20 +231,17 @@ const Pocket = () => {
             if (!pos) return null;
 
             return (
-              <AvatarBubble
+              <PocketBubble
                 key={item.id}
-                style={{
-                  width: `${itemSize}px`,
-                  height: `${itemSize}px`,
-                  transform: `translate(${pos.x - itemSize / 2}px, ${
-                    pos.y - itemSize / 2
-                  }px) rotate(${pos.angle}rad)`,
-                }}
-                onMouseDown={(e) => handleMouseDown(item.id, e)}
-                onMouseUp={(e) => handleMouseUp(item.id, e)}
-              >
-                <AvatarImage src={item.image} alt={`avatar-${item.id}`} draggable={false} />
-              </AvatarBubble>
+                id={item.id}
+                image={item.image}
+                size={itemSize}
+                x={pos.x}
+                y={pos.y}
+                angle={pos.angle}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+              />
             );
           })}
         </PocketArea>
@@ -314,27 +314,4 @@ const PocketArea = styled.div`
 
 const PocketWrapper = styled.div`
   width: min(100%, 600px);
-`;
-
-const AvatarBubble = styled.div`
-  position: absolute;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid #f8fafc;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-  cursor: grab;
-  user-select: none;
-  will-change: transform;
-
-  &:active {
-    cursor: grabbing;
-  }
-`;
-
-const AvatarImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-  -webkit-user-drag: none;
 `;
