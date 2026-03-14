@@ -21,7 +21,7 @@ export interface PocketBubbleType {
   userId: string;
   ownerType: "ME" | "FRIEND";
   representative: {
-    type: "IMAGE" | "IMOGE";
+    type: "IMAGE" | "IMOGI";
     value: string;
   };
   createdAt: string;
