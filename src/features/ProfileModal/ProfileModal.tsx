@@ -1,6 +1,8 @@
 import styled from "styled-components";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Cropper from "react-easy-crop";
+import EmojiPicker from "emoji-picker-react";
+import { Theme, type EmojiClickData } from "emoji-picker-react";
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -15,7 +17,10 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   });
 
   const [profileImg, setProfileImg] = useState<string | null>(null);
+
   const [emojiImg, setEmojiImg] = useState<string | null>(null); // 이모지 이미지 상태
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // 픽커 표시 상태
+  const [emojiContent, setEmojiContent] = useState<string | null>(null);
 
   //Crop
   const [imageToCrop, setImageToCrop] = useState<{ url: string; type: "photo" | "emoji" } | null>(
@@ -27,6 +32,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "photo" | "emoji") => {
     const file = e.target.files?.[0];
@@ -65,6 +71,44 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
     else setEmojiImg(base64Image);
 
     setImageToCrop(null); // 크롭 창 닫기
+  };
+
+  useEffect(() => {
+    const handleClickOustside = (event: MouseEvent) => {
+      if (
+        showEmojiPicker &&
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOustside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOustside);
+    };
+  }, [showEmojiPicker]);
+
+  // 이모지 클릭 핸들러
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setEmojiContent(emojiData.emoji); // 선택한 이모지 저장
+    setShowEmojiPicker(false); // 픽커 닫기
+  };
+
+  const handleEmojiFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setEmojiContent(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 텍스트인지 이미지인지 판별
+  const isEmojiText = (content: string | null) => {
+    if (!content) return false;
+    return !content.startsWith("data:image"); // data 주소가 아니면 텍스트로 간주
   };
 
   //Required
@@ -137,21 +181,54 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
           </CustomBox>
 
           {/* 이모지/사진 섹션 */}
-          <CustomBox
-            onClick={() => isEditing && emojiInputRef.current?.click()}
-            $isEditing={isEditing}
-          >
+          <CustomBox $isEditing={isEditing}>
             <input
               type="file"
               ref={emojiInputRef}
-              onChange={(e) => handleFileChange(e, "emoji")}
+              onChange={handleEmojiFileChange}
               accept="image/*"
               style={{ display: "none" }}
             />
+
             <PickerCircle>
-              {emojiImg ? <PreviewImg src={emojiImg} /> : <PlusIcon>+</PlusIcon>}
+              {emojiContent ? (
+                isEmojiText(emojiContent) ? (
+                  <EmojiDisplay>{emojiContent}</EmojiDisplay>
+                ) : (
+                  <PreviewImg src={emojiContent} />
+                )
+              ) : (
+                <PlusIcon>+</PlusIcon>
+              )}
             </PickerCircle>
+
             <LabelText>PICK AN EMOJI / PHOTO</LabelText>
+
+            <ButtonGroup>
+              <MiniButton onClick={() => emojiInputRef.current?.click()} disabled={!isEditing}>
+                Image
+              </MiniButton>
+              <MiniButton
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                disabled={!isEditing}
+              >
+                Emoji
+              </MiniButton>
+            </ButtonGroup>
+
+            {/* 이모지 픽커 팝업 (isEditing일 때만 팝업 가능) */}
+            {isEditing && showEmojiPicker && (
+              <PickerWrapper ref={emojiPickerRef}>
+                <EmojiPicker
+                  onEmojiClick={onEmojiClick}
+                  width={320}
+                  height={400}
+                  theme={Theme.LIGHT}
+                  searchDisabled={false}
+                  autoFocusSearch={false}
+                />
+              </PickerWrapper>
+            )}
           </CustomBox>
         </AppearanceBox>
 
@@ -303,10 +380,11 @@ const AppearanceBox = styled.div`
 `;
 
 const CustomBox = styled.div<{ $isEditing: boolean }>`
+  position: relative;
   background: #f8f9fa; /* 연한 회색 배경 */
   border-radius: 12px;
   padding: 24px;
-  width: 180px;
+  width: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -348,6 +426,49 @@ const LabelText = styled.span`
   font-weight: 800;
   color: #adb5bd;
   text-align: center;
+`;
+
+const PickerWrapper = styled.div`
+  position: absolute;
+  top: 95%;
+  left: 100px;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  z-index: 100;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+`;
+
+const EmojiDisplay = styled.span`
+  font-size: 44px;
+  line-height: 1;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  z-index: 10px;
+`;
+
+const MiniButton = styled.button`
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  color: #495057;
+  cursor: pointer;
+  &:hover {
+    background: #f1f3f5;
+  }
+  /* 비활성화 상태 스타일 */
+  &:disabled {
+    cursor: not-allowed;
+    background: #f1f3f5;
+    color: #ced4da;
+    border-color: #e9ecef;
+  }
 `;
 
 const InputGrid = styled.div`
