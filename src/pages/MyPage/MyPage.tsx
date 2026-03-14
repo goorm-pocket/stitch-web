@@ -84,7 +84,7 @@ const Avator = styled.img`
 `;
 
 const ProfileTextBox = styled.div`
-  dispaly: flex;
+  display: flex;
   flex-direction: column;
   gap: 4px;
 `;
