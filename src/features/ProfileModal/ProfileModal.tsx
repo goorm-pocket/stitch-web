@@ -153,16 +153,14 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
       <CloseButton onClick={onClose}>&times;</CloseButton>
 
       <TitleContainer>
-        <ModalTitle>Set up your profile</ModalTitle>
+        <ModalTitle>Profile Settings</ModalTitle>
         <Description> </Description>
       </TitleContainer>
 
       <ModalBody>
-        {/* 1. Appearance Section */}
-        <SectionTitle>1. CUSTOMIZE YOUR APPEARANCE</SectionTitle>
+        <SectionTitle>1. Profile Customization</SectionTitle>
 
         <AppearanceBox>
-          {/* 프로필 사진 섹션 */}
           <CustomBox
             onClick={() => isEditing && photoInputRef.current?.click()}
             $isEditing={isEditing}
@@ -177,7 +175,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
             <PickerCircle>
               {profileImg ? <PreviewImg src={profileImg} /> : <PlusIcon>+</PlusIcon>}
             </PickerCircle>
-            <LabelText>PROFILE PHOTO</LabelText>
+            <LabelText>PROFILE</LabelText>
           </CustomBox>
 
           {/* 이모지/사진 섹션 */}
@@ -202,7 +200,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
               )}
             </PickerCircle>
 
-            <LabelText>PICK AN EMOJI / PHOTO</LabelText>
+            <LabelText>Bubble</LabelText>
 
             <ButtonGroup>
               <MiniButton onClick={() => emojiInputRef.current?.click()} disabled={!isEditing}>
@@ -361,12 +359,12 @@ const ModalBody = styled.div`
 `;
 
 const SectionTitle = styled.div`
-  background: #f1f3f5;
+  background: ${({ theme }) => theme.colors.border};
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 800;
-  color: #495057;
+  color: ${({ theme }) => theme.colors.text_primary};
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -381,14 +379,14 @@ const AppearanceBox = styled.div`
 
 const CustomBox = styled.div<{ $isEditing: boolean }>`
   position: relative;
-  background: #f8f9fa; /* 연한 회색 배경 */
+  background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   width: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
   transition: all 0.2s ease;
 
@@ -398,8 +396,8 @@ const CustomBox = styled.div<{ $isEditing: boolean }>`
 `;
 
 const PickerCircle = styled.div`
-  width: 80px;
-  height: 80px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   border: 2px dashed #dee2e6;
   background: white;
@@ -446,7 +444,6 @@ const EmojiDisplay = styled.span`
 const ButtonGroup = styled.div`
   display: flex;
   gap: 8px;
-  margin-top: 10px;
   z-index: 10px;
 `;
 
@@ -484,7 +481,7 @@ const InputWrapper = styled.div`
   label {
     font-size: 13px;
     font-weight: 700;
-    color: #495057;
+    color: ${({ theme }) => theme.colors.text_secondary};
   }
 `;
 
@@ -511,7 +508,7 @@ const ButtonWrapper = styled.div`
 
 const EditModeButton = styled.button`
   padding: 12px 28px;
-  background: #748ffc;
+  background: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
   border-radius: 10px;
@@ -521,7 +518,7 @@ const EditModeButton = styled.button`
 
 const SaveButton = styled.button`
   padding: 12px 28px;
-  background: ${(props) => (props.disabled ? "#e9ecef" : "#748ffc")};
+  background: ${(props) => (props.disabled ? "#e9ecef" : props.theme.colors.primary)};
   color: ${(props) => (props.disabled ? "#adb5bd" : "white")};
   border: none;
   border-radius: 10px;
