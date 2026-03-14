@@ -2,38 +2,146 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Matter from "matter-js";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
+import { useGetBoardQuery } from "../../shared/hooks/useBoard";
+import type { PocketBubbleType } from "../../shared/types/post.type";
 
-type Item = {
-  id: number;
-  image: string;
-};
-
-const SAMPLE_ITEMS: Item[] = [
-  { id: 1, image: "https://i.pravatar.cc/100?img=1" },
-  { id: 2, image: "https://i.pravatar.cc/100?img=2" },
-  { id: 3, image: "https://i.pravatar.cc/100?img=3" },
-  { id: 4, image: "https://i.pravatar.cc/100?img=4" },
-  { id: 5, image: "https://i.pravatar.cc/100?img=5" },
-  { id: 6, image: "https://i.pravatar.cc/100?img=6" },
-  { id: 7, image: "https://i.pravatar.cc/100?img=7" },
-  { id: 8, image: "https://i.pravatar.cc/100?img=8" },
-  { id: 9, image: "https://i.pravatar.cc/100?img=9" },
-  { id: 10, image: "https://i.pravatar.cc/100?img=10" },
+const SAMPLE_ITEMS: PocketBubbleType[] = [
+  {
+    postId: "1",
+    userId: "user1",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMAGE",
+      value: "https://i.pravatar.cc/100?img=1",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "2",
+    userId: "user2",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMAGE",
+      value: "https://i.pravatar.cc/100?img=2",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "3",
+    userId: "user3",
+    ownerType: "ME",
+    representative: {
+      type: "IMOGI",
+      value: "😊",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: true,
+  },
+  {
+    postId: "4",
+    userId: "user4",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMAGE",
+      value: "https://i.pravatar.cc/100?img=4",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "5",
+    userId: "user5",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMOGI",
+      value: "🔥",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "6",
+    userId: "user6",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMAGE",
+      value: "https://i.pravatar.cc/100?img=6",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: true,
+  },
+  {
+    postId: "7",
+    userId: "user7",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMOGI",
+      value: "🎉",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "8",
+    userId: "user8",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMAGE",
+      value: "https://i.pravatar.cc/100?img=8",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "9",
+    userId: "user9",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMOGI",
+      value: "😎",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: false,
+  },
+  {
+    postId: "10",
+    userId: "user10",
+    ownerType: "FRIEND",
+    representative: {
+      type: "IMAGE",
+      value: "https://i.pravatar.cc/100?img=10",
+    },
+    createdAt: "2026-03-14T10:00:00Z",
+    exposedAt: "2026-03-14T10:00:00Z",
+    read: true,
+  },
 ];
 
-type BodyMap = Record<number, Matter.Body>;
-type PositionMap = Record<number, { x: number; y: number; angle: number }>;
+type BodyMap = Record<string, Matter.Body>;
+type PositionMap = Record<string, { x: number; y: number; angle: number }>;
 
 const Pocket = () => {
+  const { data: board } = useGetBoardQuery("WEB");
+
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
-  const engineRef = useRef<Matter.Engine | null>(null);
   const runnerRef = useRef<Matter.Runner | null>(null);
   const animationRef = useRef<number | null>(null);
   const bodyMapRef = useRef<BodyMap>({});
 
   const clickStartRef = useRef<{
-    id: number | null;
+    id: string | null;
     x: number;
     y: number;
   }>({
@@ -45,15 +153,13 @@ const Pocket = () => {
   const [positions, setPositions] = useState<PositionMap>({});
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  const items = useMemo(() => SAMPLE_ITEMS, []);
+  const items = useMemo(() => {
+    return board?.items?.length ? board.items : SAMPLE_ITEMS;
+  }, [board]);
 
-  // pocket size에 맞게 사이즈 계산
   const itemSize = Math.min(size.width * 0.2, 65);
-
-  // 벽이랑 item 사이
   const wallThickness = 20;
 
-  // pocket의 size를 업데이트
   useEffect(() => {
     if (!wrapperRef.current) return;
 
@@ -85,13 +191,12 @@ const Pocket = () => {
   }, []);
 
   useEffect(() => {
-    if (!sceneRef.current || size.width === 0 || size.height === 0) return;
+    if (!sceneRef.current || size.width === 0 || size.height === 0 || items.length === 0) return;
 
     bodyMapRef.current = {};
 
     const engine = Matter.Engine.create();
     engine.gravity.y = 3;
-    engineRef.current = engine;
 
     const world = engine.world;
 
@@ -129,7 +234,6 @@ const Pocket = () => {
 
     Matter.World.add(world, [leftWall, rightWall, topWall, bottomWall]);
 
-    // 버블들 초기 렌더링
     const bodies = items.map((item, index) => {
       const col = index % 4;
       const row = Math.floor(index / 4);
@@ -144,7 +248,7 @@ const Pocket = () => {
         density: 0.002,
       });
 
-      bodyMapRef.current[item.id] = body;
+      bodyMapRef.current[item.postId] = body;
       return body;
     });
 
@@ -170,10 +274,10 @@ const Pocket = () => {
       const next: PositionMap = {};
 
       items.forEach((item) => {
-        const body = bodyMapRef.current[item.id];
+        const body = bodyMapRef.current[item.postId];
         if (!body) return;
 
-        next[item.id] = {
+        next[item.postId] = {
           x: body.position.x,
           y: body.position.y,
           angle: body.angle,
@@ -192,9 +296,9 @@ const Pocket = () => {
       Matter.World.clear(world, false);
       Matter.Engine.clear(engine);
     };
-  }, [items, size.width, size.height, itemSize, wallThickness]);
+  }, [items, size.width, size.height, itemSize]);
 
-  const handleMouseDown = (id: number, e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
     clickStartRef.current = {
       id,
       x: e.clientX,
@@ -202,7 +306,7 @@ const Pocket = () => {
     };
   };
 
-  const handleMouseUp = (id: number, e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseUp = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
     const start = clickStartRef.current;
     if (start.id !== id) return;
 
@@ -211,7 +315,7 @@ const Pocket = () => {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance < 8) {
-      console.log("클릭");
+      console.log("클릭", id);
     }
 
     clickStartRef.current = { id: null, x: 0, y: 0 };
@@ -227,14 +331,13 @@ const Pocket = () => {
           }}
         >
           {items.map((item) => {
-            const pos = positions[item.id];
+            const pos = positions[item.postId];
             if (!pos) return null;
 
             return (
               <PocketBubble
-                key={item.id}
-                id={item.id}
-                image={item.image}
+                key={item.postId}
+                item={item}
                 size={itemSize}
                 x={pos.x}
                 y={pos.y}
