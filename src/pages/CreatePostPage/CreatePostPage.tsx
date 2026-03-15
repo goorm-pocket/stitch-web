@@ -5,8 +5,8 @@ import ImageUploadIcon from "../../assets/upload-icon.svg";
 import ImageIcon from "../../assets/Image-icon.svg";
 import EmojiIcon from "../../assets/Emoji-icon.svg";
 
-// 타입 정의: 선택 가능한 디스플레이 타입
 type DisplayType = "image" | "emoji";
+type VisibilityType = "FRIENDS" | "PRIVATE";
 
 export default function CreatePocketPost() {
   const [image, setImage] = useState<File | null>(null);
@@ -16,8 +16,16 @@ export default function CreatePocketPost() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  //공개 범위 설정
+  const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
+
   //글자수 제한
   const MAX_LENGTH = 500;
+
+  //공개 범위 선택 토글
+  const toggleVisibility = () => {
+    setVisibility((prev) => (prev === "FRIENDS" ? "PRIVATE" : "FRIENDS"));
+  };
 
   // 이미지 선택 핸들러
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +52,7 @@ export default function CreatePocketPost() {
     if (image) formData.append("image", image);
     formData.append("story", story);
     formData.append("displayType", displayType);
+    formData.append("visibility", visibility);
 
     // TODO: 서버 전송 로직 (fetch/axios)
     console.log("전송 데이터:", Object.fromEntries(formData));
@@ -58,9 +67,18 @@ export default function CreatePocketPost() {
       </HeaderSection>
 
       <Card>
-        <SectionTitle>POCKET IMAGE</SectionTitle>
+        <SubContainer>
+          <SectionTitle>POCKET IMAGE</SectionTitle>
 
-        {/* 이미지 업로드 영역: 클릭 시 input 트리거 */}
+          <VisibilityToggle>
+            <ToggleLabel $active={visibility === "FRIENDS"}>Friends</ToggleLabel>
+            <ToggleSwitch onClick={toggleVisibility} $active={visibility === "PRIVATE"}>
+              <ToggleHandle $active={visibility === "PRIVATE"} />
+            </ToggleSwitch>
+            <ToggleLabel $active={visibility === "PRIVATE"}>Private</ToggleLabel>
+          </VisibilityToggle>
+        </SubContainer>
+
         <UploadBox onClick={() => fileInputRef.current?.click()} hasImage={!!previewUrl}>
           {previewUrl ? (
             <PreviewImage src={previewUrl} alt="Preview" />
@@ -122,6 +140,49 @@ const HeaderSection = styled.div`
   margin-bottom: 50px;
   padding-left: 10px;
   text-align: left;
+`;
+
+const SubContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const VisibilityToggle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ToggleLabel = styled.span<{ $active: boolean }>`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${(props) => (props.$active ? props.theme.colors.text_primary : "#adb5bd")};
+  transition: color 0.3s ease;
+`;
+
+const ToggleSwitch = styled.div<{ $active: boolean }>`
+  width: 50px;
+  height: 26px;
+  background-color: ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
+  border-radius: 20px;
+  padding: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const ToggleHandle = styled.div<{ $active: boolean }>`
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: ${(props) => (props.$active ? "translateX(24px)" : "translateX(0)")};
 `;
 
 const Title = styled.h1`
