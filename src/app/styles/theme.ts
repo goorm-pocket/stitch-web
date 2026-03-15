@@ -10,6 +10,7 @@ export const theme = {
     text_disable: "#94A3B8",
     border: "#E2E8F0",
     border2: "#D4AF37",
+    border3: "#B3C5D7",
     hover: "#F1F5F9",
   },
 };
