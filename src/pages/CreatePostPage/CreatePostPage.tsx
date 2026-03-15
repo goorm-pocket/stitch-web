@@ -16,6 +16,9 @@ export default function CreatePocketPost() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  //글자수 제한
+  const MAX_LENGTH = 500;
+
   // 이미지 선택 핸들러
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,6 +35,11 @@ export default function CreatePocketPost() {
   };
 
   const handleSubmit = async () => {
+    if (story.length > MAX_LENGTH) {
+      alert("글자 수는 500자를 초과할 수 없습니다.");
+      return;
+    }
+
     const formData = new FormData();
     if (image) formData.append("image", image);
     formData.append("story", story);
@@ -89,6 +97,9 @@ export default function CreatePocketPost() {
 
       <Card>
         <SectionTitle>POCKET STORY</SectionTitle>
+        <LengthCount isMax={story.length >= MAX_LENGTH}>
+          {story.length} / {MAX_LENGTH}
+        </LengthCount>
         <StoryBox
           placeholder="Tell the story behind this pocket..."
           value={story}
@@ -102,18 +113,20 @@ export default function CreatePocketPost() {
 }
 
 const Container = styled.div`
-  max-width: 900px;
+  width: 1000px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 10px 0px;
 `;
 
 const HeaderSection = styled.div`
-  margin-bottom: 40px;
+  margin-bottom: 50px;
+  padding-left: 10px;
+  text-align: left;
 `;
 
 const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: ${({ theme }) => theme.colors.text_primary};
   margin-bottom: 8px;
 `;
@@ -125,27 +138,34 @@ const SubTitle = styled.p`
 `;
 
 const Card = styled.section`
+  width: 100%;
   background: #ffffff;
   border: 2px dashed ${({ theme }) => theme.colors.border3};
-  border-radius: 14px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 50px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 `;
 
 const SectionTitle = styled.h3`
   font-size: 14px;
   letter-spacing: 1px;
   color: ${({ theme }) => theme.colors.text_primary};
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   text-transform: uppercase;
 `;
 
 const UploadBox = styled.div<{ hasImage: boolean }>`
+  width: 100%;
+  height: ${(props) => (props.hasImage ? "auto" : "450px")};
   border: 2px dashed ${(props) => (props.hasImage ? "transparent" : "#d1d5db")};
   border-radius: 16px;
-  padding: ${(props) => (props.hasImage ? "0" : "40px 20px")};
-  text-align: center;
+  min-height: ${(props) => (props.hasImage ? "auto" : "250px")};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
   overflow: hidden;
@@ -159,8 +179,8 @@ const UploadBox = styled.div<{ hasImage: boolean }>`
 
 const PreviewImage = styled.img`
   width: 100%;
-  height: 250px;
-  object-fit: cover;
+  height: 600px;
+  object-fit: fit;
   display: block;
 `;
 
@@ -192,22 +212,33 @@ const PrefLabel = styled.div`
 const PrefButtons = styled.div`
   display: flex;
   gap: 12px;
+  justify-content: flex-start;
 `;
 
 const PreIcon = styled.div`
-  margin-right: 5px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: currentColor;
 `;
 
 // transient prop ($) 사용으로 DOM에 active 속성이 전달되지 않도록 함
 const PrefButton = styled.button<{ $active: boolean }>`
-  flex: 1;
+  width: 160px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   padding: 12px;
   border-radius: 12px;
   border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
   cursor: pointer;
+
   font-size: 14px;
   font-weight: 500;
+  line-height: 1;
   transition: all 0.2s;
   background: ${(props) => (props.$active ? "#f0f7ff" : props.theme.colors.background)};
   color: ${(props) => (props.$active ? "#6f95b5" : "#4b5563")};
@@ -217,32 +248,43 @@ const PrefButton = styled.button<{ $active: boolean }>`
   }
 `;
 
+const LengthCount = styled.span<{ isMax: boolean }>`
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: ${(props) => (props.isMax ? "#ff4d4d" : props.theme.colors.text_secondary)};
+  font-weight: ${(props) => (props.isMax ? "700" : "400")};
+`;
+
 const StoryBox = styled.textarea`
   width: 100%;
-  height: 150px;
+  height: 300px;
   background: ${({ theme }) => theme.colors.background};
-  border-radius: 10px;
-  border: 1px solid #dfe5ec;
-  padding: 15px;
-  font-size: 15px;
-  line-height: 1.6;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 20px;
+  margin-top: 5px;
+  font-size: 17px;
+  line-height: 1.8;
   resize: none;
   outline: none;
+  box-sizing: border-box;
   &:focus {
-    border-color: #6f95b5;
+    border-color: ${({ theme }) => theme.colors.border3};
   }
 `;
 
 const PublishButton = styled(StitchedBox)`
   width: 100%;
-  padding: 18px;
+  height: 60px;
+  margin: 20px 0;
 
   color: white;
   font-size: 18px;
   font-weight: bold;
 
   border-radius: 16px;
-  border: none;
 
   cursor: pointer;
   transition: transform 0.1s;
@@ -252,7 +294,7 @@ const PublishButton = styled(StitchedBox)`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
   &:active {
-    transform: scale(0.98);
+    transform: scale(0.9);
   }
   &:disabled {
     background: #d1d5db;
