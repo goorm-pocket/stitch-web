@@ -47,7 +47,7 @@ export interface PostAuthor {
 }
 
 export interface PostImage {
-  image_url: string;
+  image_url?: string;
 }
 
 export type PostVisibility = "PUBLIC" | "FRIENDS" | "PRIVATE";
