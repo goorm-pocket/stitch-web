@@ -8,38 +8,53 @@ import EmojiIcon from "../../assets/Emoji-icon.svg";
 type DisplayType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
 
+//글자수 제한
+const MAX_LENGTH = 500;
+//이미지 제한
+const MAX_IMAGES = 10;
+
 export default function CreatePocketPost() {
-  const [image, setImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // 이미지 미리보기 추가
+  const [images, setImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]); // 이미지 미리보기 추가
   const [story, setStory] = useState("");
   const [displayType, setDisplayType] = useState<DisplayType>("image");
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   //공개 범위 설정
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
 
-  //글자수 제한
-  const MAX_LENGTH = 500;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   //공개 범위 선택 토글
   const toggleVisibility = () => {
     setVisibility((prev) => (prev === "FRIENDS" ? "PRIVATE" : "FRIENDS"));
   };
 
-  // 이미지 선택 핸들러
+  //이미지 선택
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    setImage(file);
+    if (images.length + files.length > MAX_IMAGES) {
+      alert(`사진은 최대 ${MAX_IMAGES}장까지 업로드 가능합니다.`);
+      return;
+    }
 
-    // 미리보기 URL 생성
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const newImages = [...images, ...files];
+    setImages(newImages);
+
+    //미리보기 URL 생성 및 추가
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrls((prev) => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  //이미지 삭제 기능
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
@@ -49,7 +64,7 @@ export default function CreatePocketPost() {
     }
 
     const formData = new FormData();
-    if (image) formData.append("image", image);
+    images.forEach((img) => formData.append("images", img));
     formData.append("story", story);
     formData.append("displayType", displayType);
     formData.append("visibility", visibility);
@@ -79,24 +94,39 @@ export default function CreatePocketPost() {
           </VisibilityToggle>
         </SubContainer>
 
-        <UploadBox onClick={() => fileInputRef.current?.click()} hasImage={!!previewUrl}>
-          {previewUrl ? (
-            <PreviewImage src={previewUrl} alt="Preview" />
-          ) : (
-            <>
-              <UploadIcon as={ImageUploadIcon}></UploadIcon>
-              <UploadText>Upload high-res photo</UploadText>
-              <UploadSub>Drag and drop or click to browse files</UploadSub>
-            </>
+        <UploadBoxContainer>
+          {previewUrls.length > 0 && (
+            <PreviewGrid>
+              {previewUrls.map((url, index) => (
+                <PreviewItem key={index}>
+                  <PreviewImage src={url} alt={`preview-${index}`} />
+                  <DeleteButton onClick={() => removeImage(index)}>×</DeleteButton>
+                </PreviewItem>
+              ))}
+
+              {previewUrls.length < MAX_IMAGES && (
+                <AddMoreButton onClick={() => fileInputRef.current?.click()}>+</AddMoreButton>
+              )}
+            </PreviewGrid>
           )}
+
+          {previewUrls.length === 0 && (
+            <UploadBox onClick={() => fileInputRef.current?.click()} hasImage={false}>
+              <UploadIcon as={ImageUploadIcon}></UploadIcon>
+              <UploadText>Upload photos (Max 10)</UploadText>
+              <UploadSub>Drag and drop or click to browse files</UploadSub>
+            </UploadBox>
+          )}
+
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleImageUpload}
             accept="image/*"
+            multiple
             hidden
           />
-        </UploadBox>
+        </UploadBoxContainer>
 
         <Preference>
           <PrefLabel>Bubble Icon</PrefLabel>
@@ -217,6 +247,10 @@ const SectionTitle = styled.h3`
   text-transform: uppercase;
 `;
 
+const UploadBoxContainer = styled.div`
+  width: 100%;
+`;
+
 const UploadBox = styled.div<{ hasImage: boolean }>`
   width: 100%;
   height: ${(props) => (props.hasImage ? "auto" : "450px")};
@@ -238,11 +272,62 @@ const UploadBox = styled.div<{ hasImage: boolean }>`
   }
 `;
 
+const PreviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5열 배치 */
+  gap: 15px;
+  margin-bottom: 20px;
+`;
+
+const PreviewItem = styled.div`
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1; /* 정사각형 유지 */
+`;
+
 const PreviewImage = styled.img`
   width: 100%;
-  height: 600px;
-  object-fit: fit;
-  display: block;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border3};
+`;
+
+const DeleteButton = styled.button`
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+`;
+
+const AddMoreButton = styled.div`
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: #adb5bd;
+  cursor: pointer;
+  background: #f9fafb;
+  &:hover {
+    background: #f3f4f6;
+  }
 `;
 
 const UploadIcon = styled.div`
@@ -284,7 +369,7 @@ const PreIcon = styled.div`
   color: currentColor;
 `;
 
-// transient prop ($) 사용으로 DOM에 active 속성이 전달되지 않도록 함
+//transient prop ($) 사용으로 DOM에 active 속성이 전달되지 않도록 함
 const PrefButton = styled.button<{ $active: boolean }>`
   width: 160px;
   height: 50px;
