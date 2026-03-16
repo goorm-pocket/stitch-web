@@ -61,9 +61,6 @@ const Container = styled.article`
   width: 100%;
   border-radius: 24px;
   overflow: hidden;
-  background: white;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   padding: 16px;
 `;
 
