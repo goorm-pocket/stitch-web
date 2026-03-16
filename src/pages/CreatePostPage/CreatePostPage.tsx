@@ -4,8 +4,10 @@ import { StitchedBox } from "../../shared/ui/StitchedBox";
 import ImageUploadIcon from "../../assets/upload-icon.svg";
 import ImageIcon from "../../assets/Image-icon.svg";
 import EmojiIcon from "../../assets/Emoji-icon.svg";
+import EmojiPicker from "emoji-picker-react";
+import { Theme, type EmojiClickData } from "emoji-picker-react";
 
-type DisplayType = "image" | "emoji";
+type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
 
 //글자수 제한
@@ -15,13 +17,37 @@ const MAX_IMAGES = 10;
 
 export default function CreatePocketPost() {
   const [images, setImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]); // 이미지 미리보기 추가
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [story, setStory] = useState("");
-  const [displayType, setDisplayType] = useState<DisplayType>("image");
-  //공개 범위 설정
+  const [markType, setMarkType] = useState<MarkType>("emoji");
+  const [selectedEmoji, setSelectedEmoji] = useState("📍"); //나중에 디폴트 이모지 넣기
+  const [markImage, setMarkImage] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const markInputRef = useRef<HTMLInputElement>(null);
+
+  // 이모지 선택 핸들러
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setSelectedEmoji(emojiData.emoji);
+    setShowEmojiPicker(false);
+    setMarkType("emoji");
+  };
+
+  // 버블 전용 이미지 업로드
+  const handleMarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setMarkImage(reader.result as string);
+      setMarkType("image");
+
+      e.target.value = "";
+    };
+    reader.readAsDataURL(file);
+  };
 
   //공개 범위 선택 토글
   const toggleVisibility = () => {
@@ -55,6 +81,10 @@ export default function CreatePocketPost() {
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async () => {
@@ -66,7 +96,7 @@ export default function CreatePocketPost() {
     const formData = new FormData();
     images.forEach((img) => formData.append("images", img));
     formData.append("story", story);
-    formData.append("displayType", displayType);
+    formData.append("markType", markType);
     formData.append("visibility", visibility);
 
     // TODO: 서버 전송 로직 (fetch/axios)
@@ -80,6 +110,56 @@ export default function CreatePocketPost() {
         <Title>Create New Pocket Post</Title>
         <SubTitle>주머니 속 일상의 조각을 기록해보세요.</SubTitle>
       </HeaderSection>
+      <Card>
+        <MarkContainer>
+          <SectionTitle>Bubble Icon</SectionTitle>
+          <MarkSettingArea>
+            <MarkPreviewCircle>
+              {markType === "image" && markImage ? (
+                <img src={markImage} alt="mark" />
+              ) : (
+                <span className="emoji-display">{selectedEmoji}</span>
+              )}
+            </MarkPreviewCircle>
+            <MarkButtons>
+              <MarkButton
+                $active={markType === "emoji"}
+                onClick={() => {
+                  setMarkType("emoji");
+                  setShowEmojiPicker(true);
+                }}
+              >
+                <MarkIcon as={EmojiIcon} />
+                Emoji Icon
+              </MarkButton>
+              <MarkButton
+                $active={markType === "image"}
+                onClick={() => {
+                  setMarkType("image");
+                  markInputRef.current?.click();
+                }}
+              >
+                <MarkIcon as={ImageIcon} />
+                Image Icon
+              </MarkButton>
+            </MarkButtons>
+            {showEmojiPicker && (
+              <EmojiPickerWrapper>
+                <div className="overlay" onClick={() => setShowEmojiPicker(false)} />
+                <EmojiPicker onEmojiClick={onEmojiClick} autoFocusSearch={false} />
+              </EmojiPickerWrapper>
+            )}
+          </MarkSettingArea>
+
+          <input
+            type="file"
+            ref={markInputRef}
+            onChange={handleMarkImageUpload}
+            accept="image/*"
+            hidden
+          />
+        </MarkContainer>
+      </Card>
 
       <Card>
         <SubContainer>
@@ -95,7 +175,7 @@ export default function CreatePocketPost() {
         </SubContainer>
 
         <UploadBoxContainer>
-          {previewUrls.length > 0 && (
+          {previewUrls.length > 0 ? (
             <PreviewGrid>
               {previewUrls.map((url, index) => (
                 <PreviewItem key={index}>
@@ -105,12 +185,13 @@ export default function CreatePocketPost() {
               ))}
 
               {previewUrls.length < MAX_IMAGES && (
-                <AddMoreButton onClick={() => fileInputRef.current?.click()}>+</AddMoreButton>
+                <AddMoreButton onClick={() => fileInputRef.current?.click()}>
+                  <UploadIcon as={ImageUploadIcon}></UploadIcon>
+                  <span>Add More</span>
+                </AddMoreButton>
               )}
             </PreviewGrid>
-          )}
-
-          {previewUrls.length === 0 && (
+          ) : (
             <UploadBox onClick={() => fileInputRef.current?.click()} hasImage={false}>
               <UploadIcon as={ImageUploadIcon}></UploadIcon>
               <UploadText>Upload photos (Max 10)</UploadText>
@@ -127,20 +208,6 @@ export default function CreatePocketPost() {
             hidden
           />
         </UploadBoxContainer>
-
-        <Preference>
-          <PrefLabel>Bubble Icon</PrefLabel>
-          <PrefButtons>
-            <PrefButton $active={displayType === "image"} onClick={() => setDisplayType("image")}>
-              <PreIcon as={ImageIcon} />
-              Image Icon
-            </PrefButton>
-            <PrefButton $active={displayType === "emoji"} onClick={() => setDisplayType("emoji")}>
-              <PreIcon as={EmojiIcon} />
-              Emoji Icon
-            </PrefButton>
-          </PrefButtons>
-        </Preference>
       </Card>
 
       <Card>
@@ -160,6 +227,60 @@ export default function CreatePocketPost() {
   );
 }
 
+const MarkSettingArea = styled.div`
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  margin-top: 25px;
+  gap: 30px;
+  position: relative;
+  background: ${({ theme }) => theme.colors.background};
+  padding: 20px;
+  border-radius: 12px;
+`;
+
+const MarkPreviewCircle = styled.div`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .emoji-display {
+    font-size: 50px;
+  }
+`;
+
+const EmojiPickerWrapper = styled.div`
+  position: absolute;
+  top: 60px;
+  left: 130px;
+  z-index: 100;
+
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+  }
+`;
+
 const Container = styled.div`
   width: 1000px;
   margin: 0 auto;
@@ -176,7 +297,7 @@ const SubContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 `;
 
 const VisibilityToggle = styled.div`
@@ -225,7 +346,6 @@ const Title = styled.h1`
 const SubTitle = styled.p`
   color: ${({ theme }) => theme.colors.text_secondary};
   font-size: 16px;
-  margin-bottom: 30px;
 `;
 
 const Card = styled.section`
@@ -233,70 +353,86 @@ const Card = styled.section`
   background: #ffffff;
   border: 2px dashed ${({ theme }) => theme.colors.border3};
   border-radius: 16px;
-  padding: 30px;
+  padding: 20px 25px 25px 25px;
   margin-bottom: 50px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 1px;
   color: ${({ theme }) => theme.colors.text_primary};
-  margin-bottom: 15px;
   text-transform: uppercase;
 `;
 
 const UploadBoxContainer = styled.div`
   width: 100%;
+  height: 400px; /* 섹션 전체 높이 고정 */
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  overflow: hidden; /* 내부 요소가 넘치면 가림 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const UploadBox = styled.div<{ hasImage: boolean }>`
   width: 100%;
-  height: ${(props) => (props.hasImage ? "auto" : "450px")};
-  border: 2px dashed ${(props) => (props.hasImage ? "transparent" : "#d1d5db")};
-  border-radius: 16px;
-  min-height: ${(props) => (props.hasImage ? "auto" : "250px")};
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  overflow: hidden;
-  background: #f9fafb;
-
   &:hover {
-    border-color: #9fb6cc;
     background: #f3f4f6;
   }
 `;
 
 const PreviewGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5열 배치 */
-  gap: 15px;
-  margin-bottom: 20px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  overflow-x: auto; /* 가로 스크롤 가능하게 */
+  align-items: center;
+
+  /* 스크롤바 디자인 (선택사항) */
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+  }
 `;
 
 const PreviewItem = styled.div`
   position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1; /* 정사각형 유지 */
+  flex: 0 0 350px; /* 미리보기 사진의 가로 크기 크게 고정 */
+  height: 300px;
+  background: #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 `;
 
 const PreviewImage = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  padding: 7px;
+  object-fit: contain;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.border3};
+  border: 1px dashed ${({ theme }) => theme.colors.border3};
 `;
 
 const DeleteButton = styled.button`
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 7px;
+  right: 7px;
   background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
@@ -314,17 +450,18 @@ const DeleteButton = styled.button`
 `;
 
 const AddMoreButton = styled.div`
-  width: 100%;
-  aspect-ratio: 1 / 1;
+  flex: 0 0 200px;
+  height: 300px;
   border: 2px dashed #d1d5db;
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  gap: 10px;
   color: #adb5bd;
   cursor: pointer;
-  background: #f9fafb;
+  background: white;
   &:hover {
     background: #f3f4f6;
   }
@@ -345,23 +482,22 @@ const UploadSub = styled.div`
   margin-top: 4px;
 `;
 
-const Preference = styled.div`
-  margin-top: 24px;
-`;
-const PrefLabel = styled.div`
+const MarkContainer = styled.div``;
+
+const MarkLabel = styled.div`
   font-size: 14px;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 `;
 
-const PrefButtons = styled.div`
+const MarkButtons = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-start;
 `;
 
-const PreIcon = styled.div`
+const MarkIcon = styled.div`
   margin-right: 8px;
   display: flex;
   align-items: center;
@@ -370,7 +506,7 @@ const PreIcon = styled.div`
 `;
 
 //transient prop ($) 사용으로 DOM에 active 속성이 전달되지 않도록 함
-const PrefButton = styled.button<{ $active: boolean }>`
+const MarkButton = styled.button<{ $active: boolean }>`
   width: 160px;
   height: 50px;
   display: flex;
