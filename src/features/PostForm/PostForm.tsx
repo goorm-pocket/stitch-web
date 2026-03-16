@@ -193,7 +193,7 @@ const ImageFallback = styled.div`
 const FallbackText = styled.span`
   font-size: 14px;
   font-weight: 600;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const Content = styled.p`

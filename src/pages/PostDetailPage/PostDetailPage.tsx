@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import PostForm from "../../features/Post/PostForm";
+import PostForm from "../../features/PostForm/PostForm";
 import type { Post } from "../../shared/types/post.type";
 
 const mockPosts: Post[] = [
