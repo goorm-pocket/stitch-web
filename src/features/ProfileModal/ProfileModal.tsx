@@ -8,19 +8,30 @@ interface ProfileModalProps {
   onClose: () => void;
 }
 
+interface ProfileData {
+  nickname: string;
+  realName: string;
+  birth: string;
+  profileImg: string | null;
+  emojiContent: string | null;
+}
+
 const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
+  const [savedData, setSavedData] = useState<ProfileData>({
     nickname: "xode114kr1",
     realName: "신윤호",
     birth: "",
+    profileImg: null,
+    emojiContent: null,
   });
 
-  const [profileImg, setProfileImg] = useState<string | null>(null);
+  const [formData, setFormData] = useState<ProfileData>(savedData);
 
-  const [emojiImg, setEmojiImg] = useState<string | null>(null); // 이모지 이미지 상태
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // 픽커 표시 상태
-  const [emojiContent, setEmojiContent] = useState<string | null>(null);
+  const [profileImg, setProfileImg] = useState<string | null>(savedData.profileImg);
+  const [emojiContent, setEmojiContent] = useState<string | null>(savedData.emojiContent);
+  const [emojiImg, setEmojiImg] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   //Crop
   const [imageToCrop, setImageToCrop] = useState<{ url: string; type: "photo" | "emoji" } | null>(
@@ -74,6 +85,37 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   };
 
   useEffect(() => {
+    setProfileImg(savedData.profileImg);
+    setEmojiContent(savedData.emojiContent);
+  }, [savedData]);
+
+  // --- 핸들러 수정 ---
+
+  // [취소 버튼 클릭 시]
+  const handleCancel = () => {
+    // 원본 데이터(savedData)로 폼과 이미지 상태를 모두 덮어씌웁니다.
+    setFormData(savedData); // 이제 타입이 일치하므로 에러가 나지 않습니다.
+    setProfileImg(savedData.profileImg);
+    setEmojiContent(savedData.emojiContent);
+
+    setIsEditing(false);
+    setShowEmojiPicker(false);
+  };
+
+  const handleSave = () => {
+    if (isFormValid) {
+      const newData: ProfileData = {
+        ...formData,
+        profileImg, // 현재 수정된 이미지 상태값 반영
+        emojiContent, // 현재 수정된 이모지 상태값 반영
+      };
+      setSavedData(newData); // 원본을 새 데이터로 교체
+      alert("프로필이 저장되었습니다!");
+      setIsEditing(false);
+    }
+  };
+
+  useEffect(() => {
     const handleClickOustside = (event: MouseEvent) => {
       if (
         showEmojiPicker &&
@@ -116,14 +158,6 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = () => {
-    if (isFormValid) {
-      alert("프로필이 저장되었습니다!");
-      setIsEditing(false);
-      // 여기서 onClose()를 호출해 닫게 할 수도 있습니다.
-    }
   };
 
   return (
@@ -273,7 +307,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
           <EditModeButton onClick={() => setIsEditing(true)}>Edit Profile</EditModeButton>
         ) : (
           <>
-            <CancelButton onClick={() => setIsEditing(false)}>Cancel</CancelButton>
+            <CancelButton onClick={handleCancel}>Cancel</CancelButton>
             <SaveButton disabled={!isFormValid} onClick={handleSave}>
               Save Profile
             </SaveButton>
