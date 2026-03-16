@@ -87,7 +87,6 @@ const ArchivePostSlider = ({
             {posts.map((post) => (
               <Slide key={post.post_id}>
                 <PostCard
-                  type="button"
                   onClick={() => onPostClick(post.post_id)}
                   aria-label={`Open post ${post.post_id}`}
                 >
@@ -250,7 +249,7 @@ const Slide = styled.div`
   display: flex;
 `;
 
-const PostCard = styled.button`
+const PostCard = styled.div`
   width: 100%;
   border: 1px solid ${({ theme }) => theme.colors.border};
   background: white;
