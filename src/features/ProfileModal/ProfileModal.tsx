@@ -41,6 +41,9 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
+  //오늘 날짜
+  const today = new Date().toISOString().split("T")[0];
+
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -48,10 +51,12 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "photo" | "emoji") => {
     const file = e.target.files?.[0];
     if (file) {
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
       const reader = new FileReader();
       reader.onloadend = () => {
         if (type === "photo") setImageToCrop({ url: reader.result as string, type });
-        else setEmojiImg(reader.result as string);
+        else setImageToCrop({ url: reader.result as string, type: "emoji" });
       };
       reader.readAsDataURL(file);
     }
@@ -78,8 +83,13 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
     ctx?.drawImage(image, x, y, width, height, 0, 0, width, height);
 
     const base64Image = canvas.toDataURL("image/jpeg");
-    if (imageToCrop.type === "photo") setProfileImg(base64Image);
-    else setEmojiImg(base64Image);
+
+    if (imageToCrop.type === "photo") {
+      setProfileImg(base64Image);
+    } else {
+      // 이 부분을 setEmojiImg 대신 setEmojiContent로 변경!
+      setEmojiContent(base64Image);
+    }
 
     setImageToCrop(null); // 크롭 창 닫기
   };
@@ -141,8 +151,15 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const handleEmojiFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // 상태 초기화
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+
       const reader = new FileReader();
-      reader.onload = () => setEmojiContent(reader.result as string);
+      reader.onload = () => {
+        // emoji 타입으로 크롭 오버레이를 띄웁니다.
+        setImageToCrop({ url: reader.result as string, type: "emoji" });
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -154,7 +171,8 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   };
 
   //Required
-  const isFormValid = formData.nickname.trim() !== "" && formData.realName.trim() !== "";
+  const isFormValid =
+    formData.nickname?.trim() !== "" && formData.realName?.trim() !== "" && emojiContent !== null;
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -196,7 +214,12 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
 
         <AppearanceBox>
           <CustomBox
-            onClick={() => isEditing && photoInputRef.current?.click()}
+            onClick={() => {
+              if (isEditing) {
+                if (photoInputRef.current) photoInputRef.current.value = "";
+                photoInputRef.current?.click();
+              }
+            }}
             $isEditing={isEditing}
           >
             <input
@@ -213,7 +236,10 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
           </CustomBox>
 
           {/* 이모지/사진 섹션 */}
-          <CustomBox $isEditing={isEditing}>
+          <CustomBox
+            $isEditing={isEditing}
+            $isError={isEditing && !emojiContent} // 수정 중인데 내용이 없으면 에러
+          >
             <input
               type="file"
               ref={emojiInputRef}
@@ -234,10 +260,16 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
               )}
             </PickerCircle>
 
-            <LabelText>Bubble</LabelText>
+            <LabelText>Bubble (Required)</LabelText>
 
             <ButtonGroup>
-              <MiniButton onClick={() => emojiInputRef.current?.click()} disabled={!isEditing}>
+              <MiniButton
+                onClick={() => {
+                  if (emojiInputRef.current) emojiInputRef.current.value = ""; // 초기화 추가
+                  emojiInputRef.current?.click();
+                }}
+                disabled={!isEditing}
+              >
                 Image
               </MiniButton>
               <MiniButton
@@ -274,6 +306,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
               value={formData.nickname}
               onChange={handleChange}
               disabled={!isEditing}
+              $isError={isEditing && formData.nickname.trim() === ""}
               placeholder="e.g. SpaceExplorer"
             />
           </InputWrapper>
@@ -284,6 +317,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
               value={formData.realName}
               onChange={handleChange}
               disabled={!isEditing}
+              $isError={isEditing && formData.realName.trim() === ""}
               placeholder="Enter your full name"
             />
           </InputWrapper>
@@ -297,6 +331,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
             value={formData.birth}
             onChange={handleChange}
             disabled={!isEditing}
+            max={today}
           />
         </InputWrapper>
       </ModalBody>
@@ -411,7 +446,7 @@ const AppearanceBox = styled.div`
   margin-bottom: 32px;
 `;
 
-const CustomBox = styled.div<{ $isEditing: boolean }>`
+const CustomBox = styled.div<{ $isEditing: boolean; $isError?: boolean }>`
   position: relative;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
@@ -424,6 +459,9 @@ const CustomBox = styled.div<{ $isEditing: boolean }>`
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
   transition: all 0.2s ease;
 
+  /* 에러 상태일 때 테두리 추가 */
+  border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "transparent")};
+
   &:hover {
     background: ${(props) => (props.$isEditing ? "#e9ecef" : "#f8f9fa")};
   }
@@ -433,7 +471,7 @@ const PickerCircle = styled.div`
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  border: 2px dashed #dee2e6;
+  border: 2px dashed "#dee2e6";
   background: white;
   display: flex;
   align-items: center;
@@ -519,16 +557,18 @@ const InputWrapper = styled.div`
   }
 `;
 
-const StyledInput = styled.input`
+const StyledInput = styled.input<{ $isError?: boolean }>`
   padding: 14px;
-  border: 1px solid #dee2e6;
+  border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "#dee2e6")};
   border-radius: 10px;
   font-size: 14px;
   background: ${(props) => (props.disabled ? "#f8f9fa" : "white")};
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+
   &:focus {
     outline: none;
-    border-color: #748ffc;
+    border-color: ${(props) => (props.$isError ? "#ff6b6b" : "#748ffc")};
+    box-shadow: ${(props) => (props.$isError ? "0 0 0 3px rgba(255, 107, 107, 0.1)" : "none")};
   }
 `;
 
