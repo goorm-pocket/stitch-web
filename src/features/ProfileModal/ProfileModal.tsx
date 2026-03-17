@@ -379,26 +379,25 @@ const CropOverlay = styled.div`
   right: 0;
   bottom: 0;
   background: #fff;
-  z-index: 10;
+  z-index: 20; /* 픽커보다 높게 */
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   padding: 20px;
+  /* 오버레이 자체도 스크롤 가능하게 함으로써 버튼 잘림 방지 */
+  overflow-y: auto;
 `;
 
 const CropContainer = styled.div`
   position: relative;
   width: 100%;
-  height: 550px;
+  /* 고정 높이 550px 대신 최소 높이를 주고 비율로 조절하거나 높이를 살짝 줄임 */
+  height: 400px;
+  min-height: 300px;
   background: #333;
   border-radius: 8px;
   overflow: hidden;
-
-  /* 라이브러리 기본 가이드라인 선명하게 조절 */
-  .react-easy-crop_CropArea {
-    color: rgba(0, 0, 0, 0.5) !important; /* 바깥쪽 어두운 정도 */
-    border: 2px solid rgba(255, 255, 255, 0.8) !important; /* 흰색 테두리 선 */
-  }
+  flex-shrink: 0; /* 크기가 줄어들지 않도록 설정 */
 `;
 
 // 2. 모양 선택 영역 스타일 추가
@@ -439,10 +438,26 @@ const CropButtonWrapper = styled.div`
 const ModalContainer = styled.div`
   background: white;
   width: 580px;
+  /* 화면 높이의 90%를 넘지 않도록 설정 */
+  max-height: 90vh;
   padding: 40px;
   border-radius: 16px;
   position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+
+  /* 내용이 넘치면 세로 스크롤 생성 */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+
+  /* 스크롤바 디자인 (선택 사항) */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 4px;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -555,11 +570,12 @@ const LabelText = styled.span`
 
 const PickerWrapper = styled.div`
   position: absolute;
-  top: 95%;
-  left: 100px;
+  /* 95% 대신 아래쪽 여유 공간 확보 */
+  bottom: 100%;
+  left: 50%;
   transform: translateX(-50%);
-  margin-top: 8px;
-  z-index: 100;
+  margin-bottom: 8px;
+  z-index: 1000;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 `;
 
