@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
+import Cropper, { type Area } from "react-easy-crop";
 import ImageUploadIcon from "../../assets/upload-icon.svg";
 import ImageIcon from "../../assets/Image-icon.svg";
 import EmojiIcon from "../../assets/Emoji-icon.svg";
@@ -9,11 +10,51 @@ import type { EmojiClickData } from "emoji-picker-react";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
+type CropShape = "rect" | "round";
 
 //글자수 제한
 const MAX_LENGTH = 500;
 //이미지 제한
 const MAX_IMAGES = 10;
+
+//Crop
+const getCroppedImg = async (
+  imageSrc: string,
+  pixelCrop: any,
+  isRound: boolean,
+): Promise<string> => {
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise((resolve) => (image.onload = resolve));
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  // 원형 크롭일 경우 캔버스 자체를 클리핑
+  if (isRound) {
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+    ctx.clip();
+  }
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height,
+  );
+
+  return canvas.toDataURL("image/jpeg");
+};
 
 export default function CreatePocketPost() {
   const [images, setImages] = useState<File[]>([]);
@@ -24,6 +65,17 @@ export default function CreatePocketPost() {
   const [markImage, setMarkImage] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
+
+  const [cropImage, setCropImage] = useState<string | null>(null); // 자르기 전 원본
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const [isRoundCrop, setIsRoundCrop] = useState(true); // 원형/사각형 토글 상태
+  //지울수도있음
+  const [cropShape, setCropShape] = useState<CropShape>("round");
+  const [bubbleShape, setBubbleShape] = useState<CropShape>("round");
+  const aspect = cropShape === "rect" ? undefined : 1;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
@@ -40,13 +92,25 @@ export default function CreatePocketPost() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setMarkImage(reader.result as string);
-      setMarkType("image");
-
-      e.target.value = "";
+    reader.onload = () => {
+      setCropImage(reader.result as string); // 1단계: 크롭 창 띄우기
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  // 크롭 완료 핸들러
+  const onCropComplete = (_: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const saveCroppedImage = async () => {
+    if (cropImage && croppedAreaPixels) {
+      const croppedResult = await getCroppedImg(cropImage, croppedAreaPixels, isRoundCrop);
+      setMarkImage(croppedResult);
+      setMarkType("image");
+      setCropImage(null); // 크롭 창 닫기
+    }
   };
 
   //공개 범위 선택 토글
@@ -111,10 +175,53 @@ export default function CreatePocketPost() {
         <SubTitle>주머니 속 일상의 조각을 기록해보세요.</SubTitle>
       </HeaderSection>
       <Card>
+        {cropImage && (
+          <CropModalOverlay>
+            <CropControls>
+              <CropContainer>
+                <Cropper
+                  image={cropImage}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  cropShape={isRoundCrop ? "round" : "rect"}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                />
+              </CropContainer>
+
+              <ControlBottomBar>
+                {/* 1단: 모양 선택 버튼 */}
+                <ShapeButtons>
+                  <ShapeBtn $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
+                    Circle
+                  </ShapeBtn>
+                  <ShapeBtn $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
+                    Square
+                  </ShapeBtn>
+                </ShapeButtons>
+
+                {/* 2단: 실행 버튼 (취소/적용) */}
+                <ActionButtons>
+                  <CancelBtn
+                    onClick={() => {
+                      setCropImage(null);
+                      setIsRoundCrop(true);
+                    }}
+                  >
+                    Cancel
+                  </CancelBtn>
+                  <SaveBtn onClick={saveCroppedImage}>Apply</SaveBtn>
+                </ActionButtons>
+              </ControlBottomBar>
+            </CropControls>
+          </CropModalOverlay>
+        )}
         <MarkContainer>
           <SectionTitle>Bubble Icon</SectionTitle>
           <MarkSettingArea>
-            <MarkPreviewCircle>
+            <MarkPreviewCircle $isRound={isRoundCrop}>
               {markType === "image" && markImage ? (
                 <img src={markImage} alt="mark" />
               ) : (
@@ -134,10 +241,7 @@ export default function CreatePocketPost() {
               </MarkButton>
               <MarkButton
                 $active={markType === "image"}
-                onClick={() => {
-                  setMarkType("image");
-                  markInputRef.current?.click();
-                }}
+                onClick={() => markInputRef.current?.click()}
               >
                 <MarkIcon as={ImageIcon} />
                 Image Icon
@@ -227,6 +331,104 @@ export default function CreatePocketPost() {
   );
 }
 
+const CropModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7); /* 배경을 어둡게 처리하여 모달 강조 */
+  z-index: 3000; /* 이모지 피커보다 위에 위치 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const CropContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 500px; /* 높이도 함께 확장 */
+  background: #111;
+  overflow: hidden;
+`;
+
+const CropControls = styled.div`
+  position: relative;
+  width: 600px; /* 너비를 500px에서 600px로 확장 */
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+/* 버튼들을 감싸는 하단 바 영역 */
+const ControlBottomBar = styled.div`
+  display: flex;
+  flex-direction: column; /* 요소를 수직으로 배치 */
+  align-items: center;
+  gap: 20px; /* 요소 간 간격 */
+  padding: 24px;
+  background: #f8f9fa;
+`;
+
+const ShapeButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+`;
+
+const ShapeBtn = styled.button<{ $active: boolean }>`
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
+  color: ${(props) => (props.$active ? "white" : props.theme.colors.text_primary)};
+  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#dee2e6")};
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: ${(props) => props.theme.colors.primary};
+  }
+};
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: flex-end; /* 캔슬/어플라이는 오른쪽 정렬 */
+  border-top: 1px solid #eee; /* 구분선 추가 */
+  padding-top: 15px;
+`;
+
+const SaveBtn = styled.button`
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+`;
+
+const CancelBtn = styled.button`
+  background: #adb5bd;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover {
+    background: #868e96;
+  }
+`;
+
 const MarkSettingArea = styled.div`
   display: flex;
   align-items: center;
@@ -241,10 +443,16 @@ const MarkSettingArea = styled.div`
   border-radius: 12px;
 `;
 
-const MarkPreviewCircle = styled.div`
+const MarkPreviewCircle = styled.div<{ $isRound: boolean }>`
   width: 100px;
   height: 100px;
-  border-radius: 50%;
+
+  /* 🔥 핵심: isRound 상태에 따라 곡률을 동적으로 변경 */
+  border-radius: ${(props) =>
+    props.$isRound
+      ? "50%"
+      : "0"}; /* 사각형일 때도 약간의 곡률을 주면 더 세련돼 보입니다. 원하시면 0px로 하셔도 됩니다. */
+
   background: white;
   border: 3px solid white;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -253,6 +461,7 @@ const MarkPreviewCircle = styled.div`
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  transition: border-radius 0.3s ease; /* 모양 변경 시 부드러운 효과 */
 
   img {
     width: 100%;
