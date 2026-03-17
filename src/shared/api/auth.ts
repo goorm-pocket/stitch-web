@@ -1,3 +1,4 @@
+import type { ApiResponse } from "../types/common.type";
 import { apiClient } from "./axios";
 
 interface OauthLoginRes {
@@ -13,16 +14,16 @@ export async function oauthLogin({
   provider: string;
   code: string;
 }): Promise<OauthLoginRes> {
-  const res = await apiClient.post<OauthLoginRes>(`/api/v1/auth/${provider}/login`, {
+  const res = await apiClient.post<ApiResponse<OauthLoginRes>>(`/api/v1/auth/${provider}/login`, {
     authorizationCode: code,
     redirectUri: import.meta.env.VITE_REDIRECTION_URL,
   });
-  return res.data;
+  return res.data.data;
 }
 
 export async function logout() {
   const res = await apiClient.post("/api/v1/auth/logout");
-  return res.data;
+  return res.data.data;
 }
 
 interface fetchMeRes {
@@ -34,6 +35,6 @@ interface fetchMeRes {
 }
 
 export async function fetchMe(): Promise<fetchMeRes> {
-  const res = await apiClient.get<fetchMeRes>("/api/v1/auth/me");
-  return res.data;
+  const res = await apiClient.get<ApiResponse<fetchMeRes>>("/api/v1/auth/me");
+  return res.data.data;
 }
