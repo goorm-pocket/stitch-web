@@ -14,7 +14,7 @@ const CallbackPage = () => {
         const provider = params.get("state");
 
         if (!code || !provider) {
-          navigate("/login");
+          navigate("/");
           return;
         }
 
@@ -22,7 +22,7 @@ const CallbackPage = () => {
         navigate("/pocket");
       } catch (err) {
         console.error("OAuth login failed:", err);
-        navigate("/login");
+        navigate("/");
       }
     };
 
