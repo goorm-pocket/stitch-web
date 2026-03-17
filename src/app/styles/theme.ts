@@ -9,6 +9,7 @@ export const theme = {
     text_secondary: "#64748B",
     text_disable: "#94A3B8",
     border: "#E2E8F0",
+    border2: "#D4AF37",
     hover: "#F1F5F9",
   },
 };
