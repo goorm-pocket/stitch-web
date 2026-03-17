@@ -4,6 +4,7 @@ import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
 import { useGetBoardQuery } from "../../shared/hooks/useBoard";
 import type { PocketBubbleType } from "../../shared/types/post.type";
+import PostModal from "../PostModal/PostModal";
 
 const SAMPLE_ITEMS: PocketBubbleType[] = [
   {
@@ -133,7 +134,8 @@ type PositionMap = Record<string, { x: number; y: number; angle: number }>;
 
 const Pocket = () => {
   const { data: board } = useGetBoardQuery("WEB");
-
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const runnerRef = useRef<Matter.Runner | null>(null);
@@ -315,7 +317,8 @@ const Pocket = () => {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance < 8) {
-      console.log("클릭", id);
+      setIsModalOpen(true);
+      setSelectedPostId(id);
     }
 
     clickStartRef.current = { id: null, x: 0, y: 0 };
@@ -349,6 +352,9 @@ const Pocket = () => {
           })}
         </PocketArea>
       </PocketWrapper>
+      {isModalOpen && selectedPostId && (
+        <PostModal onClose={() => setIsModalOpen(false)} postId={selectedPostId} />
+      )}
     </Container>
   );
 };

@@ -37,10 +37,11 @@ const mockdata: Post = {
 };
 
 interface PostModalProps {
-  onClose?: () => void;
+  postId: string;
+  onClose: () => void;
 }
 
-const PostModal = ({ onClose }: PostModalProps) => {
+const PostModal = ({ onClose, postId }: PostModalProps) => {
   return (
     <Overlay onClick={onClose}>
       <ModalContainer onClick={(e) => e.stopPropagation()}>
