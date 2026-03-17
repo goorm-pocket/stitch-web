@@ -8,11 +8,12 @@ interface DayCellProps {
     date: dayjs.Dayjs | null;
   };
   dayData: Calendar | undefined;
+  onClick?: () => void;
 }
 
-const DayCell = ({ cell, dayData }: DayCellProps) => {
+const DayCell = ({ cell, dayData, onClick }: DayCellProps) => {
   return (
-    <Container $empty={!cell.date} $variant={dayData?.hasPost}>
+    <Container $empty={!cell.date} $variant={dayData?.hasPost} onClick={onClick}>
       {cell.date && (
         <>
           <DateNumber>{cell.date.date()}</DateNumber>
