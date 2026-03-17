@@ -113,6 +113,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
     setFormData(savedData); // 이제 타입이 일치하므로 에러가 나지 않습니다.
     setProfileImg(savedData.profileImg);
     setEmojiContent(savedData.emojiContent);
+    setCropShape("round");
 
     setIsEditing(false);
     setShowEmojiPicker(false);
