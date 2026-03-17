@@ -4,6 +4,8 @@ import Cropper from "react-easy-crop";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
 
+type CropShape = "rect" | "round";
+
 interface ProfileModalProps {
   onClose: () => void;
 }
@@ -40,6 +42,9 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [cropShape, setCropShape] = useState<CropShape>("round");
+  const [bubbleShape, setBubbleShape] = useState<CropShape>("round");
+  const aspect = cropShape === "rect" ? undefined : 1;
 
   //오늘 날짜
   const today = new Date().toISOString().split("T")[0];
@@ -89,6 +94,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
     } else {
       // 이 부분을 setEmojiImg 대신 setEmojiContent로 변경!
       setEmojiContent(base64Image);
+      setBubbleShape(cropShape);
     }
 
     setImageToCrop(null); // 크롭 창 닫기
@@ -187,14 +193,25 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
               image={imageToCrop.url}
               crop={crop}
               zoom={zoom}
-              aspect={1} // 1:1 비율 고정
-              cropShape="round" // 원형 가이드라인
-              showGrid={false}
+              aspect={aspect} // 모양에 따라 비율 조절
+              cropShape={cropShape} // "round" 또는 "rect"
+              showGrid={cropShape === "rect"} // 사각형일 때만 그리드 표시
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
             />
           </CropContainer>
+
+          {/* 모양 선택 버튼 그룹 추가 */}
+          <ShapeSelectorWrapper>
+            <ShapeButton active={cropShape === "round"} onClick={() => setCropShape("round")}>
+              원형
+            </ShapeButton>
+            <ShapeButton active={cropShape === "rect"} onClick={() => setCropShape("rect")}>
+              사각형
+            </ShapeButton>
+          </ShapeSelectorWrapper>
+
           <CropButtonWrapper>
             <CancelButton onClick={() => setImageToCrop(null)}>Cancel</CancelButton>
             <EditModeButton onClick={getCroppedImg}>Save</EditModeButton>
@@ -248,7 +265,7 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
               style={{ display: "none" }}
             />
 
-            <PickerCircle>
+            <PickerCircle $shape={bubbleShape} $isError={isEditing && !emojiContent}>
               {emojiContent ? (
                 isEmojiText(emojiContent) ? (
                   <EmojiDisplay>{emojiContent}</EmojiDisplay>
@@ -375,6 +392,41 @@ const CropContainer = styled.div`
   height: 550px;
   background: #333;
   border-radius: 8px;
+  overflow: hidden;
+
+  /* 라이브러리 기본 가이드라인 선명하게 조절 */
+  .react-easy-crop_CropArea {
+    color: rgba(0, 0, 0, 0.5) !important; /* 바깥쪽 어두운 정도 */
+    border: 2px solid rgba(255, 255, 255, 0.8) !important; /* 흰색 테두리 선 */
+  }
+`;
+
+// 2. 모양 선택 영역 스타일 추가
+const ShapeSelectorWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 10px;
+  background: #f1f3f5;
+  border-radius: 8px;
+`;
+
+const ShapeButton = styled.button<{ active: boolean }>`
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: ${(props) => (props.active ? props.theme.colors.primary : "white")};
+  color: ${(props) => (props.active ? "white" : props.theme.colors.text_primary)};
+  border: 1px solid ${(props) => (props.active ? props.theme.colors.primary : "#dee2e6")};
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: ${(props) => props.theme.colors.primary};
+  }
+};
 `;
 
 const CropButtonWrapper = styled.div`
@@ -467,16 +519,19 @@ const CustomBox = styled.div<{ $isEditing: boolean; $isError?: boolean }>`
   }
 `;
 
-const PickerCircle = styled.div`
+const PickerCircle = styled.div<{ $shape?: "round" | "rect"; $isError?: boolean }>`
   width: 130px;
   height: 130px;
-  border-radius: 50%;
+
+  border-radius: ${(props) => (props.$shape === "rect" ? "0" : "50%")};
+
   border: 2px dashed "#dee2e6";
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  transition: border-radius 0.3s ease;
 `;
 
 const PreviewImg = styled.img`
