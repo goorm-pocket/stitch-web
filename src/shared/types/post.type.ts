@@ -16,6 +16,19 @@ export interface Calendar {
   hasMultiplePosts: boolean; // postCount가 2 이상인지
 }
 
+export interface PocketBubbleType {
+  postId: string;
+  userId: string;
+  ownerType: "ME" | "FRIEND";
+  representative: {
+    type: "IMAGE" | "IMOGI";
+    value: string;
+  };
+  createdAt: string;
+  exposedAt: string;
+  read: boolean;
+}
+
 export interface Post {
   post_id: string;
 
