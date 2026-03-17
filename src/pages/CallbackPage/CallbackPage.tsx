@@ -1,17 +1,33 @@
 import { useEffect } from "react";
 import { useOauthLoginMutation } from "../../shared/hooks/useAuth";
+import { useNavigate } from "react-router";
 
 const CallbackPage = () => {
-  const { mutate: oauthLogin } = useOauthLoginMutation();
+  const navigate = useNavigate();
+  const { mutateAsync: oauthLogin } = useOauthLoginMutation();
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    const provider = params.get("state");
+    const run = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+        const provider = params.get("state");
 
-    if (!code || !provider) return;
+        if (!code || !provider) {
+          navigate("/login");
+          return;
+        }
 
-    oauthLogin({ provider, code });
-  }, [oauthLogin]);
+        await oauthLogin({ provider, code });
+        navigate("/pocket");
+      } catch (err) {
+        console.error("OAuth login failed:", err);
+        navigate("/login");
+      }
+    };
+
+    run();
+  }, [oauthLogin, navigate]);
   return <div>로딩 스피너</div>;
 };
 

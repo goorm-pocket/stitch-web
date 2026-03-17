@@ -1,7 +1,12 @@
 import styled from "styled-components";
 import Archive from "../../features/Archive/Archive";
+import SettingsIcon from "../../assets/setting-icon.svg";
+import { useNavigate } from "react-router";
+import { ProfileStitchedBox } from "../../shared/ui/StitchedBox";
 
 const MyPage = () => {
+  const navigate = useNavigate();
+
   return (
     <Container>
       <ProfileContainer>
@@ -24,7 +29,10 @@ const MyPage = () => {
         </Left>
 
         <Right>
-          <SettingButton>Settings</SettingButton>
+          <SettingButton onClick={() => navigate("/setting")}>
+            <SettingIcon as={SettingsIcon} />
+            Settings
+          </SettingButton>
         </Right>
       </ProfileContainer>
       <Archive />
@@ -42,30 +50,24 @@ const Container = styled.main`
   gap: 24px;
 `;
 
-const ProfileContainer = styled.div`
+const ProfileContainer = styled(ProfileStitchedBox)`
   position: relative;
   display: flex;
-  padding: 20px;
-  background: white;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  justify-content: flex-start;
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 6px;
-    border: 2px dashed ${({ theme }) => theme.colors.sub};
-    border-radius: 8px;
-    pointer-events: none;
-  }
+  width: 100%;
+  height: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  margin-bottom: 32px;
 `;
 
 const Left = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 32px;
 `;
 
 const Right = styled.div`
@@ -74,30 +76,36 @@ const Right = styled.div`
 `;
 
 const Avator = styled.img`
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  border: 2px solid ${({ theme }) => theme.colors.border};
+  border: 4px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
 `;
 
-const ProfileTextBox = styled.div``;
+const ProfileTextBox = styled.div`
+  dispaly: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
 
 const ProfileName = styled.div`
-  font-size: 20px;
+  font-size: 28px;
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
-const ProfileDescription = styled.div`
-  font-size: 13px;
+const ProfileDescription = styled.p`
+  font-size: 16px;
   color: ${({ theme }) => theme.colors.text_secondary};
+  margin: 0;
+  margin-bottom: 20px;
 `;
 
 const BadgeContainer = styled.div`
   margin-top: 8px;
   display: flex;
-  gap: 6px;
+  gap: 10px;
 `;
 
 const Badge = styled.div`
@@ -117,21 +125,28 @@ const BadgeNumber = styled.span`
   }
 `;
 
-const Button = styled.button`
+const SettingButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: ${({ theme }) => theme.colors.sub};
+  border: none;
+  border-radius: 8px;
+
   color: white;
+  font-size: 12px;
+
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  border: none;
-  border-radius: 4px;
-  padding: 8px;
-  cursor: pointer;
+  transition: background-color 0.2s;
 `;
 
-const SettingButton = styled(Button)`
-  width: 110px;
-  height: 34px;
-  background: ${({ theme }) => theme.colors.primary};
+const SettingIcon = styled.svg`
+  color: currentColor;
+  margin-right: 5px;
 `;
