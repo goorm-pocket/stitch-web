@@ -11,6 +11,7 @@ declare module "styled-components" {
       text_secondary: string;
       text_disable: string;
       border: string;
+      border2: string;
       hover: string;
     };
   }
