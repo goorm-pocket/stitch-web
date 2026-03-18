@@ -59,7 +59,11 @@ const PrivacySection = () => {
               <div>{item.label}</div>
             </SectionLeft>
 
-            <SectionToggle disabled={!privacyEnabled} onChange={() => handleToggle(item.key)} />
+            <SectionToggle
+              disabled={!privacyEnabled}
+              checked={privacyStates ? privacyStates[item.key] : false}
+              onChange={() => handleToggle(item.key)}
+            />
           </SectionItem>
         ))}
       </SectionList>
