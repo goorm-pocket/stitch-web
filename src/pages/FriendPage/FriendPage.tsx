@@ -6,6 +6,7 @@ import { useGetFriendsQuery } from "@/shared/hooks/useFriend";
 
 const FriendPage = () => {
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
+  const [searchName, setSearchName] = useState<string>("");
   const { data } = useGetFriendsQuery();
 
   const friends = data?.pages[0].items ?? [];
@@ -18,7 +19,11 @@ const FriendPage = () => {
       <RequestInputContainer>
         <RequestText>Search and Add Friends</RequestText>
         <RequestInputBox>
-          <RequestInput placeholder="Enter username..." />
+          <RequestInput
+            placeholder="Enter username..."
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+          />
           <RequestButton>Add Friend</RequestButton>
         </RequestInputBox>
       </RequestInputContainer>
