@@ -3,11 +3,17 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
-
+import { getProfile, patchProfile, setupProfile } from "@/shared/api/user";
+import {
+  useGetProfileQuery,
+  usePatchProfileMutation,
+  useSetupProfileMutation,
+} from "@/shared/hooks/useUser";
 type CropShape = "rect" | "round";
 
 interface ProfileModalProps {
   onClose: () => void;
+  isInitial?: boolean;
 }
 
 interface ProfileData {
@@ -18,22 +24,36 @@ interface ProfileData {
   emojiContent: string | null;
 }
 
-const ProfileModal = ({ onClose }: ProfileModalProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [savedData, setSavedData] = useState<ProfileData>({
-    nickname: "xode114kr1",
-    realName: "신윤호",
+interface FormData {
+  nickname: string;
+  realName: string;
+  birth: string;
+  profileImg: string | null;
+  emojiContent: string | null;
+}
+
+const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
+  const { data: profileData, isLoading } = useGetProfileQuery();
+  const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
+  const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
+  const [isEditing, setIsEditing] = useState(isInitial);
+  // 원본 데이터를 보관할 상태 (취소 시 복구용)
+  const [initialData, setInitialData] = useState<FormData | null>(null);
+  const [formData, setFormData] = useState<FormData>({
+    nickname: "",
+    realName: "",
     birth: "",
-    profileImg: null,
-    emojiContent: null,
+    profileImg: "",
+    emojiContent: "",
   });
-
-  const [formData, setFormData] = useState<ProfileData>(savedData);
-
-  const [profileImg, setProfileImg] = useState<string | null>(savedData.profileImg);
-  const [emojiContent, setEmojiContent] = useState<string | null>(savedData.emojiContent);
-  const [emojiImg, setEmojiImg] = useState<string | null>(null);
+  const [profileImg, setProfileImg] = useState<string | null>(null);
+  const [emojiContent, setEmojiContent] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  //const [formData, setFormData] = useState<ProfileData>(savedData);
+  //const [profileImg, setProfileImg] = useState<string | null>(savedData.profileImg);
+  //const [emojiContent, setEmojiContent] = useState<string | null>(savedData.emojiContent);
+  const [emojiImg, setEmojiImg] = useState<string | null>(null);
 
   //Crop
   const [imageToCrop, setImageToCrop] = useState<{ url: string; type: "photo" | "emoji" } | null>(
@@ -52,6 +72,33 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  const isInitialized = useRef(false);
+
+  // 3번 & 7번: 모달 띄울 때마다 정보 조회
+  useEffect(() => {
+    if (profileData && !isInitialized.current) {
+      const data = profileData;
+      console.log("bbb", data);
+      const setData = {
+        nickname: profileData.nickname || "",
+        realName: profileData.realName || "", // 키값 확인용
+        birth: profileData.birth || "",
+        profileImg: profileData.profileImageUrl || "",
+        emojiContent: profileData.profileEmoji || "",
+      };
+      setEmojiContent(profileData.profileEmoji || null);
+      setProfileImg(profileData.profileImageUrl || null);
+      setFormData(setData);
+      setInitialData(setData);
+      isInitialized.current = true;
+    }
+  }, [profileData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "photo" | "emoji") => {
     const file = e.target.files?.[0];
@@ -100,26 +147,32 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
     setImageToCrop(null); // 크롭 창 닫기
   };
 
-  useEffect(() => {
-    setProfileImg(savedData.profileImg);
-    setEmojiContent(savedData.emojiContent);
-  }, [savedData]);
+  /*useEffect(() => {
+    setProfileImg(formData.profileImg);
+    setEmojiContent(formData.emojiContent);
+  }, [formData]);*/
 
   // --- 핸들러 수정 ---
 
   // [취소 버튼 클릭 시]
   const handleCancel = () => {
+    if (initialData) setFormData(initialData); // 백업 데이터로 복구
+    setCropShape("round");
+    setIsEditing(false);
+    setShowEmojiPicker(false);
+  };
+  /*const handleCancel = () => {
     // 원본 데이터(savedData)로 폼과 이미지 상태를 모두 덮어씌웁니다.
-    setFormData(savedData); // 이제 타입이 일치하므로 에러가 나지 않습니다.
-    setProfileImg(savedData.profileImg);
-    setEmojiContent(savedData.emojiContent);
+    setFormData(formData); // 이제 타입이 일치하므로 에러가 나지 않습니다.
+    //setProfileImg(formData.profileImg);
+    //setEmojiContent(formData.emojiContent);
     setCropShape("round");
 
     setIsEditing(false);
     setShowEmojiPicker(false);
-  };
+  };*/
 
-  const handleSave = () => {
+  /*const handleSave = () => {
     if (isFormValid) {
       const newData: ProfileData = {
         ...formData,
@@ -129,6 +182,70 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
       setSavedData(newData); // 원본을 새 데이터로 교체
       alert("프로필이 저장되었습니다!");
       setIsEditing(false);
+    }
+  };*/
+  /*const handleSave = async () => {
+    if (!isFormValid) return;
+    try {
+      await updateProfile({
+        profile: {
+          nickname: formData.nickname,
+          realName: formData.realName,
+          profileEmoji: emojiContent!,
+          profileImageKey: profileImg || undefined,
+
+          birth: formData.birth,
+        },
+      });
+      alert("저장되었습니다.");
+      onClose();
+    } catch (err) {
+      alert("저장 중 오류가 발생했습니다.");
+    }
+  };*/
+
+  const handleSave = async () => {
+    if (!isFormValid) return;
+
+    // 공통 데이터 객체 생성 (realname 소문자 주의!)
+    const profilePayload = {
+      nickname: formData.nickname,
+      realName: formData.realName,
+      profileEmoji: emojiContent!,
+      profileImageKey: profileImg || undefined,
+      birth: formData.birth || undefined,
+      // 필요시 isPublic 등 추가 필드
+      isPublic: true,
+      namePublic: true,
+      birthPublic: false,
+      agePublic: false,
+    };
+    console.log("aa", profilePayload);
+
+    try {
+      let response;
+      if (isInitial) {
+        response = await setupProfileMutate({ profile: { ...profilePayload } });
+        alert("프로필 설정이 완료되었습니다!");
+      } else {
+        response = await patchProfileMutate({ profile: { ...profilePayload } });
+        alert("프로필이 수정되었습니다!");
+      }
+      console.log("결과 확인:", response);
+      setFormData({
+        nickname: response.nickname || "",
+        realName: response.realName || "",
+        birth: response.birth || "",
+        profileImg: response.profileImageUrl || "",
+        emojiContent: response.profileEmoji || "",
+      });
+
+      setProfileImg(response.profileImageUrl || null);
+      setEmojiContent(response.profileEmoji || null);
+      onClose();
+    } catch (err) {
+      console.error("저장 실패:", err);
+      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -178,196 +295,208 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
   };
 
   //Required
+  // 2번: 필수값 비어있으면 X 버튼 및 Cancel 비활성화
   const isFormValid =
+    formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
+  /*const isFormValid =
     formData.nickname?.trim() !== "" && formData.realName?.trim() !== "" && emojiContent !== null;
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  };*/
 
   return (
-    <ModalContainer>
-      {imageToCrop && (
-        <CropOverlay>
-          <CropContainer>
-            <Cropper
-              image={imageToCrop.url}
-              crop={crop}
-              zoom={zoom}
-              aspect={aspect} // 모양에 따라 비율 조절
-              cropShape={cropShape} // "round" 또는 "rect"
-              showGrid={cropShape === "rect"} // 사각형일 때만 그리드 표시
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-            />
-          </CropContainer>
+    <ModalOverlay>
+      <ModalContainer>
+        {(!isInitial || isFormValid) && <CloseButton onClick={onClose}>&times;</CloseButton>}
+        {imageToCrop && (
+          <CropOverlay>
+            <CropContainer>
+              <Cropper
+                image={imageToCrop.url}
+                crop={crop}
+                zoom={zoom}
+                aspect={aspect} // 모양에 따라 비율 조절
+                cropShape={cropShape} // "round" 또는 "rect"
+                showGrid={cropShape === "rect"} // 사각형일 때만 그리드 표시
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </CropContainer>
 
-          {/* 모양 선택 버튼 그룹 추가 */}
-          <ShapeSelectorWrapper>
-            <ShapeButton active={cropShape === "round"} onClick={() => setCropShape("round")}>
-              원형
-            </ShapeButton>
-            <ShapeButton active={cropShape === "rect"} onClick={() => setCropShape("rect")}>
-              사각형
-            </ShapeButton>
-          </ShapeSelectorWrapper>
+            {/* 모양 선택 버튼 그룹 추가 */}
+            <ShapeSelectorWrapper>
+              <ShapeButton active={cropShape === "round"} onClick={() => setCropShape("round")}>
+                원형
+              </ShapeButton>
+              <ShapeButton active={cropShape === "rect"} onClick={() => setCropShape("rect")}>
+                사각형
+              </ShapeButton>
+            </ShapeSelectorWrapper>
 
-          <CropButtonWrapper>
-            <CancelButton onClick={() => setImageToCrop(null)}>Cancel</CancelButton>
-            <EditModeButton onClick={getCroppedImg}>Save</EditModeButton>
-          </CropButtonWrapper>
-        </CropOverlay>
-      )}
-
-      <CloseButton onClick={onClose}>&times;</CloseButton>
-
-      <TitleContainer>
-        <ModalTitle>Profile Settings</ModalTitle>
-        <Description> </Description>
-      </TitleContainer>
-
-      <ModalBody>
-        <SectionTitle>1. Profile Customization</SectionTitle>
-
-        <AppearanceBox>
-          <CustomBox
-            onClick={() => {
-              if (isEditing) {
-                if (photoInputRef.current) photoInputRef.current.value = "";
-                photoInputRef.current?.click();
-              }
-            }}
-            $isEditing={isEditing}
-          >
-            <input
-              type="file"
-              ref={photoInputRef}
-              onChange={(e) => handleFileChange(e, "photo")}
-              accept="image/*"
-              style={{ display: "none" }}
-            />
-            <PickerCircle>
-              {profileImg ? <PreviewImg src={profileImg} /> : <PlusIcon>+</PlusIcon>}
-            </PickerCircle>
-            <LabelText>PROFILE</LabelText>
-          </CustomBox>
-
-          {/* 이모지/사진 섹션 */}
-          <CustomBox
-            $isEditing={isEditing}
-            $isError={isEditing && !emojiContent} // 수정 중인데 내용이 없으면 에러
-          >
-            <input
-              type="file"
-              ref={emojiInputRef}
-              onChange={handleEmojiFileChange}
-              accept="image/*"
-              style={{ display: "none" }}
-            />
-
-            <PickerCircle $shape={bubbleShape} $isError={isEditing && !emojiContent}>
-              {emojiContent ? (
-                isEmojiText(emojiContent) ? (
-                  <EmojiDisplay>{emojiContent}</EmojiDisplay>
-                ) : (
-                  <PreviewImg src={emojiContent} />
-                )
-              ) : (
-                <PlusIcon>+</PlusIcon>
-              )}
-            </PickerCircle>
-
-            <LabelText>Bubble (Required)</LabelText>
-
-            <ButtonGroup>
-              <MiniButton
-                onClick={() => {
-                  if (emojiInputRef.current) emojiInputRef.current.value = ""; // 초기화 추가
-                  emojiInputRef.current?.click();
-                }}
-                disabled={!isEditing}
-              >
-                Image
-              </MiniButton>
-              <MiniButton
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                disabled={!isEditing}
-              >
-                Emoji
-              </MiniButton>
-            </ButtonGroup>
-
-            {/* 이모지 픽커 팝업 (isEditing일 때만 팝업 가능) */}
-            {isEditing && showEmojiPicker && (
-              <PickerWrapper ref={emojiPickerRef}>
-                <EmojiPicker
-                  onEmojiClick={onEmojiClick}
-                  width={320}
-                  height={400}
-                  theme={Theme.LIGHT}
-                  searchDisabled={false}
-                  autoFocusSearch={false}
-                />
-              </PickerWrapper>
-            )}
-          </CustomBox>
-        </AppearanceBox>
-
-        {/* 2. Personal Information Section */}
-        <SectionTitle>2. Personal Information</SectionTitle>
-        <InputGrid>
-          <InputWrapper>
-            <label>Nickname (Required)</label>
-            <StyledInput
-              name="nickname"
-              value={formData.nickname}
-              onChange={handleChange}
-              disabled={!isEditing}
-              $isError={isEditing && formData.nickname.trim() === ""}
-              placeholder="e.g. SpaceExplorer"
-            />
-          </InputWrapper>
-          <InputWrapper>
-            <label>Real Name (Required)</label>
-            <StyledInput
-              name="realName"
-              value={formData.realName}
-              onChange={handleChange}
-              disabled={!isEditing}
-              $isError={isEditing && formData.realName.trim() === ""}
-              placeholder="Enter your full name"
-            />
-          </InputWrapper>
-        </InputGrid>
-
-        <InputWrapper style={{ marginTop: "20px" }}>
-          <label>Date of Birth (Optional)</label>
-          <StyledInput
-            name="birth"
-            type="date"
-            value={formData.birth}
-            onChange={handleChange}
-            disabled={!isEditing}
-            max={today}
-          />
-        </InputWrapper>
-      </ModalBody>
-
-      <ButtonWrapper>
-        {!isEditing ? (
-          // 수정 모드가 아닐 때 보여줄 '수정하기' 버튼
-          <EditModeButton onClick={() => setIsEditing(true)}>Edit Profile</EditModeButton>
-        ) : (
-          <>
-            <CancelButton onClick={handleCancel}>Cancel</CancelButton>
-            <SaveButton disabled={!isFormValid} onClick={handleSave}>
-              Save Profile
-            </SaveButton>
-          </>
+            <CropButtonWrapper>
+              <CancelButton onClick={() => setImageToCrop(null)}>Cancel</CancelButton>
+              <EditModeButton onClick={getCroppedImg}>Save</EditModeButton>
+            </CropButtonWrapper>
+          </CropOverlay>
         )}
-      </ButtonWrapper>
-    </ModalContainer>
+
+        <CloseButton onClick={onClose}>&times;</CloseButton>
+
+        <TitleContainer>
+          <ModalTitle>Profile Settings</ModalTitle>
+          <Description> </Description>
+        </TitleContainer>
+
+        <ModalBody>
+          <SectionTitle>1. Profile Customization</SectionTitle>
+
+          <AppearanceBox>
+            <CustomBox
+              onClick={() => {
+                if (isEditing) {
+                  if (photoInputRef.current) photoInputRef.current.value = "";
+                  photoInputRef.current?.click();
+                }
+              }}
+              $isEditing={isEditing}
+            >
+              <input
+                type="file"
+                ref={photoInputRef}
+                onChange={(e) => handleFileChange(e, "photo")}
+                accept="image/*"
+                style={{ display: "none" }}
+              />
+              <PickerCircle>
+                {profileImg ? <PreviewImg src={profileImg} /> : <PlusIcon>+</PlusIcon>}
+              </PickerCircle>
+              <LabelText>PROFILE</LabelText>
+            </CustomBox>
+
+            {/* 이모지/사진 섹션 */}
+            <CustomBox
+              $isEditing={isEditing}
+              $isError={isEditing && !emojiContent} // 수정 중인데 내용이 없으면 에러
+            >
+              <input
+                type="file"
+                ref={emojiInputRef}
+                onChange={handleEmojiFileChange}
+                accept="image/*"
+                style={{ display: "none" }}
+              />
+
+              <PickerCircle $shape={bubbleShape} $isError={isEditing && !emojiContent}>
+                {emojiContent ? (
+                  isEmojiText(emojiContent) ? (
+                    <EmojiDisplay>{emojiContent}</EmojiDisplay>
+                  ) : (
+                    <PreviewImg src={emojiContent} />
+                  )
+                ) : (
+                  <PlusIcon>+</PlusIcon>
+                )}
+              </PickerCircle>
+
+              <LabelText>Bubble (Required)</LabelText>
+
+              <ButtonGroup>
+                <MiniButton
+                  onClick={() => {
+                    if (emojiInputRef.current) emojiInputRef.current.value = ""; // 초기화 추가
+                    emojiInputRef.current?.click();
+                  }}
+                  disabled={!isEditing}
+                >
+                  Image
+                </MiniButton>
+                <MiniButton
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  disabled={!isEditing}
+                >
+                  Emoji
+                </MiniButton>
+              </ButtonGroup>
+
+              {/* 이모지 픽커 팝업 (isEditing일 때만 팝업 가능) */}
+              {isEditing && showEmojiPicker && (
+                <PickerWrapper ref={emojiPickerRef}>
+                  <EmojiPicker
+                    onEmojiClick={onEmojiClick}
+                    width={320}
+                    height={400}
+                    theme={Theme.LIGHT}
+                    searchDisabled={false}
+                    autoFocusSearch={false}
+                  />
+                </PickerWrapper>
+              )}
+            </CustomBox>
+          </AppearanceBox>
+
+          {/* 2. Personal Information Section */}
+          <SectionTitle>2. Personal Information</SectionTitle>
+          <InputGrid>
+            <InputWrapper>
+              <label>Nickname (Required)</label>
+              <StyledInput
+                name="nickname"
+                value={formData.nickname}
+                onChange={handleChange}
+                disabled={!isEditing}
+                $isError={isEditing && formData.nickname.trim() === ""}
+                placeholder="e.g. SpaceExplorer"
+              />
+            </InputWrapper>
+            <InputWrapper>
+              <label>Real Name (Required)</label>
+              <StyledInput
+                name="realName"
+                value={formData.realName}
+                onChange={handleChange}
+                disabled={!isEditing}
+                $isError={isEditing && formData.realName.trim() === ""}
+                placeholder="Enter your full name"
+              />
+            </InputWrapper>
+          </InputGrid>
+
+          <InputWrapper style={{ marginTop: "20px" }}>
+            <label>Date of Birth (Optional)</label>
+            <StyledInput
+              name="birth"
+              type="date"
+              value={formData.birth}
+              onChange={handleChange}
+              disabled={!isEditing}
+              max={today}
+            />
+          </InputWrapper>
+        </ModalBody>
+
+        <ButtonWrapper>
+          {!isEditing ? (
+            // 수정 모드가 아닐 때 보여줄 '수정하기' 버튼
+            <EditModeButton onClick={() => setIsEditing(true)}>Edit Profile</EditModeButton>
+          ) : (
+            <>
+              <CancelButton
+                onClick={handleCancel}
+                disabled={isInitial && !isFormValid}
+                style={{ opacity: isInitial && !isFormValid ? 0.5 : 1 }}
+              >
+                Cancel
+              </CancelButton>
+              <SaveButton disabled={!isFormValid} onClick={handleSave}>
+                Save Profile
+              </SaveButton>
+            </>
+          )}
+        </ButtonWrapper>
+      </ModalContainer>
+    </ModalOverlay>
   );
 };
 
@@ -436,28 +565,34 @@ const CropButtonWrapper = styled.div`
   margin-top: auto;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5); // 뒷배경 어둡게
+  display: flex;
+  justify-content: center; // 가로 중앙
+  align-items: center; // 세로 중앙
+  z-index: 999; // 페이지의 다른 요소보다 위에 위치
+`;
+
 const ModalContainer = styled.div`
   background: white;
   width: 580px;
-  /* 화면 높이의 90%를 넘지 않도록 설정 */
   max-height: 90vh;
   padding: 40px;
   border-radius: 16px;
-  position: relative;
+  position: relative; // 내부 CloseButton 등을 배치하기 위함
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-
-  /* 내용이 넘치면 세로 스크롤 생성 */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 
-  /* 스크롤바 디자인 (선택 사항) */
+  // 브라우저 기본 스크롤바가 모달 곡선을 해치지 않게 처리
   &::-webkit-scrollbar {
     width: 8px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #dee2e6;
-    border-radius: 4px;
   }
 `;
 
@@ -514,7 +649,7 @@ const AppearanceBox = styled.div`
   margin-bottom: 32px;
 `;
 
-const CustomBox = styled.div<{ $isEditing: boolean; $isError?: boolean }>`
+const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   position: relative;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
@@ -570,14 +705,18 @@ const LabelText = styled.span`
 `;
 
 const PickerWrapper = styled.div`
-  position: absolute;
-  /* 95% 대신 아래쪽 여유 공간 확보 */
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 8px;
-  z-index: 1000;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  /* 부모인 CustomBox의 크기에 영향을 주지 않도록 고정 */
+  position: fixed;
+  /* 화면 중앙 근처에 띄우거나, JS로 좌표를 계산해 버튼 근처에 둡니다. */
+  top: 70%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+
+  z-index: 10000; /* ModalOverlay보다 높게 설정 */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: white;
+  border-radius: 8px;
+  line-height: 0; /* 내부 미세 공백 제거 */
 `;
 
 const EmojiDisplay = styled.span`

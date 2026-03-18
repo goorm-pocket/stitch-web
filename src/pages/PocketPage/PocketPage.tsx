@@ -1,9 +1,26 @@
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
+import { useEffect, useState } from "react";
+import { useFetchMeQuery } from "../../shared/hooks/useAuth";
+import ProfileModal from "@/features/ProfileModal/ProfileModal";
 
 const PocketPage = () => {
+  const { data: me, isLoading } = useFetchMeQuery(); // 5번: 인증 선확인
+  const [profileModal, setProfileModal] = useState(false);
+
+  useEffect(() => {
+    // 1번: 최초 로그인 시(설정 필요 시) 또는 수동 오픈
+    if (me && !me.isAgreed) {
+      // 가입 승인/설정 미완료 시 예시
+      setProfileModal(true);
+    }
+  }, [me]);
+
   return (
     <Container>
+      {profileModal && (
+        <ProfileModal onClose={() => setProfileModal(false)} isInitial={!me?.isAgreed} />
+      )}
       <TitleContainer>
         <Title>Your Pocket</Title>
         <Subtitle>Discover what&apos;s tucked away in your space today.</Subtitle>
