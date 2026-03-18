@@ -2,10 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getNotificationSettings,
   getPrivacySettings,
+  getProfile,
   patchNotificationSettings,
   patchPrivacySettings,
   withdrawAccount,
 } from "../api/user";
+
+export function useGetProfileQuery() {
+  return useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
+  });
+}
 
 export function useGetNotificationSettingsQuery() {
   return useQuery({
