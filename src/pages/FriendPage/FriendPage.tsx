@@ -2,9 +2,13 @@ import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
 import { useState } from "react";
+import { useGetFriendsQuery } from "@/shared/hooks/useFriend";
 
 const FriendPage = () => {
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
+  const { data } = useGetFriendsQuery();
+
+  const friends = data?.pages[0].items ?? [];
   return (
     <Container>
       <TitleContainer>
@@ -35,11 +39,9 @@ const FriendPage = () => {
         </ButtonBox>
       </ButtonContainer>
       <FriendListContainer>
-        <FriendItem />
-        <FriendItem />
-        <FriendItem />
-        <FriendItem />
-        <FriendItem />
+        {friends?.map((friend) => (
+          <FriendItem friend={friend} />
+        ))}
       </FriendListContainer>
     </Container>
   );
