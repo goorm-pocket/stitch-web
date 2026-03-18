@@ -73,8 +73,8 @@ export async function patchPrivacySettings({
 }
 
 export async function getProfile(): Promise<MyProfile> {
-  const res = await apiClient.get<MyProfile>("/api/v1/users/me/profile");
-  return res.data;
+  const res = await apiClient.get<ApiResponse<MyProfile>>("/api/v1/users/me/profile");
+  return res.data.data;
 }
 
 // profile 중 realName, birth, gender 만 수정
