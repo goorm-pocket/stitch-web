@@ -337,7 +337,7 @@ const CropModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7); /* 배경을 어둡게 처리하여 모달 강조 */
+  background: rgba(0, 0, 0, 0.5);
   z-index: 3000; /* 이모지 피커보다 위에 위치 */
   display: flex;
   align-items: center;
@@ -348,30 +348,35 @@ const CropModalOverlay = styled.div`
 const CropContainer = styled.div`
   position: relative;
   width: 100%;
-  height: 500px; /* 높이도 함께 확장 */
-  background: #111;
+  height: 400px; /* ProfileModal의 CropContainer 높이 */
+  background: #333;
+  border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 `;
 
 const CropControls = styled.div`
+  background: white;
+  width: 580px; /* ProfileModal과 동일한 너비 */
+  max-height: 90vh;
+  padding: 30px;
+  border-radius: 16px;
   position: relative;
-  width: 600px; /* 너비를 500px에서 600px로 확장 */
-  background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 `;
 
 /* 버튼들을 감싸는 하단 바 영역 */
 const ControlBottomBar = styled.div`
   display: flex;
-  flex-direction: column; /* 요소를 수직으로 배치 */
-  align-items: center;
-  gap: 20px; /* 요소 간 간격 */
-  padding: 24px;
-  background: #f8f9fa;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 10px;
+  background: #f1f3f5;
+  border-radius: 8px;
 `;
 
 const ShapeButtons = styled.div`
@@ -381,7 +386,7 @@ const ShapeButtons = styled.div`
 `;
 
 const ShapeBtn = styled.button<{ $active: boolean }>`
-  padding: 10px 20px;
+  padding: 8px 16px;
   font-size: 12px;
   font-weight: 700;
   background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
@@ -390,11 +395,9 @@ const ShapeBtn = styled.button<{ $active: boolean }>`
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s;
-  
   &:hover {
     border-color: ${(props) => props.theme.colors.primary};
   }
-};
 `;
 
 const ActionButtons = styled.div`
