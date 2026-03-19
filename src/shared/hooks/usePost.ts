@@ -11,7 +11,7 @@ export function useGetPostByIdQuery({ postId }: { postId: string }) {
 
 export function useGetCalendarQuery({ year, month }: { year: number; month: number }) {
   return useQuery({
-    queryKey: ["calendar", "me"],
+    queryKey: ["calendar", "me", { year, month }],
     queryFn: () => getCalendar({ year, month }),
     enabled: !!year && !!month,
   });
