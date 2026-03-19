@@ -1,18 +1,18 @@
 import styled from "styled-components";
-import type { CalendarMarker } from "../types/post.type";
+import type { CalendarMarker } from "../../../shared/types/post.type";
 
-const Bubble = ({ markers }: { markers: CalendarMarker[] }) => {
+const ArchiveBubble = ({ markers }: { markers: CalendarMarker[] }) => {
   const titleMarker = markers[0];
   const isEmoji = titleMarker.markerType === "EMOJI";
 
   return (
     <Container $isEmoji={isEmoji}>
-      {isEmoji ? titleMarker.markerEmoji : <Image src={"titleMarker.markerImageUrl as string"} />}
+      {isEmoji ? titleMarker.markerEmoji : <Image src={titleMarker.markerImageUrl as string} />}
     </Container>
   );
 };
 
-export default Bubble;
+export default ArchiveBubble;
 
 const Container = styled.div<{ $isEmoji: boolean }>`
   position: absolute;
