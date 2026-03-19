@@ -7,6 +7,8 @@ import ImageIcon from "../../assets/Image-icon.svg";
 import EmojiIcon from "../../assets/Emoji-icon.svg";
 import EmojiPicker from "emoji-picker-react";
 import type { EmojiClickData } from "emoji-picker-react";
+import { useCreatePostMutation } from "../../shared/hooks/usePost";
+import { getCroppedImg } from "./imageCrop";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
@@ -17,68 +19,55 @@ const MAX_LENGTH = 500;
 //이미지 제한
 const MAX_IMAGES = 10;
 
-//Crop
-const getCroppedImg = async (
-  imageSrc: string,
-  pixelCrop: any,
-  isRound: boolean,
-): Promise<string> => {
-  const image = new Image();
-  image.src = imageSrc;
-  await new Promise((resolve) => (image.onload = resolve));
-
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return "";
-
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-
-  // 원형 크롭일 경우 캔버스 자체를 클리핑
-  if (isRound) {
-    ctx.beginPath();
-    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
-    ctx.clip();
-  }
-
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height,
-  );
-
-  return canvas.toDataURL("image/jpeg");
-};
-
 export default function CreatePocketPost() {
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [story, setStory] = useState("");
   const [markType, setMarkType] = useState<MarkType>("emoji");
   const [selectedEmoji, setSelectedEmoji] = useState("📍"); //나중에 디폴트 이모지 넣기
-  const [markImage, setMarkImage] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [markImage, setMarkImage] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
 
-  const [cropImage, setCropImage] = useState<string | null>(null); // 자르기 전 원본
+  const [cropImage, setCropImage] = useState<string | null>(null); //자르기 전 원본
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-
-  const [isRoundCrop, setIsRoundCrop] = useState(true); // 원형/사각형 토글 상태
-  //지울수도있음
+  const [isRoundCrop, setIsRoundCrop] = useState(true); //원형,사각형 토글
   const [cropShape, setCropShape] = useState<CropShape>("round");
-  const [bubbleShape, setBubbleShape] = useState<CropShape>("round");
-  const aspect = cropShape === "rect" ? undefined : 1;
 
+  const { mutate: createPost } = useCreatePostMutation();
+
+  //const aspect = cropShape === "rect" ? undefined : 1;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async () => {
+    if (story.length > MAX_LENGTH) {
+      alert("글자 수는 500자를 초과할 수 없습니다.");
+      return;
+    }
+    const markerType = markType === "emoji" ? "EMOJI" : "IMAGE";
+
+    createPost(
+      {
+        content: story || undefined,
+        visibility,
+        markerType,
+        markerEmoji: markerType === "EMOJI" ? selectedEmoji : undefined,
+        markerImageKey: markerType === "IMAGE" ? (markImage ?? undefined) : undefined,
+      },
+      {
+        onSuccess: () => {
+          alert("성공적으로 발행되었습니다!");
+        },
+        onError: (err) => {
+          console.error(err);
+          alert("포스트 생성 실패");
+        },
+      },
+    );
+  };
 
   // 이모지 선택 핸들러
   const onEmojiClick = (emojiData: EmojiClickData) => {
@@ -149,23 +138,6 @@ export default function CreatePocketPost() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
-
-  const handleSubmit = async () => {
-    if (story.length > MAX_LENGTH) {
-      alert("글자 수는 500자를 초과할 수 없습니다.");
-      return;
-    }
-
-    const formData = new FormData();
-    images.forEach((img) => formData.append("images", img));
-    formData.append("story", story);
-    formData.append("markType", markType);
-    formData.append("visibility", visibility);
-
-    // TODO: 서버 전송 로직 (fetch/axios)
-    console.log("전송 데이터:", Object.fromEntries(formData));
-    alert("성공적으로 발행되었습니다!");
   };
 
   return (
