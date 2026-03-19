@@ -19,5 +19,11 @@ export async function getFriends({
       cursor: pageParam ?? undefined,
     },
   });
-  return res.data.data;
+  return (
+    res.data.data || {
+      items: [],
+      nextCursor: null,
+      hasNext: false,
+    }
+  );
 }
