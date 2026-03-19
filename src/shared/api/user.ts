@@ -1,4 +1,11 @@
-import type { MyProfile, NotificationSettings, PrivacySettings, Profile } from "../types/user.type";
+import type { ApiResponse } from "../types/common.type";
+import type {
+  MyProfile,
+  NotificationSettings,
+  PrivacySettings,
+  Profile,
+  SearchUser,
+} from "../types/user.type";
 import { apiClient } from "./axios";
 
 export async function getProfileById({ userId }: { userId: string }): Promise<Profile> {
@@ -112,22 +119,25 @@ export async function setupProfile({ profile }: { profile: SetupProfileReq }) {
 }
 
 interface GetProfileByNameRes {
-  items: {
-    userId: string;
-    nickname: string;
-    realName?: string;
-    profileImageUrl?: string;
-    profileEmoji?: string;
-    isPublic: boolean;
-    isMine: boolean;
-  }[];
+  items: SearchUser[];
   nextCursor?: string;
   hasNext: boolean;
 }
 
-export async function getProfileByName({ query }: { query: string }): Promise<GetProfileByNameRes> {
-  const res = await apiClient.get<GetProfileByNameRes>(`/api/v1/users/search`, {
-    params: { query },
+export async function getProfileByName({
+  query,
+  cursor,
+}: {
+  query: string;
+  cursor?: string | null;
+}): Promise<GetProfileByNameRes> {
+  const res = await apiClient.get<ApiResponse<GetProfileByNameRes>>(`/api/v1/users/search`, {
+    params: {
+      query,
+      cursor: cursor ?? undefined,
+      size: 10,
+    },
   });
-  return res.data;
+
+  return res.data.data;
 }
