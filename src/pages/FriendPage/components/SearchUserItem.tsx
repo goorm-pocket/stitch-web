@@ -6,6 +6,9 @@ interface SearchUserItemProps {
 }
 
 const SearchUserItem = ({ user }: SearchUserItemProps) => {
+  if (user.isMine) {
+    return;
+  }
   return (
     <Container>
       <UserInfo>
@@ -18,13 +21,9 @@ const SearchUserItem = ({ user }: SearchUserItemProps) => {
         <UserTextBox>
           <NicknameRow>
             <Nickname>{user.nickname}</Nickname>
-            {user.isMine && <MeBadge>Me</MeBadge>}
           </NicknameRow>
 
-          <SubInfoRow>
-            {user.realName && <RealName>{user.realName}</RealName>}
-            <VisibilityBadge>{user.isPublic ? "Public" : "Private"}</VisibilityBadge>
-          </SubInfoRow>
+          <SubInfoRow>{user.realName && <RealName>{user.realName}</RealName>}</SubInfoRow>
         </UserTextBox>
       </UserInfo>
 
@@ -94,15 +93,6 @@ const Nickname = styled.div`
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
-const MeBadge = styled.span`
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-`;
-
 const SubInfoRow = styled.div`
   display: flex;
   align-items: center;
@@ -113,14 +103,6 @@ const SubInfoRow = styled.div`
 const RealName = styled.div`
   font-size: 13px;
   color: ${({ theme }) => theme.colors.text_secondary};
-`;
-
-const VisibilityBadge = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.text_secondary};
-  background: ${({ theme }) => theme.colors.sub};
-  padding: 2px 8px;
-  border-radius: 9999px;
 `;
 
 const AddButton = styled.button`

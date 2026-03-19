@@ -3,29 +3,8 @@ import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
 import { useEffect, useRef, useState } from "react";
 import { useGetFriendsQuery } from "@/shared/hooks/useFriend";
-import type { SearchUser } from "@/shared/types/user.type";
 import SearchUserItem from "./components/SearchUserItem";
-
-const mockSearchData: SearchUser[] = [
-  {
-    userId: "550e8400-e29b-41d4-a716-446655440000",
-    nickname: "길동이",
-    realName: null,
-    profileImageUrl: "https://cdn.example.com/profile/550e8400.png",
-    profileEmoji: "🌱",
-    isPublic: true,
-    isMine: false,
-  },
-  {
-    userId: "7f1d7c6b-7d44-4fc5-a5a7-5c4c4e8c6d10",
-    nickname: "홍길동",
-    realName: "홍길동",
-    profileImageUrl: null,
-    profileEmoji: "✨",
-    isPublic: true,
-    isMine: true,
-  },
-];
+import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 
 const FriendPage = () => {
   const searchInputRef = useRef<HTMLDivElement | null>(null);
@@ -33,9 +12,13 @@ const FriendPage = () => {
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
   const [searchName, setSearchName] = useState<string>("");
   const { data } = useGetFriendsQuery();
+  const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
+
+  const searchUserList = searchUserListRes?.pages[0].items ?? [];
 
   const friends = data?.pages[0].items ?? [];
 
+  // 밖에 클릭하면 친구 요청 리스트 닫는거
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchInputRef.current && !searchInputRef.current.contains(e.target as Node)) {
@@ -67,8 +50,8 @@ const FriendPage = () => {
 
           {showSearchList && (
             <SearchUserList>
-              {mockSearchData.length > 0 ? (
-                mockSearchData.map((item) => <SearchUserItem key={item.userId} user={item} />)
+              {searchUserList?.length > 0 ? (
+                searchUserList?.map((item) => <SearchUserItem key={item.userId} user={item} />)
               ) : (
                 <EmptyText>No users found.</EmptyText>
               )}
