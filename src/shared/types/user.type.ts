@@ -1,11 +1,21 @@
 export interface Profile {
   userId: string;
   nickname: string;
-  realName: string;
-  profileImageUrl?: string;
+  realName: string | null;
+  profileImageUrl?: string | null;
   profileEmoji?: string;
   birth?: string;
   age?: number;
+  isPublic: boolean;
+  isMine: boolean;
+}
+
+export interface SearchUser {
+  userId: string;
+  nickname: string;
+  realName: string | null;
+  profileImageUrl: string | null;
+  profileEmoji: string | null;
   isPublic: boolean;
   isMine: boolean;
 }
