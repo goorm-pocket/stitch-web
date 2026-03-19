@@ -1,24 +1,25 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import PostForm from "../PostForm/PostForm";
-import type { Post } from "../../shared/types/post.type";
+import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
 
 interface ArchivePostSliderProps {
-  open: boolean;
   selectedDate: string | null;
-  posts: Post[];
+  postIds: string[];
   onClose: () => void;
   onPostClick: (postId: string) => void;
 }
 
 const ArchivePostSlider = ({
-  open,
   selectedDate,
-  posts,
+  postIds,
   onClose,
   onPostClick,
 }: ArchivePostSliderProps) => {
-  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [currentIdx, setCurrendIdx] = useState<number>(0);
+  const currentPostId = postIds[currentIdx];
+  const { data: post } = useGetPostByIdQuery({ postId: currentPostId });
+  console.log(post);
 
   const title = useMemo(() => {
     if (!selectedDate) return "";
@@ -26,32 +27,14 @@ const ArchivePostSlider = ({
   }, [selectedDate]);
 
   const handlePrev = () => {
-    if (!trackRef.current) return;
-
-    const track = trackRef.current;
-    const firstSlide = track.firstElementChild as HTMLDivElement | null;
-    if (!firstSlide) return;
-
-    const gap = 20;
-    const slideWidth = firstSlide.getBoundingClientRect().width + gap;
-
-    track.scrollBy({ left: -slideWidth, behavior: "smooth" });
+    const idx = currentIdx - 1 > 0 ? currentIdx - 1 : 0;
+    setCurrendIdx(idx);
   };
 
   const handleNext = () => {
-    if (!trackRef.current) return;
-
-    const track = trackRef.current;
-    const firstSlide = track.firstElementChild as HTMLDivElement | null;
-    if (!firstSlide) return;
-
-    const gap = 20;
-    const slideWidth = firstSlide.getBoundingClientRect().width + gap;
-
-    track.scrollBy({ left: slideWidth, behavior: "smooth" });
+    const idx = currentIdx + 1 < postIds.length - 1 ? currentIdx + 1 : postIds.length - 1;
+    setCurrendIdx(idx);
   };
-
-  if (!open) return null;
 
   return (
     <Overlay onClick={onClose}>
@@ -60,7 +43,7 @@ const ArchivePostSlider = ({
           <Title>{title}</Title>
 
           <HeaderRight>
-            {posts.length > 1 && (
+            {postIds.length > 1 && (
               <ArrowGroup>
                 <ArrowButton type="button" onClick={handlePrev}>
                   ‹
@@ -76,25 +59,17 @@ const ArchivePostSlider = ({
             </CloseButton>
           </HeaderRight>
         </Header>
-
-        {posts.length === 0 ? (
+        {postIds.length === 0 ? (
           <EmptyBox>
             <EmptyTitle>No posts for this date</EmptyTitle>
             <EmptyText>해당 날짜에 작성된 게시글이 없습니다.</EmptyText>
           </EmptyBox>
         ) : (
-          <Track ref={trackRef}>
-            {posts.map((post) => (
-              <Slide key={post.post_id}>
-                <PostCard
-                  onClick={() => onPostClick(post.post_id)}
-                  aria-label={`Open post ${post.post_id}`}
-                >
-                  <PostForm post={post} />
-                </PostCard>
-              </Slide>
-            ))}
-          </Track>
+          <SliderViewport>
+            <PostCard onClick={() => onPostClick(currentPostId)}>
+              {post && <PostForm post={post} />}
+            </PostCard>
+          </SliderViewport>
         )}
       </Panel>
     </Overlay>
@@ -119,7 +94,6 @@ const Overlay = styled.div`
 
 const Panel = styled.section`
   width: min(1100px, 100%);
-  height: min(78vh, 760px);
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 28px;
@@ -215,67 +189,44 @@ const CloseButton = styled.button`
   }
 `;
 
-const Track = styled.div`
-  flex: 1;
+const SliderViewport = styled.div`
+  /* flex: 1; */
   display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  align-items: center;
+  justify-content: center;
 
-  padding-block: 24px;
-  padding-inline: max(24px, calc((100% - 820px) / 2));
-
-  scroll-snap-type: x mandatory;
-  scroll-snap-stop: always;
-  scroll-behavior: smooth;
-
-  &::-webkit-scrollbar {
-    height: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.colors.sub};
-    border-radius: 999px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-`;
-
-const Slide = styled.div`
-  flex: 0 0 min(820px, calc(100vw - 96px));
-  scroll-snap-align: center;
-  display: flex;
+  padding: 16px;
+  overflow: hidden;
 `;
 
 const PostCard = styled.div`
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  text-align: left;
+  width: min(720px, 100%);
+
   display: flex;
   flex-direction: column;
+
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 24px;
+  background: white;
+
   overflow: hidden;
+  cursor: pointer;
 
   transition:
     transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease,
     box-shadow 0.2s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    background: ${({ theme }) => theme.colors.hover};
-    border-color: ${({ theme }) => theme.colors.sub};
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   }
 
   &:active {
-    transform: translateY(0);
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-radius: 16px;
   }
 `;
 
