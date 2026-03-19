@@ -3,235 +3,30 @@ import dayjs from "dayjs";
 import styled from "styled-components";
 import DayCell from "./components/DayCell";
 import ArchivePostSlider from "../../features/ArchivePostSlider/ArchivePostSlider";
-import type { Calendar, Post } from "../../shared/types/post.type";
+import type { Post } from "../../shared/types/post.type";
 import { useNavigate } from "react-router";
-
-interface CalendarDayData {
-  userId: string;
-  year: number;
-  month: number;
-  calendar: Calendar[];
-}
-
-const mockCalendar: CalendarDayData = {
-  userId: "7f90f8c0-2d44-4c7b-a7e6-9b02c0c84c41",
-  year: 2026,
-  month: 3,
-  calendar: [
-    {
-      date: "2026-03-02",
-      hasPost: true,
-      postCount: 1,
-      isAllPrivate: false,
-      hasMultiplePosts: false,
-      markers: [
-        {
-          postId: "1c1e9d3a-1111-4b3b-9a81-3b9a5c3e8a11",
-          markerType: "EMOJI",
-          markerEmoji: "🌱",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 0,
-        },
-      ],
-    },
-    {
-      date: "2026-03-05",
-      hasPost: true,
-      postCount: 2,
-      isAllPrivate: false,
-      hasMultiplePosts: true,
-      markers: [
-        {
-          postId: "2d2e9d3a-2222-4b3b-9a81-3b9a5c3e8a22",
-          markerType: "EMOJI",
-          markerEmoji: "🍑",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 0,
-        },
-        {
-          postId: "3e3e9d3a-3333-4b3b-9a81-3b9a5c3e8a33",
-          markerType: "IMAGE",
-          markerEmoji: null,
-          markerImageUrl: "https://cdn.example.com/markers/sample1.png",
-          visibility: "FRIENDS",
-          order: 1,
-        },
-      ],
-    },
-    {
-      date: "2026-03-10",
-      hasPost: true,
-      postCount: 4,
-      isAllPrivate: false,
-      hasMultiplePosts: true,
-      markers: [
-        {
-          postId: "4f4e9d3a-4444-4b3b-9a81-3b9a5c3e8a44",
-          markerType: "EMOJI",
-          markerEmoji: "🫧",
-          markerImageUrl: null,
-          visibility: "PRIVATE",
-          order: 0,
-        },
-        {
-          postId: "5g5e9d3a-5555-4b3b-9a81-3b9a5c3e8a55",
-          markerType: "EMOJI",
-          markerEmoji: "☁️",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 1,
-        },
-        {
-          postId: "6h6e9d3a-6666-4b3b-9a81-3b9a5c3e8a66",
-          markerType: "IMAGE",
-          markerEmoji: null,
-          markerImageUrl: "https://cdn.example.com/markers/sample2.png",
-          visibility: "FRIENDS",
-          order: 2,
-        },
-        {
-          postId: "7i7e9d3a-7777-4b3b-9a81-3b9a5c3e8a77",
-          markerType: "EMOJI",
-          markerEmoji: "🍀",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 3,
-        },
-      ],
-    },
-    {
-      date: "2026-03-15",
-      hasPost: true,
-      postCount: 1,
-      isAllPrivate: true,
-      hasMultiplePosts: false,
-      markers: [
-        {
-          postId: "8j8e9d3a-8888-4b3b-9a81-3b9a5c3e8a88",
-          markerType: "EMOJI",
-          markerEmoji: "🔒",
-          markerImageUrl: null,
-          visibility: "PRIVATE",
-          order: 0,
-        },
-      ],
-    },
-    {
-      date: "2026-03-21",
-      hasPost: true,
-      postCount: 2,
-      isAllPrivate: false,
-      hasMultiplePosts: true,
-      markers: [
-        {
-          postId: "9k9e9d3a-9999-4b3b-9a81-3b9a5c3e8a99",
-          markerType: "EMOJI",
-          markerEmoji: "🌸",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 0,
-        },
-        {
-          postId: "10l9d3a-aaaa-4b3b-9a81-3b9a5c3e8aaa",
-          markerType: "IMAGE",
-          markerEmoji: null,
-          markerImageUrl: "https://cdn.example.com/markers/sample3.png",
-          visibility: "FRIENDS",
-          order: 1,
-        },
-      ],
-    },
-    {
-      date: "2026-03-24",
-      hasPost: true,
-      postCount: 1,
-      isAllPrivate: false,
-      hasMultiplePosts: false,
-      markers: [
-        {
-          postId: "11m9d3a-bbbb-4b3b-9a81-3b9a5c3e8bbb",
-          markerType: "EMOJI",
-          markerEmoji: "🍑",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 0,
-        },
-      ],
-    },
-    {
-      date: "2026-03-29",
-      hasPost: true,
-      postCount: 5,
-      isAllPrivate: false,
-      hasMultiplePosts: true,
-      markers: [
-        {
-          postId: "14p9d3a-eeee-4b3b-9a81-3b9a5c3e8eee",
-          markerType: "IMAGE",
-          markerEmoji: null,
-          markerImageUrl: "https://cdn.example.com/markers/sample4.png",
-          visibility: "FRIENDS",
-          order: 0,
-        },
-        {
-          postId: "12n9d3a-cccc-4b3b-9a81-3b9a5c3e8ccc",
-          markerType: "EMOJI",
-          markerEmoji: "🔥",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 1,
-        },
-        {
-          postId: "13o9d3a-dddd-4b3b-9a81-3b9a5c3e8ddd",
-          markerType: "EMOJI",
-          markerEmoji: "💧",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 2,
-        },
-        {
-          postId: "15q9d3a-ffff-4b3b-9a81-3b9a5c3e8fff",
-          markerType: "EMOJI",
-          markerEmoji: "🌙",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 3,
-        },
-        {
-          postId: "16r9d3a-gggg-4b3b-9a81-3b9a5c3e8ggg",
-          markerType: "EMOJI",
-          markerEmoji: "⭐",
-          markerImageUrl: null,
-          visibility: "FRIENDS",
-          order: 4,
-        },
-      ],
-    },
-  ],
-};
+import { useGetCalendarQuery } from "@/shared/hooks/usePost";
 
 const mockPosts: Array<Post & { archiveDate: string }> = [
   {
     archiveDate: "2026-03-02",
-    post_id: "1c1e9d3a-1111-4b3b-9a81-3b9a5c3e8a11",
+    postId: "1c1e9d3a-1111-4b3b-9a81-3b9a5c3e8a11",
     author: {
-      user_id: "user-1",
+      userId: "user-1",
       nickname: "Sarah",
-      profile_image_url: "https://i.pravatar.cc/150?img=32",
+      profileImageUrl: "https://i.pravatar.cc/150?img=32",
     },
     content: "오늘은 작은 새싹처럼 기분이 천천히 올라오는 하루였어.",
     visibility: "FRIENDS",
-    like_count: 3,
-    liked_by_me: false,
-    created_at: "2026-03-02T09:00:00Z",
-    updated_at: "2026-03-02T09:00:00Z",
-    editable_until: "2026-03-02T10:00:00Z",
-    is_editable: false,
-    marker_type: "EMOJI",
-    marker_emoji: "🌱",
-    marker_image_url: null,
+    likeCount: 3,
+    likedByMe: false,
+    createdAt: "2026-03-02T09:00:00Z",
+    updatedAt: "2026-03-02T09:00:00Z",
+    editableUntil: "2026-03-02T10:00:00Z",
+    isEditable: false,
+    markerType: "EMOJI",
+    markerEmoji: "🌱",
+    markerImageUrl: null,
     images: [],
   },
   {
@@ -523,13 +318,18 @@ const mockPosts: Array<Post & { archiveDate: string }> = [
 
 const Archive = () => {
   const navigate = useNavigate();
-  const [currentMonth, setCurrentMonth] = useState(dayjs("2026-03-11"));
+  const [visibleDate, setVisibleDate] = useState(dayjs());
+
+  const year = visibleDate.year();
+  const month = visibleDate.month() + 1;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isSliderOpen, setIsSliderOpen] = useState(false);
 
+  const { data: calendarData } = useGetCalendarQuery({ year, month });
+
   const cells = useMemo(() => {
-    const startOfMonth = currentMonth.startOf("month");
-    const endOfMonth = currentMonth.endOf("month");
+    const startOfMonth = visibleDate.startOf("month");
+    const endOfMonth = visibleDate.endOf("month");
 
     const startDay = startOfMonth.day();
     const daysInMonth = endOfMonth.date();
@@ -541,7 +341,7 @@ const Archive = () => {
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      result.push({ date: currentMonth.date(day) });
+      result.push({ date: visibleDate.date(day) });
     }
 
     while (result.length % 7 !== 0) {
@@ -549,11 +349,12 @@ const Archive = () => {
     }
 
     return result;
-  }, [currentMonth]);
+  }, [visibleDate]);
 
   const getDayData = (date: dayjs.Dayjs | null) => {
     if (!date) return undefined;
-    return mockCalendar.calendar.find((item) => item.date === date.format("YYYY-MM-DD"));
+    if (!calendarData) return undefined;
+    return calendarData.calendar.find((item) => item.date === date.format("YYYY-MM-DD"));
   };
 
   const selectedPosts = useMemo(() => {
@@ -584,11 +385,11 @@ const Archive = () => {
   return (
     <Wrapper>
       <Header>
-        <ArrowButton onClick={() => setCurrentMonth((prev) => prev.subtract(1, "month"))}>
+        <ArrowButton onClick={() => setVisibleDate((prev) => prev.subtract(1, "month"))}>
           ‹
         </ArrowButton>
-        <MonthTitle>{currentMonth.format("YYYY.MM")}</MonthTitle>
-        <ArrowButton onClick={() => setCurrentMonth((prev) => prev.add(1, "month"))}>›</ArrowButton>
+        <MonthTitle>{visibleDate.format("YYYY.MM")}</MonthTitle>
+        <ArrowButton onClick={() => setVisibleDate((prev) => prev.add(1, "month"))}>›</ArrowButton>
       </Header>
 
       <WeekRow>
