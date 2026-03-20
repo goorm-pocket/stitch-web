@@ -1,5 +1,5 @@
 import type { ApiResponse } from "../types/common.type";
-import type { Friend } from "../types/friend.type";
+import type { Friend, FriendRequest } from "../types/friend.type";
 import { apiClient } from "./axios";
 
 interface GetFriendsRes {
@@ -26,4 +26,11 @@ export async function getFriends({
       hasNext: false,
     }
   );
+}
+
+export async function sendFriendRequest({ userId }: { userId: string }): Promise<FriendRequest> {
+  const res = await apiClient.post<ApiResponse<FriendRequest>>(
+    `/api/v1/friends/requests/${userId}`,
+  );
+  return res.data.data;
 }
