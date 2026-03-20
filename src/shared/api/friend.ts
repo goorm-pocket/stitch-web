@@ -34,3 +34,8 @@ export async function sendFriendRequest({ userId }: { userId: string }): Promise
   );
   return res.data.data;
 }
+
+export async function getSentFriends() {
+  const res = await apiClient.get("/api/v1/friends/requests/sent");
+  return res.data.data;
+}

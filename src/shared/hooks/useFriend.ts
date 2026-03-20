@@ -1,5 +1,5 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getFriends, sendFriendRequest } from "../api/friend";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getFriends, getSentFriends, sendFriendRequest } from "../api/friend";
 
 export function useGetFriendsQuery() {
   return useInfiniteQuery({
@@ -12,6 +12,13 @@ export function useGetFriendsQuery() {
       if (!lastPage.hasNext) return undefined;
       return lastPage.nextCursor;
     },
+  });
+}
+
+export function useGetSentFriendsQuery() {
+  return useQuery({
+    queryKey: ["friends-sent"],
+    queryFn: getSentFriends,
   });
 }
 

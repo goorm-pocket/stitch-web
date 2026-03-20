@@ -2,7 +2,11 @@ import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
 import { useEffect, useRef, useState } from "react";
-import { useGetFriendsQuery, useSendFriendRequestMutation } from "@/shared/hooks/useFriend";
+import {
+  useGetFriendsQuery,
+  useGetSentFriendsQuery,
+  useSendFriendRequestMutation,
+} from "@/shared/hooks/useFriend";
 import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 
@@ -11,12 +15,19 @@ const FriendPage = () => {
   const [showSearchList, setShowSearchList] = useState<boolean>(false);
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
   const [searchName, setSearchName] = useState<string>("");
-  const { data } = useGetFriendsQuery();
-  const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
-  const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
-  const searchUserList = searchUserListRes?.pages[0].items ?? [];
 
-  const friends = data?.pages[0].items ?? [];
+  const { data: friendsPages } = useGetFriendsQuery();
+  const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
+  const { data: sentRequestsPage } = useGetSentFriendsQuery();
+
+  const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
+
+  const searchUserList = searchUserListRes?.pages[0].items ?? [];
+  const friends = friendsPages?.pages[0].items ?? [];
+
+  // Todo : 페이지네이션 없어지면 수정
+  const sentRequests = sentRequestsPage?.items ?? [];
+  console.log(sentRequests);
 
   const handleAddFriend = (id: string) => {
     console.log(id);
