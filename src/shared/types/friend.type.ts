@@ -4,6 +4,7 @@ export interface Friend {
   friendId: string;
   friendedAt: string;
   user: Profile;
+  status: "FRIEND" | "SENT" | "RECEIVED" | null;
 }
 
 export interface FriendRequest {
