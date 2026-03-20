@@ -3,18 +3,20 @@ import Archive from "../../features/Archive/Archive";
 import SettingsIcon from "../../assets/setting-icon.svg";
 import { useNavigate } from "react-router";
 import { ProfileStitchedBox } from "../../shared/ui/StitchedBox";
+import { useGetProfileQuery } from "@/shared/hooks/useUser";
 
 const MyPage = () => {
+  const { data: profile } = useGetProfileQuery();
   const navigate = useNavigate();
 
   return (
     <Container>
       <ProfileContainer>
         <Left>
-          <Avator />
+          <Avator src={profile?.profileImageUrl} />
           <ProfileTextBox>
-            <ProfileName>xode114kr1</ProfileName>
-            <ProfileDescription>신윤호</ProfileDescription>
+            <ProfileName>{profile?.nickname}</ProfileName>
+            <ProfileDescription>{profile?.realName}</ProfileDescription>
             <BadgeContainer>
               <Badge>
                 <BadgeNumber>1.2k</BadgeNumber>
@@ -84,7 +86,7 @@ const Avator = styled.img`
 `;
 
 const ProfileTextBox = styled.div`
-  dispaly: flex;
+  display: flex;
   flex-direction: column;
   gap: 4px;
 `;
@@ -99,7 +101,7 @@ const ProfileDescription = styled.p`
   font-size: 16px;
   color: ${({ theme }) => theme.colors.text_secondary};
   margin: 0;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 `;
 
 const BadgeContainer = styled.div`

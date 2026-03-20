@@ -6,38 +6,38 @@ interface PostFormProps {
 }
 
 const PostForm = ({ post }: PostFormProps) => {
-  const representativeImage = post.images?.[0]?.image_url;
+  const representativeImage = post.images?.[0]?.imageUrl;
 
   return (
     <Container>
       <Header>
         <AuthorRow>
           <Avatar
-            src={post.author.profile_image_url ?? "https://i.pravatar.cc/100"}
+            src={post.author.profileImageUrl ?? "https://i.pravatar.cc/100"}
             alt={post.author.nickname}
           />
           <AuthorInfo>
             <Nickname>{post.author.nickname}</Nickname>
-            <DateText>{new Date(post.created_at).toLocaleDateString()}</DateText>
+            <DateText>{new Date(post.createdAt).toLocaleDateString()}</DateText>
           </AuthorInfo>
         </AuthorRow>
 
-        <LikeButton $liked={post.liked_by_me}>
-          <HeartIcon $liked={post.liked_by_me}>❤</HeartIcon>
-          <span>{post.like_count}</span>
+        <LikeButton $liked={post.likedByMe}>
+          <HeartIcon $liked={post.likedByMe}>❤</HeartIcon>
+          <span>{post.likeCount}</span>
         </LikeButton>
       </Header>
 
       <ImageSection>
-        {post.marker_type === "EMOJI" && post.marker_emoji && (
+        {post.markerType === "EMOJI" && post.markerEmoji && (
           <MarkerBadge>
-            <Marker>{post.marker_emoji}</Marker>
+            <Marker>{post.markerEmoji}</Marker>
           </MarkerBadge>
         )}
 
-        {post.marker_type === "IMAGE" && post.marker_image_url && (
+        {post.markerType === "IMAGE" && post.markerImageUrl && (
           <MarkerBadge>
-            <MarkerImage src={post.marker_image_url} alt="marker" />
+            <MarkerImage src={post.markerImageUrl} alt="marker" />
           </MarkerBadge>
         )}
 
