@@ -4,7 +4,8 @@ import FriendItem from "./components/FriendItem";
 import { useEffect, useRef, useState } from "react";
 import {
   useGetFriendsQuery,
-  useGetSentFriendsQuery,
+  useGetReceivedRequestsQuery,
+  useGetSentRequestsQuery,
   useSendFriendRequestMutation,
 } from "@/shared/hooks/useFriend";
 import SearchUserItem from "./components/SearchUserItem";
@@ -16,9 +17,11 @@ const FriendPage = () => {
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
   const [searchName, setSearchName] = useState<string>("");
 
-  const { data: friendsPages } = useGetFriendsQuery();
   const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
-  const { data: sentRequestsPage } = useGetSentFriendsQuery();
+
+  const { data: friendsPages } = useGetFriendsQuery();
+  const { data: sentRequestsRes } = useGetSentRequestsQuery();
+  const { data: receivedRequestsRes } = useGetReceivedRequestsQuery();
 
   const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
 
@@ -26,11 +29,13 @@ const FriendPage = () => {
   const friends = friendsPages?.pages[0].items ?? [];
 
   // Todo : 페이지네이션 없어지면 수정
-  const sentRequests = sentRequestsPage?.items ?? [];
-  console.log(sentRequests);
+  const sentRequests = sentRequestsRes?.items ?? [];
+  const receivedRequests = receivedRequestsRes?.items ?? [];
+  console.log("fff", friends);
+  console.log("sss", sentRequests);
+  console.log("rrr", receivedRequests);
 
   const handleAddFriend = (id: string) => {
-    console.log(id);
     sendFriendRequest({ userId: id });
   };
 
@@ -99,9 +104,12 @@ const FriendPage = () => {
       </ButtonContainer>
 
       <FriendListContainer>
-        {friends.map((friend) => (
-          <FriendItem key={friend.friendId} friend={friend} />
-        ))}
+        {selectList == "friend" &&
+          friends.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+        {selectList == "sent" &&
+          sentRequests.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+        {selectList == "received" &&
+          receivedRequests.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
       </FriendListContainer>
     </Container>
   );

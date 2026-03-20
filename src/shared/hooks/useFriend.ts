@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFriends, getSentFriends, sendFriendRequest } from "../api/friend";
+import { getFriends, getReceivedRequests, getSentRequests, sendFriendRequest } from "../api/friend";
 
 export function useGetFriendsQuery() {
   return useInfiniteQuery({
@@ -15,10 +15,17 @@ export function useGetFriendsQuery() {
   });
 }
 
-export function useGetSentFriendsQuery() {
+export function useGetSentRequestsQuery() {
   return useQuery({
     queryKey: ["friends-sent"],
-    queryFn: getSentFriends,
+    queryFn: getSentRequests,
+  });
+}
+
+export function useGetReceivedRequestsQuery() {
+  return useQuery({
+    queryKey: ["friends-received"],
+    queryFn: getReceivedRequests,
   });
 }
 
