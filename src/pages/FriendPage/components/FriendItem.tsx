@@ -1,20 +1,22 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../../shared/ui/StitchedBox";
+import type { Friend } from "@/shared/types/friend.type";
 
-const FriendItem = () => {
+const FriendItem = ({ friend }: { friend: Friend }) => {
+  const status = friend.status;
   return (
     <Container>
       <Left>
-        <Avator />
+        <Avator src={friend.user?.profileImageUrl} />
         <NameBox>
-          <NickName>xode114kr1</NickName>
-          <Name>신윤호</Name>
+          <NickName>{friend.user?.nickname}</NickName>
+          <Name>{friend.user?.realName}</Name>
         </NameBox>
       </Left>
       <Right>
-        <RemoveButton>REMOVE</RemoveButton>
-        <AcceptButton>ACCEPT</AcceptButton>
-        <RejectButton>REJECT</RejectButton>
+        {status == "SENT" && <RemoveButton>REMOVE</RemoveButton>}
+        {status == "RECEIVED" && <AcceptButton>ACCEPT</AcceptButton>}
+        {status == "RECEIVED" && <RejectButton>REJECT</RejectButton>}
       </Right>
     </Container>
   );

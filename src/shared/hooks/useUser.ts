@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getNotificationSettings,
   getPrivacySettings,
+  getProfileByName,
   getProfile,
   patchNotificationSettings,
   patchPrivacySettings,
@@ -54,5 +55,26 @@ export function usePatchPrivacySettingsMutation() {
 export function useWithdrawAccountMutation() {
   return useMutation({
     mutationFn: withdrawAccount,
+  });
+}
+
+export function useGetProfileByNameQuery({ query }: { query: string }) {
+  return useInfiniteQuery({
+    queryKey: ["profile", query],
+
+    queryFn: ({ pageParam }) =>
+      getProfileByName({
+        query,
+        cursor: pageParam,
+      }),
+
+    initialPageParam: null as string | null,
+
+    enabled: !!query,
+
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasNext) return undefined;
+      return lastPage.nextCursor;
+    },
   });
 }
