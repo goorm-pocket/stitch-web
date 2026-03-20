@@ -28,3 +28,14 @@ export async function getComments({
     }
   );
 }
+
+interface CreateComment {
+  postId: string;
+  content: string;
+  parentId?: string;
+}
+
+export async function createComment({ postId, content, parentId }: CreateComment) {
+  const res = await apiClient.post(`/api/v1/posts/${postId}/comments`, { content, parentId });
+  return res.data.data;
+}

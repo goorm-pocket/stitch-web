@@ -1,5 +1,5 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { getComments } from "../api/comment";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createComment, getComments } from "../api/comment";
 
 export function useGetCommentsQuery({ postId }: { postId: string }) {
   return useInfiniteQuery({
@@ -11,5 +11,17 @@ export function useGetCommentsQuery({ postId }: { postId: string }) {
       return lastPage.nextCursor;
     },
     enabled: !!postId,
+  });
+}
+
+export function useCreateCommentMutation({ postId }: { postId: string; parentId?: string }) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createComment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", postId],
+      });
+    },
   });
 }
