@@ -3,17 +3,31 @@ import PostForm from "../../features/PostForm/PostForm";
 import CommentItem from "./components/CommentItem";
 import { useParams } from "react-router";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
-import { useGetCommentsQuery } from "@/shared/hooks/useComment";
+import { useCreateCommentMutation, useGetCommentsQuery } from "@/shared/hooks/useComment";
 import { useState } from "react";
 
 const PostDetailPage = () => {
   const { id } = useParams();
+
+  // query
   const { data: post } = useGetPostByIdQuery({ postId: id! });
   const { data: commentsPages } = useGetCommentsQuery({ postId: id! });
-  const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];
 
+  // mutate
+  const { mutate: createCommnet } = useCreateCommentMutation({ postId: post?.postId as string });
+
+  // state
   const [commentInput, setCommentInput] = useState("");
   const [replyTarget, setReplyTarget] = useState("");
+
+  const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];
+
+  // handle function
+  const handleCreateComment = async () => {
+    if (!commentInput.trim()) return;
+    if (!post) return;
+    createCommnet({ postId: post?.postId, content: commentInput, parentId: replyTarget });
+  };
 
   return (
     <Container>
@@ -41,7 +55,9 @@ const PostDetailPage = () => {
                 placeholder={replyTarget ? "Write a reply..." : "Write a comment..."}
                 onChange={(e) => setCommentInput(e.target.value)}
               />
-              <CommentSubmitButton type="button">Post</CommentSubmitButton>
+              <CommentSubmitButton type="button" onClick={handleCreateComment}>
+                Create
+              </CommentSubmitButton>
             </CommentEditorRow>
           </CommentInputBox>
 
