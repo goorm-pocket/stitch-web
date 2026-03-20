@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
 import { useEffect, useRef, useState } from "react";
-import { useGetFriendsQuery } from "@/shared/hooks/useFriend";
+import { useGetFriendsQuery, useSendFriendRequestMutation } from "@/shared/hooks/useFriend";
 import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 
@@ -13,10 +13,15 @@ const FriendPage = () => {
   const [searchName, setSearchName] = useState<string>("");
   const { data } = useGetFriendsQuery();
   const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
-
+  const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
   const searchUserList = searchUserListRes?.pages[0].items ?? [];
 
   const friends = data?.pages[0].items ?? [];
+
+  const handleAddFriend = (id: string) => {
+    console.log(id);
+    sendFriendRequest({ userId: id });
+  };
 
   // 밖에 클릭하면 친구 요청 리스트 닫는거
   useEffect(() => {
@@ -51,7 +56,13 @@ const FriendPage = () => {
           {showSearchList && (
             <SearchUserList>
               {searchUserList?.length > 0 ? (
-                searchUserList?.map((item) => <SearchUserItem key={item.userId} user={item} />)
+                searchUserList?.map((item) => (
+                  <SearchUserItem
+                    key={item.userId}
+                    user={item}
+                    handleAdd={() => handleAddFriend(item.userId)}
+                  />
+                ))
               ) : (
                 <EmptyText>No users found.</EmptyText>
               )}

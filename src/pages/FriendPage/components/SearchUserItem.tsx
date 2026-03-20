@@ -3,9 +3,10 @@ import styled from "styled-components";
 
 interface SearchUserItemProps {
   user: SearchUser;
+  handleAdd: () => void;
 }
 
-const SearchUserItem = ({ user }: SearchUserItemProps) => {
+const SearchUserItem = ({ user, handleAdd }: SearchUserItemProps) => {
   if (user.isMine) {
     return;
   }
@@ -27,7 +28,9 @@ const SearchUserItem = ({ user }: SearchUserItemProps) => {
         </UserTextBox>
       </UserInfo>
 
-      <AddButton disabled={user.isMine}>{user.isMine ? "My Account" : "Add"}</AddButton>
+      <AddButton disabled={user.isMine} onClick={handleAdd}>
+        {user.isMine ? "My Account" : "Add"}
+      </AddButton>
     </Container>
   );
 };
