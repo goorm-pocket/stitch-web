@@ -107,7 +107,7 @@ interface SetupProfileReq {
   realName: string;
   birth?: string;
   profileImageKey?: string;
-  profileEmoji: string;
+  profileEmoji?: string;
   isPublic: boolean;
   namePublic: boolean;
   birthPublic: boolean;

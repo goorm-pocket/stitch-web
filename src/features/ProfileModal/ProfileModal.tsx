@@ -21,7 +21,7 @@ interface FormData {
 }
 
 const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
-  const { data: profileData, isLoading } = useGetProfileQuery();
+  const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery();
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
 
@@ -68,10 +68,11 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   }, [imageToCrop, cropShape]);
 
   const updateUIWithData = (data: any) => {
+    console.log("data", data);
     const mappedData = {
       nickname: data.nickname || "",
       realName: data.realName || "",
-      birth: data.birth || "",
+      birth: data.birth || data.birthDate || "",
       profileImg: data.profileImageUrl || "",
       emojiContent: data.profileEmoji || "",
     };
@@ -154,15 +155,34 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const handleSave = async () => {
     if (!isFormValid) return;
 
-    const payload = {
-      ...formData,
-      profileEmoji: emojiContent!,
-      profileImageKey: profileImg || undefined,
+    // 1. 현재 선택된 bubble(emojiContent)이 이미지인지 이모지인지 판별
+    const isEmoji = isEmojiText(emojiContent);
+
+    // 2. 서버로 보낼 페이로드 구성
+    const payload: any = {
+      nickname: formData.nickname,
+      realName: formData.realName,
+      birth: formData.birth || undefined,
       isPublic: true,
       namePublic: true,
       birthPublic: false,
       agePublic: false,
+      // 기본 프로필 이미지 처리
+      profileImageKey: profileImg || undefined,
     };
+
+    // 3. 필드별 데이터 할당 (16자 제한 방어)
+    if (isEmoji) {
+      // 순수 이모지(예: "🚀")일 때만 profileEmoji 필드 사용
+      payload.profileEmoji = emojiContent || undefined;
+    } else {
+      /* bubble에 이미지가 들어있을 경우 (Base64)
+       - profileEmoji는 서버 제한(16자) 때문에 넣을 수 없으므로 비움
+       - 대신 profileImageKey에 이미지 데이터를 넣음 (서버 구조에 따라 필드명 확인 필요)
+    */
+      payload.profileEmoji = "IMAGE_TYPE"; // 서버와 약속된 구분값 (16자 이하)
+      payload.profileImageKey = emojiContent || profileImg || undefined;
+    }
 
     try {
       const response = isInitial
@@ -173,7 +193,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       alert(isInitial ? "설정이 완료되었습니다!" : "수정되었습니다!");
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Save Error:", err);
       alert("저장 중 오류가 발생했습니다.");
     }
   };
@@ -188,6 +208,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     setIsEditing(false);
     setShowEmojiPicker(false);
   };
+  if (isProfileLoading) return null;
 
   const onCropComplete = useCallback((_: any, croppedPixels: any) => {
     setCroppedAreaPixels(croppedPixels);
@@ -239,10 +260,10 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
             {/* 모양 선택 버튼 그룹 추가 */}
             {imageToCrop.type === "emoji" && (
               <ShapeSelectorWrapper>
-                <ShapeButton active={cropShape === "round"} onClick={() => setCropShape("round")}>
+                <ShapeButton $active={cropShape === "round"} onClick={() => setCropShape("round")}>
                   원형
                 </ShapeButton>
-                <ShapeButton active={cropShape === "rect"} onClick={() => setCropShape("rect")}>
+                <ShapeButton $active={cropShape === "rect"} onClick={() => setCropShape("rect")}>
                   사각형
                 </ShapeButton>
               </ShapeSelectorWrapper>
@@ -465,13 +486,13 @@ const ShapeSelectorWrapper = styled.div`
   border-radius: 8px;
 `;
 
-const ShapeButton = styled.button<{ active: boolean }>`
+const ShapeButton = styled.button<{ $active: boolean }>`
   padding: 8px 16px;
   font-size: 12px;
   font-weight: 700;
-  background: ${(props) => (props.active ? props.theme.colors.primary : "white")};
-  color: ${(props) => (props.active ? "white" : props.theme.colors.text_primary)};
-  border: 1px solid ${(props) => (props.active ? props.theme.colors.primary : "#dee2e6")};
+  background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
+  color: ${(props) => (props.$active ? "white" : props.theme.colors.text_primary)};
+  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#dee2e6")};
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s;

@@ -3,18 +3,27 @@ import Pocket from "../../features/Pocket/Pocket";
 import { useEffect, useState } from "react";
 import { useFetchMeQuery } from "../../shared/hooks/useAuth";
 import ProfileModal from "@/features/ProfileModal/ProfileModal";
+import { useGetProfileQuery } from "@/shared/hooks/useUser";
 
 const PocketPage = () => {
-  const { data: me, isLoading } = useFetchMeQuery(); // 5번: 인증 선확인
+  const { data: me, isLoading: isMeLoading } = useFetchMeQuery();
+  const { data: profile, isLoading: isProfileLoading } = useGetProfileQuery();
   const [profileModal, setProfileModal] = useState(false);
 
   useEffect(() => {
-    // 1번: 최초 로그인 시(설정 필요 시) 또는 수동 오픈
-    if (me && !me.isAgreed) {
-      // 가입 승인/설정 미완료 시 예시
-      setProfileModal(true);
+    // 로딩 중에는 판단을 보류합니다.
+    if (isMeLoading || isProfileLoading) return;
+
+    if (me) {
+      // 필수 데이터 존재 여부 확인 (이 값이 모두 있어야 '완성'으로 간주)
+      const hasRequiredInfo = !!(profile?.nickname && profile?.realName && profile?.profileEmoji);
+
+      // 약관 동의가 안 되었거나, 필수 정보가 하나라도 없는 경우에만 띄움
+      if (!me.isAgreed || !hasRequiredInfo) {
+        setProfileModal(true);
+      }
     }
-  }, [me]);
+  }, [me, profile, isMeLoading, isProfileLoading]);
 
   return (
     <Container>
