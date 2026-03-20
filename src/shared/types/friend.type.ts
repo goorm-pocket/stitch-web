@@ -5,3 +5,11 @@ export interface Friend {
   friendedAt: string;
   user: Profile;
 }
+
+export interface FriendRequest {
+  friendId: string;
+  status: "REQUESTED" | "ACCEPTED";
+  requesterId: string;
+  receiverId: string;
+  requestedAt: string;
+}
