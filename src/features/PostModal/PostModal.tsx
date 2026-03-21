@@ -3,6 +3,7 @@ import PostForm from "../PostForm/PostForm";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
 
 interface PostModalProps {
+  userId: string;
   postId: string;
   onClose: () => void;
 }

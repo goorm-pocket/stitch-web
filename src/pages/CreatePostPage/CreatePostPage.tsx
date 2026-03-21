@@ -1,5 +1,826 @@
-const CreatePostPage = () => {
-  return <div>CreatePostPage</div>;
-};
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { StitchedBox } from "../../shared/ui/StitchedBox";
+import Cropper, { type Area } from "react-easy-crop";
+import ImageUploadIcon from "../../assets/upload-icon.svg";
+import ImageIcon from "../../assets/Image-icon.svg";
+import EmojiIcon from "../../assets/Emoji-icon.svg";
+import EmojiPicker from "emoji-picker-react";
+import type { EmojiClickData } from "emoji-picker-react";
+import { useCreatePostMutation } from "../../shared/hooks/usePost";
+import { getCroppedImg } from "./imageCrop";
+import { useGetProfileQuery } from "@/shared/hooks/useUser";
+import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
 
-export default CreatePostPage;
+type MarkType = "image" | "emoji";
+type VisibilityType = "FRIENDS" | "PRIVATE";
+
+//글자수 제한
+const MAX_LENGTH = 500;
+//이미지 제한
+const MAX_IMAGES = 10;
+
+export default function CreatePocketPost() {
+  const navigate = useNavigate();
+  const [images, setImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [story, setStory] = useState("");
+  const [markType, setMarkType] = useState<MarkType>("emoji");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [markImage, setMarkImage] = useState<string | null>(null);
+  const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
+
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isRoundCrop, setIsRoundCrop] = useState(true);
+
+  const { mutate: createPost } = useCreatePostMutation();
+
+  //사용자 정보 조회
+  const { data: profileData } = useGetProfileQuery();
+  useEffect(() => {
+    if (!profileData?.userId) {
+      alert("사용자 정보를 불러올 수 없습니다.");
+      return;
+    }
+    if (profileData) {
+      console.log("모달 정보 조회", profileData);
+    }
+  }, [profileData]);
+  //디폴트 이모지
+  const [selectedEmoji, setSelectedEmoji] = useState(profileData.profileEmoji);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const markInputRef = useRef<HTMLInputElement>(null);
+
+  const dataURLtoBlob = (dataurl: string) => {
+    const arr = dataurl.split(","),
+      mime = arr[0].match(/:(.*?);/)![1];
+    let bstr = atob(arr[1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new Blob([u8arr], { type: mime });
+  };
+
+  const handleSubmit = async () => {
+    if (story.length > MAX_LENGTH) {
+      alert("글자 수는 500자를 초과할 수 없습니다.");
+      return;
+    }
+
+    if (!story.trim() && images.length === 0) {
+      alert("내용 또는 사진을 최소 하나 이상 포함해야 합니다.");
+      return;
+    }
+
+    try {
+      let markerKey = undefined;
+      let postImageKeys: string[] = [];
+
+      if (markType === "image" && markImage) {
+        const blob = dataURLtoBlob(markImage);
+        const singleRes = await SinglePresignedUrl(profileData.userId, {
+          uploadType: "TEMP_POST_MARKER",
+          contentType: blob.type,
+          fileExtension: blob.type.split("/")[1],
+          fileSize: blob.size,
+        });
+
+        if (singleRes.uploadUrl) {
+          await uploadFileToS3(singleRes.uploadUrl, blob);
+          markerKey = singleRes.key;
+        }
+      }
+
+      if (images.length > 0) {
+        const multipleRes = await MultiplePresignedUrls(profileData.userId, {
+          uploadType: "TEMP_POST_IMAGE",
+          files: images.map((file, idx) => ({
+            clientFileId: `file-${idx}`,
+            contentType: file.type,
+            fileExtension: file.name.split(".").pop() || "png",
+            fileSize: file.size,
+          })),
+        });
+
+        if (multipleRes.uploads) {
+          //S3에 업로드
+          await Promise.all(
+            multipleRes.uploads.map((u: any, idx: number) =>
+              uploadFileToS3(u.uploadUrl, images[idx]),
+            ),
+          );
+          //key 추출
+          postImageKeys = multipleRes.uploads.map((u: any) => u.key);
+        }
+      }
+
+      createPost(
+        {
+          content: story || undefined,
+          visibility,
+          markerType: markType === "emoji" ? "EMOJI" : "IMAGE",
+          markerEmoji: markType === "emoji" ? selectedEmoji : undefined,
+          markerImageKey: markerKey,
+          imageKeys: postImageKeys,
+        },
+        {
+          onSuccess: () => {
+            alert("성공적으로 발행되었습니다!");
+
+            navigate("/pocket");
+          },
+          onError: () => alert("포스트 생성 중 오류가 발생했습니다."),
+        },
+      );
+    } catch (error) {
+      console.error("Upload Error:", error);
+      alert("이미지 처리 중 오류가 발생했습니다. 전송 데이터를 확인해주세요.");
+    }
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setSelectedEmoji(emojiData.emoji);
+    setShowEmojiPicker(false);
+    setMarkType("emoji");
+  };
+
+  const handleMarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const onCropComplete = (_: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const saveCroppedImage = async () => {
+    if (cropImage && croppedAreaPixels) {
+      const croppedResult = await getCroppedImg(cropImage, croppedAreaPixels, isRoundCrop);
+      setMarkImage(croppedResult);
+      setMarkType("image");
+      setCropImage(null);
+    }
+  };
+
+  //공개 범위
+  const toggleVisibility = () => {
+    setVisibility((prev) => (prev === "FRIENDS" ? "PRIVATE" : "FRIENDS"));
+  };
+
+  //이미지 업로드
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (images.length + files.length > MAX_IMAGES) {
+      alert(`사진은 최대 ${MAX_IMAGES}장까지 업로드 가능합니다.`);
+      return;
+    }
+
+    const newImages = [...images, ...files];
+    setImages(newImages);
+
+    //미리보기 URL 생성 및 추가
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrls((prev) => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <Container>
+      <HeaderSection>
+        <Title>Create New Pocket Post</Title>
+        <SubTitle>주머니 속 일상의 조각을 기록해보세요.</SubTitle>
+      </HeaderSection>
+      <Box>
+        <MarkContainer>
+          <SectionTitle>Bubble Icon</SectionTitle>
+          <MarkSettings>
+            <MarkPreview $isRound={isRoundCrop}>
+              {markType === "image" && markImage ? (
+                <img src={markImage} alt="mark" />
+              ) : (
+                <span className="emoji-display">{selectedEmoji}</span>
+              )}
+            </MarkPreview>
+            <MarkButtons>
+              <MarkBtn
+                $active={markType === "emoji"}
+                onClick={() => {
+                  setMarkType("emoji");
+                  setShowEmojiPicker(true);
+                }}
+              >
+                <MarkIcon as={EmojiIcon} />
+                Emoji Icon
+              </MarkBtn>
+              <MarkBtn $active={markType === "image"} onClick={() => markInputRef.current?.click()}>
+                <MarkIcon as={ImageIcon} />
+                Image Icon
+              </MarkBtn>
+            </MarkButtons>
+            {showEmojiPicker && (
+              <EmojiPickerWrapper>
+                <div className="overlay" onClick={() => setShowEmojiPicker(false)} />
+                <EmojiPicker onEmojiClick={onEmojiClick} autoFocusSearch={false} />
+              </EmojiPickerWrapper>
+            )}
+            {cropImage && (
+              <CropModal>
+                <CropContainer>
+                  <CropView>
+                    <Cropper
+                      image={cropImage}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      cropShape={isRoundCrop ? "round" : "rect"}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                    />
+                  </CropView>
+
+                  <ControlBottom>
+                    <ShapeButtons>
+                      <ShapeBtn $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
+                        Circle
+                      </ShapeBtn>
+                      <ShapeBtn $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
+                        Square
+                      </ShapeBtn>
+                    </ShapeButtons>
+
+                    <ActionButtons>
+                      <CancelBtn
+                        onClick={() => {
+                          setCropImage(null);
+                          setIsRoundCrop(true);
+                        }}
+                      >
+                        Cancel
+                      </CancelBtn>
+                      <SaveBtn onClick={saveCroppedImage}>Apply</SaveBtn>
+                    </ActionButtons>
+                  </ControlBottom>
+                </CropContainer>
+              </CropModal>
+            )}
+          </MarkSettings>
+
+          <input
+            type="file"
+            ref={markInputRef}
+            onChange={handleMarkImageUpload}
+            accept="image/*"
+            hidden
+          />
+        </MarkContainer>
+      </Box>
+
+      <Box>
+        <SubContainer>
+          <SectionTitle>POCKET IMAGE</SectionTitle>
+
+          <VisibilityToggle>
+            <ToggleLabel $active={visibility === "FRIENDS"}>Friends</ToggleLabel>
+            <ToggleSwitch onClick={toggleVisibility} $active={visibility === "PRIVATE"}>
+              <ToggleHandle $active={visibility === "PRIVATE"} />
+            </ToggleSwitch>
+            <ToggleLabel $active={visibility === "PRIVATE"}>Private</ToggleLabel>
+          </VisibilityToggle>
+        </SubContainer>
+
+        <UploadBoxContainer>
+          {previewUrls.length > 0 ? (
+            <PreviewGrid>
+              {previewUrls.map((url, index) => (
+                <PreviewItem key={index}>
+                  <PreviewImage src={url} alt={`preview-${index}`} />
+                  <DeleteBtn onClick={() => removeImage(index)}>×</DeleteBtn>
+                </PreviewItem>
+              ))}
+
+              {previewUrls.length < MAX_IMAGES && (
+                <AddMoreBtn onClick={() => fileInputRef.current?.click()}>
+                  <UploadIcon as={ImageUploadIcon}></UploadIcon>
+                  <span>Add More</span>
+                </AddMoreBtn>
+              )}
+            </PreviewGrid>
+          ) : (
+            <UploadBox onClick={() => fileInputRef.current?.click()} $hasImage={false}>
+              <UploadIcon as={ImageUploadIcon}></UploadIcon>
+              <UploadText>Upload photos (Max 10)</UploadText>
+              <UploadSub>Drag and drop or click to browse files</UploadSub>
+            </UploadBox>
+          )}
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            multiple
+            hidden
+          />
+        </UploadBoxContainer>
+      </Box>
+
+      <Box>
+        <SectionTitle>POCKET STORY</SectionTitle>
+        <LengthCount $isMax={story.length >= MAX_LENGTH}>
+          {story.length} / {MAX_LENGTH}
+        </LengthCount>
+        <StoryBox
+          placeholder="Tell the story behind this pocket..."
+          value={story}
+          onChange={(e) => setStory(e.target.value)}
+        />
+      </Box>
+
+      <PublishBtn onClick={handleSubmit}>Publish to Pocket</PublishBtn>
+    </Container>
+  );
+}
+
+const Container = styled.div`
+  width: 1000px;
+  margin: 0 auto;
+  padding: 10px 0px;
+`;
+
+const Box = styled.section`
+  width: 100%;
+  background: #ffffff;
+  border: 2px dashed ${({ theme }) => theme.colors.border3};
+  border-radius: 16px;
+  padding: 20px 25px 25px 25px;
+  margin-bottom: 50px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+`;
+
+const HeaderSection = styled.div`
+  margin-bottom: 50px;
+  padding-left: 10px;
+  text-align: left;
+`;
+
+const Title = styled.h1`
+  font-size: 36px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.text_primary};
+  margin-bottom: 8px;
+`;
+
+const SubTitle = styled.p`
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: 16px;
+`;
+
+//Bubble Icon
+const MarkContainer = styled.div``;
+
+const MarkSettings = styled.div`
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  margin-top: 25px;
+  gap: 30px;
+  position: relative;
+  background: ${({ theme }) => theme.colors.background};
+  padding: 20px;
+  border-radius: 12px;
+`;
+
+const MarkPreview = styled.div<{ $isRound: boolean }>`
+  width: 100px;
+  height: 100px;
+
+  border-radius: ${(props) => (props.$isRound ? "50%" : "0")};
+
+  background: white;
+  border: 3px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-radius 0.3s ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .emoji-display {
+    font-size: 50px;
+  }
+`;
+
+const MarkButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+`;
+
+const MarkBtn = styled.button<{ $active: boolean }>`
+  width: 160px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.2s;
+  background: ${(props) => (props.$active ? "#f0f7ff" : props.theme.colors.background)};
+  color: ${(props) => (props.$active ? "#6f95b5" : "#4b5563")};
+
+  &:hover {
+    background: #f9fafb;
+  }
+`;
+
+const MarkIcon = styled.div`
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+`;
+
+const EmojiPickerWrapper = styled.div`
+  position: absolute;
+  top: 60px;
+  left: 130px;
+  z-index: 100;
+
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+  }
+`;
+
+const CropModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const CropContainer = styled.div`
+  background: white;
+  width: 580px;
+  max-height: 90vh;
+  padding: 30px;
+  border-radius: 16px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+`;
+
+const CropView = styled.div`
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #333;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+`;
+
+const ControlBottom = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 10px;
+  background: #f1f3f5;
+  border-radius: 8px;
+`;
+
+const ShapeButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+`;
+
+const ShapeBtn = styled.button<{ $active: boolean }>`
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
+  color: ${(props) => (props.$active ? "white" : props.theme.colors.text_primary)};
+  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#dee2e6")};
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    border-color: ${(props) => props.theme.colors.primary};
+  }
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+`;
+
+const CancelBtn = styled.button`
+  background: #adb5bd;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover {
+    background: #868e96;
+  }
+`;
+
+const SaveBtn = styled.button`
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+`;
+
+//Pocket Image
+const SubContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const VisibilityToggle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ToggleLabel = styled.span<{ $active: boolean }>`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${(props) => (props.$active ? props.theme.colors.text_primary : "#adb5bd")};
+  transition: color 0.3s ease;
+`;
+
+const ToggleSwitch = styled.div<{ $active: boolean }>`
+  width: 50px;
+  height: 26px;
+  background-color: ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
+  border-radius: 20px;
+  padding: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const ToggleHandle = styled.div<{ $active: boolean }>`
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: ${(props) => (props.$active ? "translateX(24px)" : "translateX(0)")};
+`;
+
+const UploadBoxContainer = styled.div`
+  width: 100%;
+  height: 400px;
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const UploadBox = styled.div<{ $hasImage: boolean }>`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
+const PreviewGrid = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  overflow-x: auto; /* 가로 스크롤 가능하게 */
+  align-items: center;
+
+  /* 스크롤바 디자인 (선택사항) */
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+  }
+`;
+
+const PreviewItem = styled.div`
+  position: relative;
+  flex: 0 0 350px;
+  height: 300px;
+  background: #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+`;
+
+const PreviewImage = styled.img`
+  width: 100%;
+  height: 100%;
+  padding: 7px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px dashed ${({ theme }) => theme.colors.border3};
+`;
+
+const DeleteBtn = styled.button`
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+`;
+
+const AddMoreBtn = styled.div`
+  flex: 0 0 200px;
+  height: 300px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #adb5bd;
+  cursor: pointer;
+  background: white;
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
+const UploadIcon = styled.div`
+  color: currentColor;
+`;
+
+const UploadText = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 12px;
+`;
+
+const UploadSub = styled.div`
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 4px;
+`;
+
+//Pocket Story
+const LengthCount = styled.span<{ $isMax: boolean }>`
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: ${(props) => (props.$isMax ? "#ff4d4d" : props.theme.colors.text_secondary)};
+  font-weight: ${(props) => (props.$isMax ? "700" : "400")};
+`;
+
+const StoryBox = styled.textarea`
+  width: 100%;
+  height: 300px;
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 20px;
+  margin-top: 5px;
+  font-size: 17px;
+  line-height: 1.8;
+  resize: none;
+  outline: none;
+  box-sizing: border-box;
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.border3};
+  }
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: ${({ theme }) => theme.colors.text_primary};
+  text-transform: uppercase;
+`;
+
+const PublishBtn = styled(StitchedBox)`
+  width: 100%;
+  height: 60px;
+  margin: 20px 0;
+
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+
+  border-radius: 16px;
+
+  cursor: pointer;
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  &:active {
+    transform: scale(0.9);
+  }
+  &:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+  }
+`;

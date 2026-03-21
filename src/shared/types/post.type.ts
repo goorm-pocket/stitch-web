@@ -46,7 +46,7 @@ export interface Post {
   editableUntil: string;
   isEditable: boolean;
 
-  markerType: Marker;
+  markerType: MarkerType;
   markerEmoji: string | null;
   markerImageUrl: string | null;
 
@@ -65,4 +65,4 @@ export interface PostImage {
 
 export type PostVisibility = "PUBLIC" | "FRIENDS" | "PRIVATE";
 
-export type Marker = "EMOJI" | "IMAGE";
+export type MarkerType = "EMOJI" | "IMAGE";

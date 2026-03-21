@@ -12,6 +12,7 @@ declare module "styled-components" {
       text_disable: string;
       border: string;
       border2: string;
+      border3: string;
       hover: string;
     };
   }
