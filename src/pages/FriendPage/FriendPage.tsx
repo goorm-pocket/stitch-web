@@ -13,22 +13,26 @@ import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 
 const FriendPage = () => {
   const searchInputRef = useRef<HTMLDivElement | null>(null);
+
+  // state
   const [showSearchList, setShowSearchList] = useState<boolean>(false);
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
   const [searchName, setSearchName] = useState<string>("");
 
+  // query
   const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
 
   const { data: friendsPages } = useGetFriendsQuery();
   const { data: sentRequestsRes } = useGetSentRequestsQuery();
   const { data: receivedRequestsRes } = useGetReceivedRequestsQuery();
 
+  // mutate
   const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
 
   const searchUserList = searchUserListRes?.pages[0].items ?? [];
-  const friends = friendsPages?.pages[0].items ?? [];
 
-  // Todo : 페이지네이션 없어지면 수정
+  // 리스트 추출
+  const friends = friendsPages?.items ?? [];
   const sentRequests = sentRequestsRes?.items ?? [];
   const receivedRequests = receivedRequestsRes?.items ?? [];
   console.log("fff", friends);
