@@ -9,6 +9,7 @@ import {
   usePatchProfileMutation,
   useSetupProfileMutation,
   useGetNotificationSettingsQuery,
+  usepatchPrivateProfileMutation,
 } from "@/shared/hooks/useUser";
 import { apiClient } from "@/shared/api/axios";
 
@@ -27,6 +28,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery();
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
+  const { mutateAsync: patchPrivateProfileMutate } = usepatchPrivateProfileMutation();
 
   const [isEditing, setIsEditing] = useState(isInitial); //조회, 수정 모드
   const [initialData, setInitialData] = useState<FormData | null>(null); //복구 데이터
@@ -90,9 +92,8 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   //모달 정보 조회
   useEffect(() => {
     if (profileData && !isInitialized.current) {
-      console.log("bbb", profileData);
+      console.log("모달 정보 조회", profileData);
       updateUIWithData(profileData);
-      //console.log("ccc", updateUIWithData(profileData));
       isInitialized.current = true;
     }
   }, [profileData]);
@@ -157,7 +158,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     setImageToCrop(null); // 크롭 창 닫기
   };
 
-  // 1. Base64를 File 객체로 변환하는 유틸리티
+  //Base64를 File 객체로 변환하는 유틸리티
   const base64ToFile = (base64: string, fileName: string) => {
     const [header, data] = base64.split(",");
     const mime = header.match(/:(.*?);/)?.[1];
@@ -168,9 +169,9 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     return new File([u8arr], fileName, { type: mime });
   };
 
-  // 2. S3 업로드 프로세스 (Presigned URL 활용)
+  //S3 업로드 프로세스 (Presigned URL 활용)
   const uploadToS3 = async (file: File, userId: string) => {
-    // 1. 서버에 Presigned URL 요청 (명세서 기준)
+    //서버에 Presigned URL 요청 (명세서 기준)
     const res = await apiClient.post(
       "/api/v1/uploads/presigned-url",
       {
@@ -180,20 +181,20 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
         fileSize: file.size.toString(), // 문자열로 전송
       },
       {
-        params: { userId: userId }, // 쿼리 파라미터 ?userId=...
+        params: { userId: userId }, //쿼리 파라미터 ?userId=...
       },
     );
 
     const { uploadUrl, key } = res.data.data;
 
-    // 2. S3에 직접 Binary 파일 업로드 (PUT)
+    //S3에 직접 Binary 파일 업로드 (PUT)
     await fetch(uploadUrl, {
       method: "PUT",
       body: file,
       headers: { "Content-Type": file.type },
     });
 
-    // DB에 저장할 때 사용할 'key' 반환
+    //DB에 저장할 때 사용할 'key' 반환
     return key;
   };
 
@@ -202,7 +203,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     if (!isFormValid) return;
 
     try {
-      // 0. 현재 로그인한 유저 ID 확인 (Redux, Context 등에서 가져온 값)
+      //현재 로그인한 유저 ID 확인
       // 예: const userId = currentUser.id;
       if (!userId) {
         alert("로그인 정보가 없습니다.");
@@ -212,46 +213,58 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       let finalProfileKey = profileImg;
       let finalEmojiValue = emojiContent;
 
-      // 1. 프로필 이미지가 새로 크롭된 Base64라면 S3 업로드
+      //프로필 이미지가 새로 크롭된 Base64라면 S3 업로드
       if (profileImg && profileImg.startsWith("data:image")) {
         const file = base64ToFile(profileImg, `profile_${Date.now()}.jpg`);
         finalProfileKey = await uploadToS3(file, userId);
       }
 
-      // 2. Bubble(Emoji) 데이터 처리
+      //Bubble(Emoji) 데이터 처리
       const isEmoji = isEmojiText(emojiContent);
 
       if (!isEmoji && emojiContent && emojiContent.startsWith("data:image")) {
-        // 버블이 이미지(Base64)라면 S3 업로드
+        //버블이 이미지(Base64)라면 S3 업로드
         const file = base64ToFile(emojiContent, `bubble_${Date.now()}.jpg`);
         finalEmojiValue = await uploadToS3(file, userId);
       }
 
-      // 3. 최종 서버 페이로드 구성
-      const payload: any = {
+      //일반 프로필 (닉네임, 사진, 이모지, 공개설정)
+      const publicPayload = {
         nickname: formData.nickname,
-        realName: formData.realName,
-        birth: formData.birth || undefined,
-        profileImageKey: finalProfileKey || undefined, // S3 Key (짧음)
-        profileEmoji: finalEmojiValue || undefined, // 이모지 문자열 OR S3 Key
+        profileImageKey: finalProfileKey || undefined,
+        profileEmoji: finalEmojiValue || undefined,
         isPublic: true,
         namePublic: true,
         birthPublic: false,
         agePublic: false,
       };
 
-      // 4. 프로필 생성 또는 수정 API 호출
-      const response = isInitial
-        ? await setupProfileMutate({ profile: payload })
-        : await patchProfileMutate({ profile: payload });
+      //민감 정보 (실명, 생일)
+      const privatePayload = {
+        realName: formData.realName,
+        birth: formData.birth || undefined,
+      };
 
-      updateUIWithData(response);
-      alert(isInitial ? "설정이 완료되었습니다!" : "수정되었습니다!");
+      //API 호출 (신규 설정(isInitial)일 때는 기존 setup 로직을 타고, 수정일 때는 두 API를 모두 호출합니다.
+      if (isInitial) {
+        const response = await setupProfileMutate({
+          profile: { ...publicPayload, ...privatePayload },
+        });
+        updateUIWithData(response);
+      } else {
+        await Promise.all([
+          patchProfileMutate({ profile: publicPayload }),
+          patchPrivateProfileMutate({ profile: privatePayload }),
+        ]);
+
+        alert(isInitial ? "설정이 완료되었습니다!" : "수정되었습니다!");
+      }
+
       setIsEditing(false);
       onClose();
     } catch (err: any) {
       console.error("Save Error:", err);
-      // 400 에러 등이 발생했을 때 서버의 메시지를 보여주면 디버깅이 쉽습니다.
+      //400 에러 등이 발생했을 때 서버의 메시지를 보여주면 디버깅이 쉽습니다.
       const errorMsg = err.response?.data?.message || "저장 중 오류가 발생했습니다.";
       alert(errorMsg);
     }
@@ -259,7 +272,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
   const handleCancel = () => {
     if (initialData) {
-      setFormData(initialData); // 백업 데이터로 복구
+      setFormData(initialData); //백업 데이터로 복구
       setProfileImg(initialData.profileImg);
       setEmojiContent(initialData.emojiContent);
     }

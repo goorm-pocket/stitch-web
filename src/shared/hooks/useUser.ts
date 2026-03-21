@@ -7,6 +7,7 @@ import {
   withdrawAccount,
   getProfile,
   patchProfile,
+  patchPrivateProfile,
   setupProfile,
 } from "../api/user";
 
@@ -81,6 +82,19 @@ export function usePatchProfileMutation() {
     mutationFn: patchProfile,
     onSuccess: () => {
       //queryClient.setQueryData(["user-profile"], data);
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
+
+//민감 정보(실명, 생일)
+export function usepatchPrivateProfileMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: patchPrivateProfile,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
