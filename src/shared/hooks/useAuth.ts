@@ -17,5 +17,6 @@ export function useFetchMeQuery() {
   return useQuery({
     queryKey: ["me"],
     queryFn: fetchMe,
+    retry: false,
   });
 }
