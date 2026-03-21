@@ -1,13 +1,14 @@
 import type { ApiResponse } from "../types/common.type";
 import { apiClient } from "./axios";
-import type { Marker, PostVisibility } from "../types/post.type";
+import type { MarkerType, PostVisibility } from "../types/post.type";
 
 export interface CreatePostReq {
   content?: string;
   visibility: PostVisibility; // "PUBLIC" | "FRIENDS" | "PRIVATE"
-  markerType: Marker; // "EMOJI" | "IMAGE"
+  markerType: MarkerType; // "EMOJI" | "IMAGE"
   markerEmoji?: string;
   markerImageKey?: string;
+  imageKeys?: string[];
 }
 
 export interface CreatePostRes {
