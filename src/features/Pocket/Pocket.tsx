@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import Matter from "matter-js";
+import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
 import { useGetBoardQuery } from "../../shared/hooks/useBoard";
 import type { PocketBubbleType } from "../../shared/types/post.type";
 import PostModal from "../PostModal/PostModal";
+import { usePocketSize } from "./hooks/usePocketSize";
+import { usePocketMatter } from "./hooks/usePocketMatter";
 
 const SAMPLE_ITEMS: PocketBubbleType[] = [
   {
@@ -129,18 +130,13 @@ const SAMPLE_ITEMS: PocketBubbleType[] = [
   },
 ];
 
-type BodyMap = Record<string, Matter.Body>;
-type PositionMap = Record<string, { x: number; y: number; angle: number }>;
-
 const Pocket = () => {
   const { data: board } = useGetBoardQuery("WEB");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
-  const runnerRef = useRef<Matter.Runner | null>(null);
-  const animationRef = useRef<number | null>(null);
-  const bodyMapRef = useRef<BodyMap>({});
 
   const clickStartRef = useRef<{
     id: string | null;
@@ -152,8 +148,7 @@ const Pocket = () => {
     y: 0,
   });
 
-  const [positions, setPositions] = useState<PositionMap>({});
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const size = usePocketSize(wrapperRef);
 
   const items = useMemo(() => {
     return board?.items?.length ? board.items : SAMPLE_ITEMS;
@@ -162,143 +157,14 @@ const Pocket = () => {
   const itemSize = Math.min(size.width * 0.2, 65);
   const wallThickness = 20;
 
-  useEffect(() => {
-    if (!wrapperRef.current) return;
-
-    const updateSize = () => {
-      if (!wrapperRef.current) return;
-
-      const nextWidth = wrapperRef.current.clientWidth;
-      const nextHeight = nextWidth * 1.08;
-
-      setSize({
-        width: nextWidth,
-        height: nextHeight,
-      });
-    };
-
-    updateSize();
-
-    const observer = new ResizeObserver(() => {
-      updateSize();
-    });
-
-    observer.observe(wrapperRef.current);
-    window.addEventListener("resize", updateSize);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateSize);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!sceneRef.current || size.width === 0 || size.height === 0 || items.length === 0) return;
-
-    bodyMapRef.current = {};
-
-    const engine = Matter.Engine.create();
-    engine.gravity.y = 3;
-
-    const world = engine.world;
-
-    const leftWall = Matter.Bodies.rectangle(
-      wallThickness / 2,
-      size.height / 2,
-      wallThickness,
-      size.height,
-      { isStatic: true },
-    );
-
-    const rightWall = Matter.Bodies.rectangle(
-      size.width - wallThickness / 2,
-      size.height / 2,
-      wallThickness,
-      size.height,
-      { isStatic: true },
-    );
-
-    const topWall = Matter.Bodies.rectangle(
-      size.width / 2,
-      wallThickness / 2,
-      size.width,
-      wallThickness,
-      { isStatic: true },
-    );
-
-    const bottomWall = Matter.Bodies.rectangle(
-      size.width / 2,
-      size.height - wallThickness / 2,
-      size.width,
-      wallThickness,
-      { isStatic: true },
-    );
-
-    Matter.World.add(world, [leftWall, rightWall, topWall, bottomWall]);
-
-    const bodies = items.map((item, index) => {
-      const col = index % 4;
-      const row = Math.floor(index / 4);
-
-      const x = size.width * (0.22 + col * 0.15);
-      const y = size.height * (0.14 + row * 0.13);
-
-      const body = Matter.Bodies.circle(x, y, itemSize / 2, {
-        restitution: 0.7,
-        friction: 0.02,
-        frictionAir: 0.07,
-        density: 0.002,
-      });
-
-      bodyMapRef.current[item.postId] = body;
-      return body;
-    });
-
-    Matter.World.add(world, bodies);
-
-    const mouse = Matter.Mouse.create(sceneRef.current);
-
-    const mouseConstraint = Matter.MouseConstraint.create(engine, {
-      mouse,
-      constraint: {
-        stiffness: 0.15,
-        render: { visible: false },
-      },
-    });
-
-    Matter.World.add(world, mouseConstraint);
-
-    const runner = Matter.Runner.create();
-    runnerRef.current = runner;
-    Matter.Runner.run(runner, engine);
-
-    const updatePositions = () => {
-      const next: PositionMap = {};
-
-      items.forEach((item) => {
-        const body = bodyMapRef.current[item.postId];
-        if (!body) return;
-
-        next[item.postId] = {
-          x: body.position.x,
-          y: body.position.y,
-          angle: body.angle,
-        };
-      });
-
-      setPositions(next);
-      animationRef.current = requestAnimationFrame(updatePositions);
-    };
-
-    updatePositions();
-
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      Matter.Runner.stop(runner);
-      Matter.World.clear(world, false);
-      Matter.Engine.clear(engine);
-    };
-  }, [items, size.width, size.height, itemSize]);
+  const positions = usePocketMatter({
+    sceneRef,
+    items,
+    width: size.width,
+    height: size.height,
+    itemSize,
+    wallThickness,
+  });
 
   const handleMouseDown = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
     clickStartRef.current = {
