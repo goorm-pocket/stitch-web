@@ -15,7 +15,6 @@ import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/sha
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
-//type CropShape = "rect" | "round";
 
 //글자수 제한
 const MAX_LENGTH = 500;
@@ -32,12 +31,11 @@ export default function CreatePocketPost() {
   const [markImage, setMarkImage] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
 
-  const [cropImage, setCropImage] = useState<string | null>(null); //자르기 전 원본
+  const [cropImage, setCropImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const [isRoundCrop, setIsRoundCrop] = useState(true); //원형,사각형 토글
-  //const [cropShape, setCropShape] = useState<CropShape>("round");
+  const [isRoundCrop, setIsRoundCrop] = useState(true);
 
   const { mutate: createPost } = useCreatePostMutation();
 
@@ -55,7 +53,6 @@ export default function CreatePocketPost() {
   //디폴트 이모지
   const [selectedEmoji, setSelectedEmoji] = useState(profileData.profileEmoji);
 
-  //const aspect = cropShape === "rect" ? undefined : 1;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,11 +81,10 @@ export default function CreatePocketPost() {
       let markerKey = undefined;
       let postImageKeys: string[] = [];
 
-      // --- 1. 마커 이미지 업로드 (선택된 경우) ---
       if (markType === "image" && markImage) {
         const blob = dataURLtoBlob(markImage);
         const singleRes = await SinglePresignedUrl(profileData.userId, {
-          uploadType: "TEMP_POST_MARKER", // 명세 기반 타입 확인 필요 (TEMP_POST_MARKER 등)
+          uploadType: "TEMP_POST_MARKER",
           contentType: blob.type,
           fileExtension: blob.type.split("/")[1],
           fileSize: blob.size,
@@ -100,10 +96,9 @@ export default function CreatePocketPost() {
         }
       }
 
-      // --- 2. 포스트 이미지들 업로드 (다건) ---
       if (images.length > 0) {
         const multipleRes = await MultiplePresignedUrls(profileData.userId, {
-          uploadType: "TEMP_POST_IMAGE", // 400 에러 방지를 위해 명세상의 타입으로 수정
+          uploadType: "TEMP_POST_IMAGE",
           files: images.map((file, idx) => ({
             clientFileId: `file-${idx}`,
             contentType: file.type,
@@ -113,18 +108,17 @@ export default function CreatePocketPost() {
         });
 
         if (multipleRes.uploads) {
-          // 모든 파일을 S3에 병렬 업로드
+          //S3에 업로드
           await Promise.all(
             multipleRes.uploads.map((u: any, idx: number) =>
               uploadFileToS3(u.uploadUrl, images[idx]),
             ),
           );
-          // 서버 응답 배열 순서대로 key 추출
+          //key 추출
           postImageKeys = multipleRes.uploads.map((u: any) => u.key);
         }
       }
 
-      // --- 3. 최종 포스트 생성 ---
       createPost(
         {
           content: story || undefined,
@@ -149,26 +143,23 @@ export default function CreatePocketPost() {
     }
   };
 
-  // 이모지 선택 핸들러
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setSelectedEmoji(emojiData.emoji);
     setShowEmojiPicker(false);
     setMarkType("emoji");
   };
 
-  // 버블 전용 이미지 업로드
   const handleMarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      setCropImage(reader.result as string); // 1단계: 크롭 창 띄우기
+      setCropImage(reader.result as string);
     };
     reader.readAsDataURL(file);
     e.target.value = "";
   };
 
-  // 크롭 완료 핸들러
   const onCropComplete = (_: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
@@ -178,16 +169,16 @@ export default function CreatePocketPost() {
       const croppedResult = await getCroppedImg(cropImage, croppedAreaPixels, isRoundCrop);
       setMarkImage(croppedResult);
       setMarkType("image");
-      setCropImage(null); // 크롭 창 닫기
+      setCropImage(null);
     }
   };
 
-  //공개 범위 선택 토글
+  //공개 범위
   const toggleVisibility = () => {
     setVisibility((prev) => (prev === "FRIENDS" ? "PRIVATE" : "FRIENDS"));
   };
 
-  //이미지 선택
+  //이미지 업로드
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -210,7 +201,6 @@ export default function CreatePocketPost() {
     });
   };
 
-  //이미지 삭제 기능
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
@@ -226,62 +216,19 @@ export default function CreatePocketPost() {
         <Title>Create New Pocket Post</Title>
         <SubTitle>주머니 속 일상의 조각을 기록해보세요.</SubTitle>
       </HeaderSection>
-      <Card>
-        {cropImage && (
-          <CropModalOverlay>
-            <CropControls>
-              <CropContainer>
-                <Cropper
-                  image={cropImage}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  cropShape={isRoundCrop ? "round" : "rect"}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                />
-              </CropContainer>
-
-              <ControlBottomBar>
-                {/* 1단: 모양 선택 버튼 */}
-                <ShapeButtons>
-                  <ShapeBtn $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
-                    Circle
-                  </ShapeBtn>
-                  <ShapeBtn $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
-                    Square
-                  </ShapeBtn>
-                </ShapeButtons>
-
-                {/* 2단: 실행 버튼 (취소/적용) */}
-                <ActionButtons>
-                  <CancelBtn
-                    onClick={() => {
-                      setCropImage(null);
-                      setIsRoundCrop(true);
-                    }}
-                  >
-                    Cancel
-                  </CancelBtn>
-                  <SaveBtn onClick={saveCroppedImage}>Apply</SaveBtn>
-                </ActionButtons>
-              </ControlBottomBar>
-            </CropControls>
-          </CropModalOverlay>
-        )}
+      <Box>
         <MarkContainer>
           <SectionTitle>Bubble Icon</SectionTitle>
-          <MarkSettingArea>
-            <MarkPreviewCircle $isRound={isRoundCrop}>
+          <MarkSettings>
+            <MarkPreview $isRound={isRoundCrop}>
               {markType === "image" && markImage ? (
                 <img src={markImage} alt="mark" />
               ) : (
                 <span className="emoji-display">{selectedEmoji}</span>
               )}
-            </MarkPreviewCircle>
+            </MarkPreview>
             <MarkButtons>
-              <MarkButton
+              <MarkBtn
                 $active={markType === "emoji"}
                 onClick={() => {
                   setMarkType("emoji");
@@ -290,14 +237,11 @@ export default function CreatePocketPost() {
               >
                 <MarkIcon as={EmojiIcon} />
                 Emoji Icon
-              </MarkButton>
-              <MarkButton
-                $active={markType === "image"}
-                onClick={() => markInputRef.current?.click()}
-              >
+              </MarkBtn>
+              <MarkBtn $active={markType === "image"} onClick={() => markInputRef.current?.click()}>
                 <MarkIcon as={ImageIcon} />
                 Image Icon
-              </MarkButton>
+              </MarkBtn>
             </MarkButtons>
             {showEmojiPicker && (
               <EmojiPickerWrapper>
@@ -305,7 +249,48 @@ export default function CreatePocketPost() {
                 <EmojiPicker onEmojiClick={onEmojiClick} autoFocusSearch={false} />
               </EmojiPickerWrapper>
             )}
-          </MarkSettingArea>
+            {cropImage && (
+              <CropModal>
+                <CropContainer>
+                  <CropView>
+                    <Cropper
+                      image={cropImage}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      cropShape={isRoundCrop ? "round" : "rect"}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                    />
+                  </CropView>
+
+                  <ControlBottom>
+                    <ShapeButtons>
+                      <ShapeBtn $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
+                        Circle
+                      </ShapeBtn>
+                      <ShapeBtn $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
+                        Square
+                      </ShapeBtn>
+                    </ShapeButtons>
+
+                    <ActionButtons>
+                      <CancelBtn
+                        onClick={() => {
+                          setCropImage(null);
+                          setIsRoundCrop(true);
+                        }}
+                      >
+                        Cancel
+                      </CancelBtn>
+                      <SaveBtn onClick={saveCroppedImage}>Apply</SaveBtn>
+                    </ActionButtons>
+                  </ControlBottom>
+                </CropContainer>
+              </CropModal>
+            )}
+          </MarkSettings>
 
           <input
             type="file"
@@ -315,9 +300,9 @@ export default function CreatePocketPost() {
             hidden
           />
         </MarkContainer>
-      </Card>
+      </Box>
 
-      <Card>
+      <Box>
         <SubContainer>
           <SectionTitle>POCKET IMAGE</SectionTitle>
 
@@ -336,19 +321,19 @@ export default function CreatePocketPost() {
               {previewUrls.map((url, index) => (
                 <PreviewItem key={index}>
                   <PreviewImage src={url} alt={`preview-${index}`} />
-                  <DeleteButton onClick={() => removeImage(index)}>×</DeleteButton>
+                  <DeleteBtn onClick={() => removeImage(index)}>×</DeleteBtn>
                 </PreviewItem>
               ))}
 
               {previewUrls.length < MAX_IMAGES && (
-                <AddMoreButton onClick={() => fileInputRef.current?.click()}>
+                <AddMoreBtn onClick={() => fileInputRef.current?.click()}>
                   <UploadIcon as={ImageUploadIcon}></UploadIcon>
                   <span>Add More</span>
-                </AddMoreButton>
+                </AddMoreBtn>
               )}
             </PreviewGrid>
           ) : (
-            <UploadBox onClick={() => fileInputRef.current?.click()} hasImage={false}>
+            <UploadBox onClick={() => fileInputRef.current?.click()} $hasImage={false}>
               <UploadIcon as={ImageUploadIcon}></UploadIcon>
               <UploadText>Upload photos (Max 10)</UploadText>
               <UploadSub>Drag and drop or click to browse files</UploadSub>
@@ -364,11 +349,11 @@ export default function CreatePocketPost() {
             hidden
           />
         </UploadBoxContainer>
-      </Card>
+      </Box>
 
-      <Card>
+      <Box>
         <SectionTitle>POCKET STORY</SectionTitle>
-        <LengthCount isMax={story.length >= MAX_LENGTH}>
+        <LengthCount $isMax={story.length >= MAX_LENGTH}>
           {story.length} / {MAX_LENGTH}
         </LengthCount>
         <StoryBox
@@ -376,21 +361,154 @@ export default function CreatePocketPost() {
           value={story}
           onChange={(e) => setStory(e.target.value)}
         />
-      </Card>
+      </Box>
 
-      <PublishButton onClick={handleSubmit}>Publish to Pocket</PublishButton>
+      <PublishBtn onClick={handleSubmit}>Publish to Pocket</PublishBtn>
     </Container>
   );
 }
 
-const CropModalOverlay = styled.div`
+const Container = styled.div`
+  width: 1000px;
+  margin: 0 auto;
+  padding: 10px 0px;
+`;
+
+const Box = styled.section`
+  width: 100%;
+  background: #ffffff;
+  border: 2px dashed ${({ theme }) => theme.colors.border3};
+  border-radius: 16px;
+  padding: 20px 25px 25px 25px;
+  margin-bottom: 50px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+`;
+
+const HeaderSection = styled.div`
+  margin-bottom: 50px;
+  padding-left: 10px;
+  text-align: left;
+`;
+
+const Title = styled.h1`
+  font-size: 36px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.text_primary};
+  margin-bottom: 8px;
+`;
+
+const SubTitle = styled.p`
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: 16px;
+`;
+
+//Bubble Icon
+const MarkContainer = styled.div``;
+
+const MarkSettings = styled.div`
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  margin-top: 25px;
+  gap: 30px;
+  position: relative;
+  background: ${({ theme }) => theme.colors.background};
+  padding: 20px;
+  border-radius: 12px;
+`;
+
+const MarkPreview = styled.div<{ $isRound: boolean }>`
+  width: 100px;
+  height: 100px;
+
+  border-radius: ${(props) => (props.$isRound ? "50%" : "0")};
+
+  background: white;
+  border: 3px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-radius 0.3s ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .emoji-display {
+    font-size: 50px;
+  }
+`;
+
+const MarkButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+`;
+
+const MarkBtn = styled.button<{ $active: boolean }>`
+  width: 160px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.2s;
+  background: ${(props) => (props.$active ? "#f0f7ff" : props.theme.colors.background)};
+  color: ${(props) => (props.$active ? "#6f95b5" : "#4b5563")};
+
+  &:hover {
+    background: #f9fafb;
+  }
+`;
+
+const MarkIcon = styled.div`
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+`;
+
+const EmojiPickerWrapper = styled.div`
+  position: absolute;
+  top: 60px;
+  left: 130px;
+  z-index: 100;
+
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+  }
+`;
+
+const CropModal = styled.div`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 3000; /* 이모지 피커보다 위에 위치 */
+  z-index: 3000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -398,18 +516,8 @@ const CropModalOverlay = styled.div`
 `;
 
 const CropContainer = styled.div`
-  position: relative;
-  width: 100%;
-  height: 400px; /* ProfileModal의 CropContainer 높이 */
-  background: #333;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-`;
-
-const CropControls = styled.div`
   background: white;
-  width: 580px; /* ProfileModal과 동일한 너비 */
+  width: 580px;
   max-height: 90vh;
   padding: 30px;
   border-radius: 16px;
@@ -420,8 +528,17 @@ const CropControls = styled.div`
   overflow-y: auto;
 `;
 
-/* 버튼들을 감싸는 하단 바 영역 */
-const ControlBottomBar = styled.div`
+const CropView = styled.div`
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #333;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+`;
+
+const ControlBottom = styled.div`
   display: flex;
   justify-content: center;
   gap: 12px;
@@ -456,19 +573,9 @@ const ActionButtons = styled.div`
   display: flex;
   gap: 12px;
   width: 100%;
-  justify-content: flex-end; /* 캔슬/어플라이는 오른쪽 정렬 */
-  border-top: 1px solid #eee; /* 구분선 추가 */
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
   padding-top: 15px;
-`;
-
-const SaveBtn = styled.button`
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  padding: 10px 24px;
-  border-radius: 8px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
 `;
 
 const CancelBtn = styled.button`
@@ -484,79 +591,17 @@ const CancelBtn = styled.button`
   }
 `;
 
-const MarkSettingArea = styled.div`
-  display: flex;
-  align-items: center;
-  background: #f9fafb;
-  border-radius: 16px;
-  border: 2px dashed #d1d5db;
-  margin-top: 25px;
-  gap: 30px;
-  position: relative;
-  background: ${({ theme }) => theme.colors.background};
-  padding: 20px;
-  border-radius: 12px;
+const SaveBtn = styled.button`
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
 `;
 
-const MarkPreviewCircle = styled.div<{ $isRound: boolean }>`
-  width: 100px;
-  height: 100px;
-
-  /* 🔥 핵심: isRound 상태에 따라 곡률을 동적으로 변경 */
-  border-radius: ${(props) =>
-    props.$isRound
-      ? "50%"
-      : "0"}; /* 사각형일 때도 약간의 곡률을 주면 더 세련돼 보입니다. 원하시면 0px로 하셔도 됩니다. */
-
-  background: white;
-  border: 3px solid white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  transition: border-radius 0.3s ease; /* 모양 변경 시 부드러운 효과 */
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .emoji-display {
-    font-size: 50px;
-  }
-`;
-
-const EmojiPickerWrapper = styled.div`
-  position: absolute;
-  top: 60px;
-  left: 130px;
-  z-index: 100;
-
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-  }
-`;
-
-const Container = styled.div`
-  width: 1000px;
-  margin: 0 auto;
-  padding: 10px 0px;
-`;
-
-const HeaderSection = styled.div`
-  margin-bottom: 50px;
-  padding-left: 10px;
-  text-align: left;
-`;
-
+//Pocket Image
 const SubContainer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -600,49 +645,19 @@ const ToggleHandle = styled.div<{ $active: boolean }>`
   transform: ${(props) => (props.$active ? "translateX(24px)" : "translateX(0)")};
 `;
 
-const Title = styled.h1`
-  font-size: 36px;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.text_primary};
-  margin-bottom: 8px;
-`;
-
-const SubTitle = styled.p`
-  color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: 16px;
-`;
-
-const Card = styled.section`
-  width: 100%;
-  background: #ffffff;
-  border: 2px dashed ${({ theme }) => theme.colors.border3};
-  border-radius: 16px;
-  padding: 20px 25px 25px 25px;
-  margin-bottom: 50px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-  box-sizing: border-box;
-`;
-
-const SectionTitle = styled.h3`
-  font-size: 15px;
-  letter-spacing: 1px;
-  color: ${({ theme }) => theme.colors.text_primary};
-  text-transform: uppercase;
-`;
-
 const UploadBoxContainer = styled.div`
   width: 100%;
-  height: 400px; /* 섹션 전체 높이 고정 */
+  height: 400px;
   background: #f9fafb;
   border-radius: 16px;
   border: 2px dashed #d1d5db;
-  overflow: hidden; /* 내부 요소가 넘치면 가림 */
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
-const UploadBox = styled.div<{ hasImage: boolean }>`
+const UploadBox = styled.div<{ $hasImage: boolean }>`
   width: 100%;
   height: 100%;
   display: flex;
@@ -676,7 +691,7 @@ const PreviewGrid = styled.div`
 
 const PreviewItem = styled.div`
   position: relative;
-  flex: 0 0 350px; /* 미리보기 사진의 가로 크기 크게 고정 */
+  flex: 0 0 350px;
   height: 300px;
   background: #eee;
   border-radius: 12px;
@@ -693,7 +708,7 @@ const PreviewImage = styled.img`
   border: 1px dashed ${({ theme }) => theme.colors.border3};
 `;
 
-const DeleteButton = styled.button`
+const DeleteBtn = styled.button`
   position: absolute;
   top: 7px;
   right: 7px;
@@ -713,7 +728,7 @@ const DeleteButton = styled.button`
   }
 `;
 
-const AddMoreButton = styled.div`
+const AddMoreBtn = styled.div`
   flex: 0 0 200px;
   height: 300px;
   border: 2px dashed #d1d5db;
@@ -734,73 +749,28 @@ const AddMoreButton = styled.div`
 const UploadIcon = styled.div`
   color: currentColor;
 `;
+
 const UploadText = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: #374151;
   margin-top: 12px;
 `;
+
 const UploadSub = styled.div`
   font-size: 13px;
   color: #9ca3af;
   margin-top: 4px;
 `;
 
-const MarkContainer = styled.div``;
-
-const MarkLabel = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 20px;
-`;
-
-const MarkButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  justify-content: flex-start;
-`;
-
-const MarkIcon = styled.div`
-  margin-right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: currentColor;
-`;
-
-//transient prop ($) 사용으로 DOM에 active 속성이 전달되지 않도록 함
-const MarkButton = styled.button<{ $active: boolean }>`
-  width: 160px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
-  cursor: pointer;
-
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  transition: all 0.2s;
-  background: ${(props) => (props.$active ? "#f0f7ff" : props.theme.colors.background)};
-  color: ${(props) => (props.$active ? "#6f95b5" : "#4b5563")};
-
-  &:hover {
-    background: #f9fafb;
-  }
-`;
-
-const LengthCount = styled.span<{ isMax: boolean }>`
+//Pocket Story
+const LengthCount = styled.span<{ $isMax: boolean }>`
   font-size: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: ${(props) => (props.isMax ? "#ff4d4d" : props.theme.colors.text_secondary)};
-  font-weight: ${(props) => (props.isMax ? "700" : "400")};
+  color: ${(props) => (props.$isMax ? "#ff4d4d" : props.theme.colors.text_secondary)};
+  font-weight: ${(props) => (props.$isMax ? "700" : "400")};
 `;
 
 const StoryBox = styled.textarea`
@@ -821,7 +791,14 @@ const StoryBox = styled.textarea`
   }
 `;
 
-const PublishButton = styled(StitchedBox)`
+const SectionTitle = styled.h3`
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: ${({ theme }) => theme.colors.text_primary};
+  text-transform: uppercase;
+`;
+
+const PublishBtn = styled(StitchedBox)`
   width: 100%;
   height: 60px;
   margin: 20px 0;
