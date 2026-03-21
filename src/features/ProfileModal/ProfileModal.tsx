@@ -120,13 +120,17 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "photo" | "emoji") => {
     const file = e.target.files?.[0];
     if (file) {
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      if (type === "photo") setCropShape("round");
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (type === "photo") setImageToCrop({ url: reader.result as string, type });
-        else setImageToCrop({ url: reader.result as string, type: "emoji" });
+        if (type === "photo") {
+          setCropShape("round");
+          setProfileImg(reader.result as string);
+          setImageToCrop(null);
+        } else {
+          setCrop({ x: 0, y: 0 });
+          setZoom(1);
+          setImageToCrop({ url: reader.result as string, type: "emoji" });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -275,8 +279,10 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       setFormData(initialData); //백업 데이터로 복구
       setProfileImg(initialData.profileImg);
       setEmojiContent(initialData.emojiContent);
+      if (isEmojiText(initialData.emojiContent)) {
+        setBubbleShape("round");
+      }
     }
-    setCropShape("round");
     setIsEditing(false);
     setShowEmojiPicker(false);
   };
