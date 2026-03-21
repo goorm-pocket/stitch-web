@@ -8,10 +8,13 @@ import {
   useGetProfileQuery,
   usePatchProfileMutation,
   useSetupProfileMutation,
+  useGetNotificationSettingsQuery,
 } from "@/shared/hooks/useUser";
+import { apiClient } from "@/shared/api/axios";
 
 type CropShape = "rect" | "round";
 
+//입력 데이터
 interface FormData {
   nickname: string;
   realName: string;
@@ -25,8 +28,8 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
 
-  const [isEditing, setIsEditing] = useState(isInitial);
-  const [initialData, setInitialData] = useState<FormData | null>(null);
+  const [isEditing, setIsEditing] = useState(isInitial); //조회, 수정 모드
+  const [initialData, setInitialData] = useState<FormData | null>(null); //복구 데이터
   const [formData, setFormData] = useState<FormData>({
     nickname: "",
     realName: "",
@@ -40,6 +43,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const [bubbleShape, setBubbleShape] = useState<CropShape>("round");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  //크롭 이미지 객체
   const [imageToCrop, setImageToCrop] = useState<{ url: string; type: "photo" | "emoji" } | null>(
     null,
   );
@@ -57,6 +61,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
   //오늘 날짜
   const today = new Date().toISOString().split("T")[0];
+
   //Required
   const isFormValid =
     formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
@@ -68,7 +73,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   }, [imageToCrop, cropShape]);
 
   const updateUIWithData = (data: any) => {
-    console.log("data", data);
+    console.log("updateUIWithData", data);
     const mappedData = {
       nickname: data.nickname || "",
       realName: data.realName || "",
@@ -152,49 +157,103 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     setImageToCrop(null); // 크롭 창 닫기
   };
 
+  // 1. Base64를 File 객체로 변환하는 유틸리티
+  const base64ToFile = (base64: string, fileName: string) => {
+    const [header, data] = base64.split(",");
+    const mime = header.match(/:(.*?);/)?.[1];
+    const bstr = atob(data);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], fileName, { type: mime });
+  };
+
+  // 2. S3 업로드 프로세스 (Presigned URL 활용)
+  const uploadToS3 = async (file: File, userId: string) => {
+    // 1. 서버에 Presigned URL 요청 (명세서 기준)
+    const res = await apiClient.post(
+      "/api/v1/uploads/presigned-url",
+      {
+        uploadType: "PROFILE_IMAGE", // 명세서 예시 값
+        contentType: file.type, // image/jpeg 등
+        fileExtension: file.name.split(".").pop() || "jpg",
+        fileSize: file.size.toString(), // 문자열로 전송
+      },
+      {
+        params: { userId: userId }, // 쿼리 파라미터 ?userId=...
+      },
+    );
+
+    const { uploadUrl, key } = res.data.data;
+
+    // 2. S3에 직접 Binary 파일 업로드 (PUT)
+    await fetch(uploadUrl, {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": file.type },
+    });
+
+    // DB에 저장할 때 사용할 'key' 반환
+    return key;
+  };
+
   const handleSave = async () => {
+    let userId = profileData.userId;
     if (!isFormValid) return;
 
-    // 1. 현재 선택된 bubble(emojiContent)이 이미지인지 이모지인지 판별
-    const isEmoji = isEmojiText(emojiContent);
-
-    // 2. 서버로 보낼 페이로드 구성
-    const payload: any = {
-      nickname: formData.nickname,
-      realName: formData.realName,
-      birth: formData.birth || undefined,
-      isPublic: true,
-      namePublic: true,
-      birthPublic: false,
-      agePublic: false,
-      // 기본 프로필 이미지 처리
-      profileImageKey: profileImg || undefined,
-    };
-
-    // 3. 필드별 데이터 할당 (16자 제한 방어)
-    if (isEmoji) {
-      // 순수 이모지(예: "🚀")일 때만 profileEmoji 필드 사용
-      payload.profileEmoji = emojiContent || undefined;
-    } else {
-      /* bubble에 이미지가 들어있을 경우 (Base64)
-       - profileEmoji는 서버 제한(16자) 때문에 넣을 수 없으므로 비움
-       - 대신 profileImageKey에 이미지 데이터를 넣음 (서버 구조에 따라 필드명 확인 필요)
-    */
-      payload.profileEmoji = "IMAGE_TYPE"; // 서버와 약속된 구분값 (16자 이하)
-      payload.profileImageKey = emojiContent || profileImg || undefined;
-    }
-
     try {
+      // 0. 현재 로그인한 유저 ID 확인 (Redux, Context 등에서 가져온 값)
+      // 예: const userId = currentUser.id;
+      if (!userId) {
+        alert("로그인 정보가 없습니다.");
+        return;
+      }
+
+      let finalProfileKey = profileImg;
+      let finalEmojiValue = emojiContent;
+
+      // 1. 프로필 이미지가 새로 크롭된 Base64라면 S3 업로드
+      if (profileImg && profileImg.startsWith("data:image")) {
+        const file = base64ToFile(profileImg, `profile_${Date.now()}.jpg`);
+        finalProfileKey = await uploadToS3(file, userId);
+      }
+
+      // 2. Bubble(Emoji) 데이터 처리
+      const isEmoji = isEmojiText(emojiContent);
+
+      if (!isEmoji && emojiContent && emojiContent.startsWith("data:image")) {
+        // 버블이 이미지(Base64)라면 S3 업로드
+        const file = base64ToFile(emojiContent, `bubble_${Date.now()}.jpg`);
+        finalEmojiValue = await uploadToS3(file, userId);
+      }
+
+      // 3. 최종 서버 페이로드 구성
+      const payload: any = {
+        nickname: formData.nickname,
+        realName: formData.realName,
+        birth: formData.birth || undefined,
+        profileImageKey: finalProfileKey || undefined, // S3 Key (짧음)
+        profileEmoji: finalEmojiValue || undefined, // 이모지 문자열 OR S3 Key
+        isPublic: true,
+        namePublic: true,
+        birthPublic: false,
+        agePublic: false,
+      };
+
+      // 4. 프로필 생성 또는 수정 API 호출
       const response = isInitial
         ? await setupProfileMutate({ profile: payload })
         : await patchProfileMutate({ profile: payload });
 
       updateUIWithData(response);
       alert(isInitial ? "설정이 완료되었습니다!" : "수정되었습니다!");
+      setIsEditing(false);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Save Error:", err);
-      alert("저장 중 오류가 발생했습니다.");
+      // 400 에러 등이 발생했을 때 서버의 메시지를 보여주면 디버깅이 쉽습니다.
+      const errorMsg = err.response?.data?.message || "저장 중 오류가 발생했습니다.";
+      alert(errorMsg);
     }
   };
 

@@ -15,11 +15,11 @@ const PocketPage = () => {
     if (isMeLoading || isProfileLoading) return;
 
     if (me) {
-      // 필수 데이터 존재 여부 확인 (이 값이 모두 있어야 '완성'으로 간주)
-      const hasRequiredInfo = !!(profile?.nickname && profile?.realName && profile?.profileEmoji);
+      // 필수 정보(닉네임, 실명, 이모지 등)가 하나라도 없는 경우 '설정 미완료'로 간주
+      const isProfileIncomplete =
+        !profile?.nickname || !profile?.realName || !profile?.profileEmoji;
 
-      // 약관 동의가 안 되었거나, 필수 정보가 하나라도 없는 경우에만 띄움
-      if (!me.isAgreed || !hasRequiredInfo) {
+      if (isProfileIncomplete) {
         setProfileModal(true);
       }
     }

@@ -37,6 +37,7 @@ const mockdata: Post = {
 };
 
 interface PostModalProps {
+  userId: string;
   postId: string;
   onClose: () => void;
 }
