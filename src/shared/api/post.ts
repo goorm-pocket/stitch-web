@@ -1,6 +1,7 @@
 import type { ApiResponse } from "../types/common.type";
 import { apiClient } from "./axios";
 import type { MarkerType, PostVisibility } from "../types/post.type";
+import type { Calendar, Post } from "../types/post.type";
 
 export interface CreatePostReq {
   content?: string;
@@ -17,8 +18,8 @@ export interface CreatePostRes {
 
 export async function createPost(body: CreatePostReq): Promise<CreatePostRes> {
   const res = await apiClient.post<ApiResponse<CreatePostRes>>("/api/v1/posts", body);
-import type { Calendar, Post } from "../types/post.type";
-import { apiClient } from "./axios";
+  return res.data.data;
+}
 
 export async function getPostById({ postId }: { postId: string }): Promise<Post> {
   const res = await apiClient.get<ApiResponse<Post>>(`/api/v1/posts/${postId}`);

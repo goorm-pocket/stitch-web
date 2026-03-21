@@ -353,7 +353,7 @@ const Pocket = () => {
         </PocketArea>
       </PocketWrapper>
       {isModalOpen && selectedPostId && (
-        <PostModal onClose={() => setIsModalOpen(false)} postId={selectedPostId} />
+        <PostModal onClose={() => setIsModalOpen(false)} postId={selectedPostId} userId={""} />
       )}
     </Container>
   );

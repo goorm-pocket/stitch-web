@@ -2,7 +2,7 @@ export interface Profile {
   userId: string;
   nickname: string;
   realName: string | null;
-  profileImageUrl?: string | null;
+  profileImageUrl?: string | "";
   profileEmoji?: string;
   birth?: string;
   age?: number;
