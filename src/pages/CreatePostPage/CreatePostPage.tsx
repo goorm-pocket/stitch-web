@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import Cropper, { type Area } from "react-easy-crop";
@@ -10,10 +11,11 @@ import type { EmojiClickData } from "emoji-picker-react";
 import { useCreatePostMutation } from "../../shared/hooks/usePost";
 import { getCroppedImg } from "./imageCrop";
 import { useGetProfileQuery } from "@/shared/hooks/useUser";
+import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
-type CropShape = "rect" | "round";
+//type CropShape = "rect" | "round";
 
 //글자수 제한
 const MAX_LENGTH = 500;
@@ -21,6 +23,7 @@ const MAX_LENGTH = 500;
 const MAX_IMAGES = 10;
 
 export default function CreatePocketPost() {
+  const navigate = useNavigate();
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [story, setStory] = useState("");
@@ -34,50 +37,116 @@ export default function CreatePocketPost() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isRoundCrop, setIsRoundCrop] = useState(true); //원형,사각형 토글
-  const [cropShape, setCropShape] = useState<CropShape>("round");
+  //const [cropShape, setCropShape] = useState<CropShape>("round");
 
   const { mutate: createPost } = useCreatePostMutation();
 
   //사용자 정보 조회
   const { data: profileData } = useGetProfileQuery();
   useEffect(() => {
+    if (!profileData?.userId) {
+      alert("사용자 정보를 불러올 수 없습니다.");
+      return;
+    }
     if (profileData) {
       console.log("모달 정보 조회", profileData);
     }
   }, [profileData]);
   //디폴트 이모지
-  let DefualtEmoji = profileData.profileEmoji;
-  const [selectedEmoji, setSelectedEmoji] = useState(DefualtEmoji);
+  const [selectedEmoji, setSelectedEmoji] = useState(profileData.profileEmoji);
 
   //const aspect = cropShape === "rect" ? undefined : 1;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
+
+  const dataURLtoBlob = (dataurl: string) => {
+    const arr = dataurl.split(","),
+      mime = arr[0].match(/:(.*?);/)![1];
+    let bstr = atob(arr[1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new Blob([u8arr], { type: mime });
+  };
 
   const handleSubmit = async () => {
     if (story.length > MAX_LENGTH) {
       alert("글자 수는 500자를 초과할 수 없습니다.");
       return;
     }
-    const markerType = markType === "emoji" ? "EMOJI" : "IMAGE";
 
-    createPost(
-      {
-        content: story || undefined,
-        visibility,
-        markerType,
-        markerEmoji: markerType === "EMOJI" ? selectedEmoji : undefined,
-        markerImageKey: markerType === "IMAGE" ? (markImage ?? undefined) : undefined,
-      },
-      {
-        onSuccess: () => {
-          alert("성공적으로 발행되었습니다!");
+    if (!story.trim() && images.length === 0) {
+      alert("내용 또는 사진을 최소 하나 이상 포함해야 합니다.");
+      return;
+    }
+
+    try {
+      let markerKey = undefined;
+      let postImageKeys: string[] = [];
+
+      // --- 1. 마커 이미지 업로드 (선택된 경우) ---
+      if (markType === "image" && markImage) {
+        const blob = dataURLtoBlob(markImage);
+        const singleRes = await SinglePresignedUrl(profileData.userId, {
+          uploadType: "TEMP_POST_MARKER", // 명세 기반 타입 확인 필요 (TEMP_POST_MARKER 등)
+          contentType: blob.type,
+          fileExtension: blob.type.split("/")[1],
+          fileSize: blob.size,
+        });
+
+        if (singleRes.uploadUrl) {
+          await uploadFileToS3(singleRes.uploadUrl, blob);
+          markerKey = singleRes.key;
+        }
+      }
+
+      // --- 2. 포스트 이미지들 업로드 (다건) ---
+      if (images.length > 0) {
+        const multipleRes = await MultiplePresignedUrls(profileData.userId, {
+          uploadType: "TEMP_POST_IMAGE", // 400 에러 방지를 위해 명세상의 타입으로 수정
+          files: images.map((file, idx) => ({
+            clientFileId: `file-${idx}`,
+            contentType: file.type,
+            fileExtension: file.name.split(".").pop() || "png",
+            fileSize: file.size,
+          })),
+        });
+
+        if (multipleRes.uploads) {
+          // 모든 파일을 S3에 병렬 업로드
+          await Promise.all(
+            multipleRes.uploads.map((u: any, idx: number) =>
+              uploadFileToS3(u.uploadUrl, images[idx]),
+            ),
+          );
+          // 서버 응답 배열 순서대로 key 추출
+          postImageKeys = multipleRes.uploads.map((u: any) => u.key);
+        }
+      }
+
+      // --- 3. 최종 포스트 생성 ---
+      createPost(
+        {
+          content: story || undefined,
+          visibility,
+          markerType: markType === "emoji" ? "EMOJI" : "IMAGE",
+          markerEmoji: markType === "emoji" ? selectedEmoji : undefined,
+          markerImageKey: markerKey,
+          imageKeys: postImageKeys,
         },
-        onError: (err) => {
-          console.error(err);
-          alert("포스트 생성 실패");
+        {
+          onSuccess: () => {
+            alert("성공적으로 발행되었습니다!");
+
+            navigate("/pocket");
+          },
+          onError: () => alert("포스트 생성 중 오류가 발생했습니다."),
         },
-      },
-    );
+      );
+    } catch (error) {
+      console.error("Upload Error:", error);
+      alert("이미지 처리 중 오류가 발생했습니다. 전송 데이터를 확인해주세요.");
+    }
   };
 
   // 이모지 선택 핸들러

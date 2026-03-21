@@ -3,7 +3,7 @@ import { apiClient } from "./axios";
 import type { ApiResponse } from "../types/common.type";
 
 export interface PresignedUrlReq {
-  uploadType: "POST_IMAGE" | "MARKER_IMAGE" | "PROFILE_IMAGE";
+  uploadType: "PROFILE_IMAGE" | "TEMP_POST_MARKER" | "TEMP_POST_IMAGE";
   files?: {
     clientFileId: string;
     contentType: string;
@@ -27,17 +27,17 @@ export interface PresignedUrlRes {
   key?: string;
 }
 
-export const MultiplePresignedUrls = async (body: PresignedUrlReq) => {
+export const MultiplePresignedUrls = async (userId: string, body: PresignedUrlReq) => {
   const res = await apiClient.post<ApiResponse<PresignedUrlRes>>(
-    "/api/v1/uploads/presigned-urls",
+    `/api/v1/uploads/presigned-urls?userId=${userId}`,
     body,
   );
   return res.data.data;
 };
 
-export const SinglePresignedUrl = async (body: PresignedUrlReq) => {
+export const SinglePresignedUrl = async (userId: string, body: PresignedUrlReq) => {
   const res = await apiClient.post<ApiResponse<PresignedUrlRes>>(
-    "/api/v1/uploads/presigned-url",
+    `/api/v1/uploads/presigned-url?userId=${userId}`,
     body,
   );
   return res.data.data;
