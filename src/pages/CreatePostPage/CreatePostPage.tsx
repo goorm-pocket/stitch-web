@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import Cropper, { type Area } from "react-easy-crop";
@@ -9,6 +9,7 @@ import EmojiPicker from "emoji-picker-react";
 import type { EmojiClickData } from "emoji-picker-react";
 import { useCreatePostMutation } from "../../shared/hooks/usePost";
 import { getCroppedImg } from "./imageCrop";
+import { useGetProfileQuery } from "@/shared/hooks/useUser";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
@@ -24,7 +25,6 @@ export default function CreatePocketPost() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [story, setStory] = useState("");
   const [markType, setMarkType] = useState<MarkType>("emoji");
-  const [selectedEmoji, setSelectedEmoji] = useState("📍"); //나중에 디폴트 이모지 넣기
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [markImage, setMarkImage] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
@@ -37,6 +37,17 @@ export default function CreatePocketPost() {
   const [cropShape, setCropShape] = useState<CropShape>("round");
 
   const { mutate: createPost } = useCreatePostMutation();
+
+  //사용자 정보 조회
+  const { data: profileData } = useGetProfileQuery();
+  useEffect(() => {
+    if (profileData) {
+      console.log("모달 정보 조회", profileData);
+    }
+  }, [profileData]);
+  //디폴트 이모지
+  let DefualtEmoji = profileData.profileEmoji;
+  const [selectedEmoji, setSelectedEmoji] = useState(DefualtEmoji);
 
   //const aspect = cropShape === "rect" ? undefined : 1;
   const fileInputRef = useRef<HTMLInputElement>(null);

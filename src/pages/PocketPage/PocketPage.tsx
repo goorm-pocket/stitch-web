@@ -1,11 +1,13 @@
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFetchMeQuery } from "../../shared/hooks/useAuth";
 import ProfileModal from "@/features/ProfileModal/ProfileModal";
 import { useGetProfileQuery } from "@/shared/hooks/useUser";
 
 const PocketPage = () => {
+  const navigate = useNavigate();
   const { data: me, isLoading: isMeLoading } = useFetchMeQuery();
   const { data: profile, isLoading: isProfileLoading } = useGetProfileQuery();
   const [profileModal, setProfileModal] = useState(false);
