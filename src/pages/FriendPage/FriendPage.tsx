@@ -10,6 +10,7 @@ import {
 } from "@/shared/hooks/useFriend";
 import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
+import type { Friend } from "@/shared/types/friend.type";
 
 const FriendPage = () => {
   const searchInputRef = useRef<HTMLDivElement | null>(null);
@@ -107,9 +108,13 @@ const FriendPage = () => {
         {selectList == "friend" &&
           friends.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
         {selectList == "sent" &&
-          sentRequests.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+          sentRequests.map((friend: Friend) => (
+            <FriendItem key={friend.friendId} friend={friend} />
+          ))}
         {selectList == "received" &&
-          receivedRequests.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+          receivedRequests.map((friend: Friend) => (
+            <FriendItem key={friend.friendId} friend={friend} />
+          ))}
       </FriendListContainer>
     </Container>
   );

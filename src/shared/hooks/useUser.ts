@@ -7,18 +7,17 @@ import {
   patchNotificationSettings,
   patchPrivacySettings,
   withdrawAccount,
-  getProfile,
   patchProfile,
   patchPrivateProfile,
   setupProfile,
 } from "../api/user";
-
+/*
 export function useGetProfileQuery() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: getProfile,
   });
-}
+}*/
 
 export function useGetNotificationSettingsQuery() {
   return useQuery({
@@ -106,6 +105,10 @@ export function usepatchPrivateProfileMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
+
 export function useGetProfileByNameQuery({ query }: { query: string }) {
   return useInfiniteQuery({
     queryKey: ["profile", query],

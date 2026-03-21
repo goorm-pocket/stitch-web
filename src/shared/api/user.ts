@@ -1,5 +1,3 @@
-import type { MyProfile, NotificationSettings, PrivacySettings, Profile } from "../types/user.type";
-import type { ApiResponse } from "../types/common.type";
 import type { ApiResponse } from "../types/common.type";
 import type {
   MyProfile,
