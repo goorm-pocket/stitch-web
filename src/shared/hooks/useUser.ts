@@ -5,6 +5,10 @@ import {
   patchNotificationSettings,
   patchPrivacySettings,
   withdrawAccount,
+  getProfile,
+  patchProfile,
+  patchPrivateProfile,
+  setupProfile,
 } from "../api/user";
 
 export function useGetNotificationSettingsQuery() {
@@ -46,5 +50,53 @@ export function usePatchPrivacySettingsMutation() {
 export function useWithdrawAccountMutation() {
   return useMutation({
     mutationFn: withdrawAccount,
+  });
+}
+
+export function useGetProfileQuery() {
+  return useQuery({
+    queryKey: ["user-profile"],
+    queryFn: getProfile,
+    select: (res: any) => res,
+  });
+}
+
+//신규 프로필 생성
+export function useSetupProfileMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: setupProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
+
+//프로필 수정
+export function usePatchProfileMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: patchProfile,
+    onSuccess: () => {
+      //queryClient.setQueryData(["user-profile"], data);
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
+
+//민감 정보(실명, 생일)
+export function usepatchPrivateProfileMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: patchPrivateProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
   });
 }

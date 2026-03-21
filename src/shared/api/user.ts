@@ -1,4 +1,5 @@
 import type { MyProfile, NotificationSettings, PrivacySettings, Profile } from "../types/user.type";
+import type { ApiResponse } from "../types/common.type";
 import { apiClient } from "./axios";
 
 export async function getProfileById({ userId }: { userId: string }): Promise<Profile> {
@@ -70,8 +71,8 @@ export async function patchPrivacySettings({
 }
 
 export async function getProfile(): Promise<MyProfile> {
-  const res = await apiClient.get<MyProfile>("/api/v1/users/me/profile");
-  return res.data;
+  const res = await apiClient.get<ApiResponse<MyProfile>>("/api/v1/users/me/profile");
+  return res.data.data;
 }
 
 // profile 중 realName, birth, gender 만 수정
@@ -86,20 +87,27 @@ export async function patchPrivateProfile({
 
 interface PatchProfileReq {
   nickname?: string;
+  realName?: string;
   profileImageKey?: string;
   profileEmoji?: string;
+  birth?: string;
+  isPublic?: boolean;
+  namePublic?: boolean;
+  birthPublic?: boolean;
+  agePublic?: boolean;
 }
 
 export async function patchProfile({ profile }: { profile: PatchProfileReq }) {
-  const res = await apiClient.patch("/api/v1/users/me/profile", profile);
-  return res.data;
+  const res = await apiClient.patch<ApiResponse<MyProfile>>("/api/v1/users/me/profile", profile);
+  return res.data.data;
 }
 
 interface SetupProfileReq {
   nickname: string;
   realName: string;
+  birth?: string;
   profileImageKey?: string;
-  profileEmoji: string;
+  profileEmoji?: string;
   isPublic: boolean;
   namePublic: boolean;
   birthPublic: boolean;
@@ -107,8 +115,11 @@ interface SetupProfileReq {
 }
 
 export async function setupProfile({ profile }: { profile: SetupProfileReq }) {
-  const res = await apiClient.patch("/api/v1/users/me/profile/setup", profile);
-  return res.data;
+  const res = await apiClient.patch<ApiResponse<MyProfile>>(
+    "/api/v1/users/me/profile/setup",
+    profile,
+  );
+  return res.data.data;
 }
 
 interface GetProfileByNameRes {

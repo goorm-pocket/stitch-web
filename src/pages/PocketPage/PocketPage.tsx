@@ -1,11 +1,35 @@
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useFetchMeQuery } from "../../shared/hooks/useAuth";
+import ProfileModal from "@/features/ProfileModal/ProfileModal";
+import { useGetProfileQuery } from "@/shared/hooks/useUser";
 
 const PocketPage = () => {
-  const navigate = useNavigate();
+  const { data: me, isLoading: isMeLoading } = useFetchMeQuery();
+  const { data: profile, isLoading: isProfileLoading } = useGetProfileQuery();
+  const [profileModal, setProfileModal] = useState(false);
+
+  useEffect(() => {
+    // 로딩 중에는 판단을 보류합니다.
+    if (isMeLoading || isProfileLoading) return;
+
+    if (me) {
+      // 필수 정보(닉네임, 실명, 이모지 등)가 하나라도 없는 경우 '설정 미완료'로 간주
+      const isProfileIncomplete =
+        !profile?.nickname || !profile?.realName || !profile?.profileEmoji;
+
+      if (isProfileIncomplete) {
+        setProfileModal(true);
+      }
+    }
+  }, [me, profile, isMeLoading, isProfileLoading]);
+
   return (
     <Container>
+      {profileModal && (
+        <ProfileModal onClose={() => setProfileModal(false)} isInitial={!me?.isAgreed} />
+      )}
       <TitleContainer>
         <Title>Your Pocket</Title>
         <Subtitle>Discover what&apos;s tucked away in your space today.</Subtitle>
