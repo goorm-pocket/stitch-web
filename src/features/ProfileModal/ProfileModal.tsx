@@ -3,15 +3,16 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Cropper from "react-easy-crop";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
-import { getProfile, patchProfile, setupProfile } from "@/shared/api/user";
 import {
   useGetProfileQuery,
   usePatchProfileMutation,
   useSetupProfileMutation,
-  useGetNotificationSettingsQuery,
   usepatchPrivateProfileMutation,
 } from "@/shared/hooks/useUser";
 import { apiClient } from "@/shared/api/axios";
+import { SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
+
+const S3_BASE_URL = "https://pocket-stitch-media-dev.s3.ap-northeast-2.amazonaws.com/"; //나중에 분리
 
 type CropShape = "rect" | "round";
 
@@ -20,29 +21,37 @@ interface FormData {
   nickname: string;
   realName: string;
   birth: string;
-  profileImg: string | null;
+  profileImageUrl: string | null;
   emojiContent: string | null;
 }
 
 const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
+  //API
   const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery();
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
   const { mutateAsync: patchPrivateProfileMutate } = usepatchPrivateProfileMutation();
 
-  const [isEditing, setIsEditing] = useState(isInitial); //조회, 수정 모드
-  const [initialData, setInitialData] = useState<FormData | null>(null); //복구 데이터
+  //조회, 수정 모드
+  const [isEditing, setIsEditing] = useState(isInitial);
+  //복구 데이터
+  const [initialData, setInitialData] = useState<FormData | null>(null);
   const [formData, setFormData] = useState<FormData>({
     nickname: "",
     realName: "",
     birth: "",
-    profileImg: "",
+    profileImageUrl: "",
     emojiContent: "",
   });
 
+  //화면 표시용
   const [profileImg, setProfileImg] = useState<string | null>(null);
+  //S3 key
+  const [profileImageKey, setProfileImageKey] = useState<string>("");
+  //실제 파일
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+
   const [emojiContent, setEmojiContent] = useState<string | null>(null);
-  const [bubbleShape, setBubbleShape] = useState<CropShape>("round");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   //크롭 이미지 객체
@@ -57,42 +66,17 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const aspect = cropShape === "rect" ? undefined : 1;
 
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const emojiInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const isInitialized = useRef(false);
 
-  //오늘 날짜
+  //날짜&필수값
   const today = new Date().toISOString().split("T")[0];
-
-  //Required
   const isFormValid =
     formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
 
-  const currentCropConfig = useMemo(() => {
-    if (!imageToCrop) return { aspect: 1, shape: "round" as CropShape };
-    if (imageToCrop.type === "photo") return { aspect: 1, shape: "round" as CropShape };
-    return { aspect: cropShape === "rect" ? undefined : 1, shape: cropShape };
-  }, [imageToCrop, cropShape]);
-
-  const updateUIWithData = (data: any) => {
-    console.log("updateUIWithData", data);
-    const mappedData = {
-      nickname: data.nickname || "",
-      realName: data.realName || "",
-      birth: data.birth || data.birthDate || "",
-      profileImg: data.profileImageUrl || "",
-      emojiContent: data.profileEmoji || "",
-    };
-    setFormData(mappedData);
-    setInitialData(mappedData);
-    setProfileImg(mappedData.profileImg || null);
-    setEmojiContent(mappedData.emojiContent || null);
-  };
-
-  //모달 정보 조회
+  //정보 조회
   useEffect(() => {
     if (profileData && !isInitialized.current) {
-      console.log("모달 정보 조회", profileData);
       updateUIWithData(profileData);
       isInitialized.current = true;
     }
@@ -112,7 +96,28 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showEmojiPicker]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const updateUIWithData = (data: any) => {
+    const key = data.profileImageUrl || "";
+    const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
+
+    const mappedData = {
+      nickname: data.nickname || "",
+      realName: data.realName || "",
+      birth: data.birth || data.birthDate || "",
+      profileImageUrl: key,
+      emojiContent: data.profileEmoji || "",
+    };
+
+    setFormData(mappedData);
+    setInitialData(mappedData);
+
+    setProfileImageKey(key);
+    setProfileImg(profileFullUrl);
+
+    setEmojiContent(mappedData.emojiContent || null);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -123,7 +128,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       const reader = new FileReader();
       reader.onloadend = () => {
         if (type === "photo") {
-          setCropShape("round");
+          setProfileFile(file);
           setProfileImg(reader.result as string);
           setImageToCrop(null);
         } else {
@@ -135,6 +140,20 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       reader.readAsDataURL(file);
     }
   };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setEmojiContent(emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const isEmojiText = (content: string | null) => {
+    if (!content) return false;
+    return !content.startsWith("data:image");
+  };
+  /*
+  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
 
   const getCroppedImg = async () => {
     if (!imageToCrop || !croppedAreaPixels) return;
@@ -156,119 +175,78 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       setProfileImg(base64Image);
     } else {
       setEmojiContent(base64Image);
-      setBubbleShape(cropShape);
     }
-
-    setImageToCrop(null); // 크롭 창 닫기
-  };
-
-  //Base64를 File 객체로 변환하는 유틸리티
-  const base64ToFile = (base64: string, fileName: string) => {
-    const [header, data] = base64.split(",");
-    const mime = header.match(/:(.*?);/)?.[1];
-    const bstr = atob(data);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) u8arr[n] = bstr.charCodeAt(n);
-    return new File([u8arr], fileName, { type: mime });
-  };
-
-  //S3 업로드 프로세스 (Presigned URL 활용)
-  const uploadToS3 = async (file: File, userId: string) => {
-    //서버에 Presigned URL 요청 (명세서 기준)
-    const res = await apiClient.post(
-      "/api/v1/uploads/presigned-url",
-      {
-        uploadType: "PROFILE_IMAGE", // 명세서 예시 값
-        contentType: file.type, // image/jpeg 등
-        fileExtension: file.name.split(".").pop() || "jpg",
-        fileSize: file.size.toString(), // 문자열로 전송
-      },
-      {
-        params: { userId: userId }, //쿼리 파라미터 ?userId=...
-      },
-    );
-
-    const { uploadUrl, key } = res.data.data;
-
-    //S3에 직접 Binary 파일 업로드 (PUT)
-    await fetch(uploadUrl, {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": file.type },
-    });
-
-    //DB에 저장할 때 사용할 'key' 반환
-    return key;
-  };
+    setImageToCrop(null);
+  };*/
 
   const handleSave = async () => {
-    let userId = profileData.userId;
+    const userId = profileData?.userId;
     if (!isFormValid) return;
 
     try {
-      //현재 로그인한 유저 ID 확인
-      // 예: const userId = currentUser.id;
       if (!userId) {
         alert("로그인 정보가 없습니다.");
         return;
       }
 
-      let finalProfileKey = profileImg;
-      let finalEmojiValue = emojiContent;
+      let finalProfileKey = profileImageKey;
 
-      //프로필 이미지가 새로 크롭된 Base64라면 S3 업로드
-      if (profileImg && profileImg.startsWith("data:image")) {
-        const file = base64ToFile(profileImg, `profile_${Date.now()}.jpg`);
-        finalProfileKey = await uploadToS3(file, userId);
+      //새 이미지 업로드
+      if (profileFile) {
+        const presignedData = await SinglePresignedUrl(userId, {
+          uploadType: "PROFILE_IMAGE",
+          contentType: profileFile.type,
+          fileExtension: profileFile.name.split(".").pop() || "jpg",
+          fileSize: profileFile.size,
+        });
+
+        if (presignedData?.uploadUrl && presignedData?.key) {
+          await uploadFileToS3(presignedData.uploadUrl, profileFile);
+
+          finalProfileKey = presignedData.key;
+
+          setProfileImageKey(presignedData.key);
+          setProfileImg(`${S3_BASE_URL}${presignedData.key}`);
+        }
       }
 
-      //Bubble(Emoji) 데이터 처리
-      const isEmoji = isEmojiText(emojiContent);
-
-      if (!isEmoji && emojiContent && emojiContent.startsWith("data:image")) {
-        //버블이 이미지(Base64)라면 S3 업로드
-        const file = base64ToFile(emojiContent, `bubble_${Date.now()}.jpg`);
-        finalEmojiValue = await uploadToS3(file, userId);
-      }
-
-      //일반 프로필 (닉네임, 사진, 이모지, 공개설정)
       const publicPayload = {
         nickname: formData.nickname,
-        profileImageKey: finalProfileKey || undefined,
-        profileEmoji: finalEmojiValue || undefined,
+        profileImageKey: finalProfileKey,
+        profileEmoji: emojiContent || undefined,
         isPublic: true,
         namePublic: true,
         birthPublic: false,
         agePublic: false,
       };
 
-      //민감 정보 (실명, 생일)
       const privatePayload = {
         realName: formData.realName,
         birth: formData.birth || undefined,
       };
 
-      //API 호출 (신규 설정(isInitial)일 때는 기존 setup 로직을 타고, 수정일 때는 두 API를 모두 호출합니다.
       if (isInitial) {
         const response = await setupProfileMutate({
           profile: { ...publicPayload, ...privatePayload },
         });
+
+        await patchPrivateProfileMutate({ profile: privatePayload });
+
         updateUIWithData(response);
+        alert("프로필이 생성되었습니다!");
       } else {
         await Promise.all([
           patchProfileMutate({ profile: publicPayload }),
           patchPrivateProfileMutate({ profile: privatePayload }),
         ]);
 
-        alert(isInitial ? "설정이 완료되었습니다!" : "수정되었습니다!");
+        alert("프로필이 수정되었습니다!");
       }
 
       setIsEditing(false);
       onClose();
     } catch (err: any) {
       console.error("Save Error:", err);
-      //400 에러 등이 발생했을 때 서버의 메시지를 보여주면 디버깅이 쉽습니다.
       const errorMsg = err.response?.data?.message || "저장 중 오류가 발생했습니다.";
       alert(errorMsg);
     }
@@ -276,92 +254,34 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
   const handleCancel = () => {
     if (initialData) {
-      setFormData(initialData); //백업 데이터로 복구
-      setProfileImg(initialData.profileImg);
+      setFormData(initialData);
+
+      const key = initialData.profileImageUrl || "";
+      setProfileImageKey(key);
+
+      const fullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
+
+      setProfileImg(fullUrl);
       setEmojiContent(initialData.emojiContent);
-      if (isEmojiText(initialData.emojiContent)) {
-        setBubbleShape("round");
-      }
     }
+
     setIsEditing(false);
     setShowEmojiPicker(false);
   };
+
   if (isProfileLoading) return null;
-
-  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
-    setCroppedAreaPixels(croppedPixels);
-  }, []);
-
-  const isEmojiText = (content: string | null) => {
-    if (!content) return false;
-    return !content.startsWith("data:image");
-  };
-
-  const onEmojiClick = (emojiData: EmojiClickData) => {
-    setEmojiContent(emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
-  const handleEmojiFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageToCrop({ url: reader.result as string, type: "emoji" });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   return (
     <ModalOverlay>
       <ModalContainer>
-        {(!isInitial || isFormValid) && <CloseButton onClick={onClose}>&times;</CloseButton>}
-        {imageToCrop && (
-          <CropOverlay>
-            <CropContainer>
-              <Cropper
-                image={imageToCrop.url}
-                crop={crop}
-                zoom={zoom}
-                aspect={imageToCrop.type === "photo" ? 1 : aspect}
-                cropShape={imageToCrop.type === "photo" ? "round" : cropShape}
-                showGrid={imageToCrop.type === "photo" ? false : cropShape === "rect"}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-              />
-            </CropContainer>
-
-            {/* 모양 선택 버튼 그룹 추가 */}
-            {imageToCrop.type === "emoji" && (
-              <ShapeSelectorWrapper>
-                <ShapeButton $active={cropShape === "round"} onClick={() => setCropShape("round")}>
-                  원형
-                </ShapeButton>
-                <ShapeButton $active={cropShape === "rect"} onClick={() => setCropShape("rect")}>
-                  사각형
-                </ShapeButton>
-              </ShapeSelectorWrapper>
-            )}
-
-            <CropButtonWrapper>
-              <CancelButton onClick={() => setImageToCrop(null)}>Cancel</CancelButton>
-              <EditModeButton onClick={getCroppedImg}>Save</EditModeButton>
-            </CropButtonWrapper>
-          </CropOverlay>
-        )}
-
-        <CloseButton onClick={onClose}>&times;</CloseButton>
+        <CloseBtn onClick={onClose}>&times;</CloseBtn>
 
         <TitleContainer>
-          <ModalTitle>Profile Settings</ModalTitle>
+          <Title>Profile Settings</Title>
           <Description> </Description>
         </TitleContainer>
 
-        <ModalBody>
+        <Box>
           <SectionTitle>1. Profile Customization</SectionTitle>
 
           <AppearanceBox>
@@ -388,15 +308,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
             </CustomBox>
 
             <CustomBox $isEditing={isEditing} $isError={isEditing && !emojiContent}>
-              <input
-                type="file"
-                ref={emojiInputRef}
-                onChange={handleEmojiFileChange}
-                accept="image/*"
-                style={{ display: "none" }}
-              />
-
-              <PickerCircle $shape={bubbleShape} $isError={isEditing && !emojiContent}>
+              <PickerCircle $isError={isEditing && !emojiContent}>
                 {emojiContent ? (
                   isEmojiText(emojiContent) ? (
                     <EmojiDisplay>{emojiContent}</EmojiDisplay>
@@ -410,23 +322,11 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
               <LabelText>Bubble (Required)</LabelText>
 
-              <ButtonGroup>
-                <MiniButton
-                  onClick={() => {
-                    if (emojiInputRef.current) emojiInputRef.current.value = ""; // 초기화 추가
-                    emojiInputRef.current?.click();
-                  }}
-                  disabled={!isEditing}
-                >
-                  Image
-                </MiniButton>
-                <MiniButton
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  disabled={!isEditing}
-                >
+              <Buttons>
+                <MiniBtn onClick={() => setShowEmojiPicker(!showEmojiPicker)} disabled={!isEditing}>
                   Emoji
-                </MiniButton>
-              </ButtonGroup>
+                </MiniBtn>
+              </Buttons>
 
               {isEditing && showEmojiPicker && (
                 <PickerWrapper ref={emojiPickerRef}>
@@ -450,7 +350,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
               <StyledInput
                 name="nickname"
                 value={formData.nickname}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 disabled={!isEditing}
                 $isError={isEditing && formData.nickname.trim() === ""}
                 placeholder="e.g. SpaceExplorer"
@@ -461,7 +361,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
               <StyledInput
                 name="realName"
                 value={formData.realName}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 disabled={!isEditing}
                 $isError={isEditing && formData.realName.trim() === ""}
                 placeholder="Enter your full name"
@@ -475,28 +375,28 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
               name="birth"
               type="date"
               value={formData.birth}
-              onChange={handleChange}
+              onChange={handleInputChange}
               disabled={!isEditing}
               max={today}
             />
           </InputWrapper>
-        </ModalBody>
+        </Box>
 
         <ButtonWrapper>
           {!isEditing ? (
-            <EditModeButton onClick={() => setIsEditing(true)}>Edit Profile</EditModeButton>
+            <EditBtn onClick={() => setIsEditing(true)}>Edit Profile</EditBtn>
           ) : (
             <>
-              <CancelButton
+              <CancelBtn
                 onClick={handleCancel}
                 disabled={isInitial && !isFormValid}
                 style={{ opacity: isInitial && !isFormValid ? 0.5 : 1 }}
               >
                 Cancel
-              </CancelButton>
-              <SaveButton disabled={!isFormValid} onClick={handleSave}>
+              </CancelBtn>
+              <SaveBtn disabled={!isFormValid} onClick={handleSave}>
                 Save Profile
-              </SaveButton>
+              </SaveBtn>
             </>
           )}
         </ButtonWrapper>
@@ -513,27 +413,11 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.5); // 뒷배경 어둡게
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center; // 가로 중앙
-  align-items: center; // 세로 중앙
-  z-index: 999; // 페이지의 다른 요소보다 위에 위치
-`;
-
-const CropOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  z-index: 20; /* 픽커보다 높게 */
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  /* 오버레이 자체도 스크롤 가능하게 함으로써 버튼 잘림 방지 */
-  overflow-y: auto;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 `;
 
 const ModalContainer = styled.div`
@@ -542,65 +426,34 @@ const ModalContainer = styled.div`
   max-height: 90vh;
   padding: 40px;
   border-radius: 16px;
-  position: relative; // 내부 CloseButton 등을 배치하기 위함
+  position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 
-  // 브라우저 기본 스크롤바가 모달 곡선을 해치지 않게 처리
   &::-webkit-scrollbar {
     width: 8px;
   }
 `;
 
-const ShapeSelectorWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 10px;
-  background: #f1f3f5;
-  border-radius: 8px;
+const TitleContainer = styled.div`
+  margin-bottom: 32px;
 `;
 
-const ShapeButton = styled.button<{ $active: boolean }>`
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
-  color: ${(props) => (props.$active ? "white" : props.theme.colors.text_primary)};
-  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#dee2e6")};
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    border-color: ${(props) => props.theme.colors.primary};
-  }
-};
+const Title = styled.h1`
+  font-size: 26px;
+  font-weight: 800;
+  color: #212529;
 `;
 
-const CropContainer = styled.div`
-  position: relative;
-  width: 100%;
-  /* 고정 높이 550px 대신 최소 높이를 주고 비율로 조절하거나 높이를 살짝 줄임 */
-  height: 400px;
-  min-height: 300px;
-  background: #333;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0; /* 크기가 줄어들지 않도록 설정 */
+const Description = styled.p`
+  font-size: 14px;
+  color: #868e96;
+  margin-top: 4px;
 `;
 
-const CropButtonWrapper = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: auto;
-`;
-
-const CloseButton = styled.button`
+const CloseBtn = styled.button`
   position: absolute;
   top: 20px;
   right: 20px;
@@ -614,23 +467,7 @@ const CloseButton = styled.button`
   }
 `;
 
-const TitleContainer = styled.div`
-  margin-bottom: 32px;
-`;
-
-const ModalTitle = styled.h1`
-  font-size: 26px;
-  font-weight: 800;
-  color: #212529;
-`;
-
-const Description = styled.p`
-  font-size: 14px;
-  color: #868e96;
-  margin-top: 4px;
-`;
-
-const ModalBody = styled.div`
+const Box = styled.div`
   flex: 1;
 `;
 
@@ -666,7 +503,6 @@ const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
   transition: all 0.2s ease;
 
-  /* 에러 상태일 때 테두리 추가 */
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "transparent")};
 
   &:hover {
@@ -701,58 +537,16 @@ const PlusIcon = styled.span`
   font-weight: 300;
 `;
 
-const LabelText = styled.span`
-  font-size: 10px;
-  font-weight: 800;
-  color: #adb5bd;
-  text-align: center;
-`;
-
-const PickerWrapper = styled.div`
-  /* 부모인 CustomBox의 크기에 영향을 주지 않도록 고정 */
-  position: fixed;
-  /* 화면 중앙 근처에 띄우거나, JS로 좌표를 계산해 버튼 근처에 둡니다. */
-  top: 70%;
-  left: 40%;
-  transform: translate(-50%, -50%);
-
-  z-index: 10000; /* ModalOverlay보다 높게 설정 */
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  background: white;
-  border-radius: 8px;
-  line-height: 0; /* 내부 미세 공백 제거 */
-`;
-
 const EmojiDisplay = styled.span`
   font-size: 44px;
   line-height: 1;
 `;
 
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 8px;
-  z-index: 10px;
-`;
-
-const MiniButton = styled.button`
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  color: #495057;
-  cursor: pointer;
-  &:hover {
-    background: #f1f3f5;
-  }
-  /* 비활성화 상태 스타일 */
-  &:disabled {
-    cursor: not-allowed;
-    background: #f1f3f5;
-    color: #ced4da;
-    border-color: #e9ecef;
-  }
+const LabelText = styled.span`
+  font-size: 10px;
+  font-weight: 800;
+  color: #adb5bd;
+  text-align: center;
 `;
 
 const InputGrid = styled.div`
@@ -772,35 +566,6 @@ const InputWrapper = styled.div`
   }
 `;
 
-const ButtonWrapper = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 16px;
-  margin-top: 40px;
-`;
-
-const SaveButton = styled.button`
-  padding: 12px 28px;
-  background: ${(props) => (props.disabled ? "#e9ecef" : props.theme.colors.primary)};
-  color: ${(props) => (props.disabled ? "#adb5bd" : "white")};
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-`;
-
-const CancelButton = styled.button`
-  background: none;
-  border: none;
-  color: #868e96;
-  font-weight: 700;
-  cursor: pointer;
-  &:hover {
-    color: #495057;
-  }
-`;
-
 const StyledInput = styled.input<{ $isError?: boolean }>`
   padding: 14px;
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "#dee2e6")};
@@ -816,7 +581,15 @@ const StyledInput = styled.input<{ $isError?: boolean }>`
   }
 `;
 
-const EditModeButton = styled.button`
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+`;
+
+const EditBtn = styled.button`
   padding: 12px 28px;
   background: ${({ theme }) => theme.colors.primary};
   color: white;
@@ -824,4 +597,65 @@ const EditModeButton = styled.button`
   border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
+`;
+
+const SaveBtn = styled.button`
+  padding: 12px 28px;
+  background: ${(props) => (props.disabled ? "#e9ecef" : props.theme.colors.primary)};
+  color: ${(props) => (props.disabled ? "#adb5bd" : "white")};
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+`;
+
+const CancelBtn = styled.button`
+  background: none;
+  border: none;
+  color: #868e96;
+  font-weight: 700;
+  cursor: pointer;
+  &:hover {
+    color: #495057;
+  }
+`;
+
+const Buttons = styled.div`
+  display: flex;
+  gap: 8px;
+  z-index: 10px;
+`;
+
+const MiniBtn = styled.button`
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  color: #495057;
+  cursor: pointer;
+  &:hover {
+    background: #f1f3f5;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: #f1f3f5;
+    color: #ced4da;
+    border-color: #e9ecef;
+  }
+`;
+
+const PickerWrapper = styled.div`
+  position: fixed;
+  top: 70%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+
+  z-index: 10000;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: white;
+  border-radius: 8px;
+  line-height: 0;
 `;
