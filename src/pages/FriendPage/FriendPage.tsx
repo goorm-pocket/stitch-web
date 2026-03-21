@@ -1,10 +1,58 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  useGetFriendsQuery,
+  useGetReceivedRequestsQuery,
+  useGetSentRequestsQuery,
+  useSendFriendRequestMutation,
+} from "@/shared/hooks/useFriend";
+import SearchUserItem from "./components/SearchUserItem";
+import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 
 const FriendPage = () => {
+  const searchInputRef = useRef<HTMLDivElement | null>(null);
+  const [showSearchList, setShowSearchList] = useState<boolean>(false);
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
+  const [searchName, setSearchName] = useState<string>("");
+
+  const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
+
+  const { data: friendsPages } = useGetFriendsQuery();
+  const { data: sentRequestsRes } = useGetSentRequestsQuery();
+  const { data: receivedRequestsRes } = useGetReceivedRequestsQuery();
+
+  const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
+
+  const searchUserList = searchUserListRes?.pages[0].items ?? [];
+  const friends = friendsPages?.pages[0].items ?? [];
+
+  // Todo : 페이지네이션 없어지면 수정
+  const sentRequests = sentRequestsRes?.items ?? [];
+  const receivedRequests = receivedRequestsRes?.items ?? [];
+  console.log("fff", friends);
+  console.log("sss", sentRequests);
+  console.log("rrr", receivedRequests);
+
+  const handleAddFriend = (id: string) => {
+    sendFriendRequest({ userId: id });
+  };
+
+  // 밖에 클릭하면 친구 요청 리스트 닫는거
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(e.target as Node)) {
+        setShowSearchList(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <Container>
       <TitleContainer>
@@ -13,10 +61,30 @@ const FriendPage = () => {
       </TitleContainer>
       <RequestInputContainer>
         <RequestText>Search and Add Friends</RequestText>
-        <RequestInputBox>
-          <RequestInput placeholder="Enter username..." />
-          <RequestButton>Add Friend</RequestButton>
-        </RequestInputBox>
+        <FriendSearchSection ref={searchInputRef}>
+          <SearchInput
+            placeholder="Enter username..."
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            onFocus={() => setShowSearchList(true)}
+          />
+
+          {showSearchList && (
+            <SearchUserList>
+              {searchUserList?.length > 0 ? (
+                searchUserList?.map((item) => (
+                  <SearchUserItem
+                    key={item.userId}
+                    user={item}
+                    handleAdd={() => handleAddFriend(item.userId)}
+                  />
+                ))
+              ) : (
+                <EmptyText>No users found.</EmptyText>
+              )}
+            </SearchUserList>
+          )}
+        </FriendSearchSection>
       </RequestInputContainer>
       <ButtonContainer>
         <ButtonBox>
@@ -34,12 +102,14 @@ const FriendPage = () => {
           </SelectButton>
         </ButtonBox>
       </ButtonContainer>
+
       <FriendListContainer>
-        <FriendItem />
-        <FriendItem />
-        <FriendItem />
-        <FriendItem />
-        <FriendItem />
+        {selectList == "friend" &&
+          friends.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+        {selectList == "sent" &&
+          sentRequests.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+        {selectList == "received" &&
+          receivedRequests.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
       </FriendListContainer>
     </Container>
   );
@@ -63,7 +133,7 @@ const TitleContainer = styled.section`
 
 const Title = styled.div`
   font-size: 30px;
-  font-weight: bold;
+  font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
@@ -75,55 +145,72 @@ const Description = styled.div`
 const RequestInputContainer = styled(StitchedBox)`
   display: flex;
   flex-direction: column;
-  justify-content: center;
   width: 100%;
-  height: 125px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   padding: 20px;
+  gap: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  overflow: visible;
 `;
 
 const RequestText = styled.div`
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 700;
   color: white;
 `;
 
-const RequestInputBox = styled.div`
-  display: flex;
-  align-items: center;
-  flex: 1;
-  gap: 8px;
+const FriendSearchSection = styled.div`
+  position: relative;
+  width: 100%;
 `;
 
-const RequestInput = styled.input`
-  flex: 3;
+const SearchInput = styled.input`
+  width: 100%;
   height: 43px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border: none;
   border-radius: 8px;
   color: white;
-  padding-left: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.65);
+  }
 
   &:focus {
     outline: none;
     border: none;
+    background: rgba(255, 255, 255, 0.16);
   }
 `;
 
-const RequestButton = styled.button`
-  flex: 1;
-  height: 43px;
-  max-width: 140px;
-  background: ${({ theme }) => theme.colors.primary};
-  border: none;
-  border-radius: 8px;
+const SearchUserList = styled.div`
+  position: absolute;
+  top: calc(100%);
+  left: 0;
+  width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  background: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  z-index: 20;
 
-  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const EmptyText = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 72px;
   font-size: 14px;
-  font-weight: bold;
-
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const ButtonContainer = styled.div`
@@ -150,7 +237,7 @@ const SelectButton = styled.button<SelectButtonProps>`
   height: 44px;
   color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.text_secondary)};
   background: ${({ $active }) => ($active ? "white" : "inherit")};
-  font-weight: bold;
+  font-weight: 700;
   padding: 0 10px;
   border-radius: 6px;
   cursor: pointer;

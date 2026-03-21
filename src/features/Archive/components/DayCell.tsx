@@ -1,7 +1,7 @@
 import type dayjs from "dayjs";
 import styled from "styled-components";
 import type { Calendar } from "../../../shared/types/post.type";
-import Bubble from "../../../shared/components/Bubble";
+import ArchiveBubble from "./ArchiveBubble";
 
 interface DayCellProps {
   cell: {
@@ -17,7 +17,7 @@ const DayCell = ({ cell, dayData, onClick }: DayCellProps) => {
       {cell.date && (
         <>
           <DateNumber>{cell.date.date()}</DateNumber>
-          {dayData?.hasPost && <Bubble markers={dayData?.markers} />}
+          {dayData?.hasPost && <ArchiveBubble markers={dayData?.markers} />}
         </>
       )}
     </Container>

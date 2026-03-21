@@ -30,37 +30,37 @@ export interface PocketBubbleType {
 }
 
 export interface Post {
-  post_id: string;
+  postId: string;
 
   author: PostAuthor;
 
   content: string | null;
   visibility: PostVisibility;
 
-  like_count: number;
-  liked_by_me: boolean;
+  likeCount: number;
+  likedByMe: boolean;
 
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 
-  editable_until: string;
-  is_editable: boolean;
+  editableUntil: string;
+  isEditable: boolean;
 
-  marker_type: MarkerType;
-  marker_emoji: string | null;
-  marker_image_url: string | null;
+  markerType: MarkerType;
+  markerEmoji: string | null;
+  markerImageUrl: string | null;
 
   images: PostImage[];
 }
 
 export interface PostAuthor {
-  user_id: string;
+  userId: string;
   nickname: string;
-  profile_image_url: string | null;
+  profileImageUrl: string | null;
 }
 
 export interface PostImage {
-  image_url?: string;
+  imageUrl?: string;
 }
 
 export type PostVisibility = "PUBLIC" | "FRIENDS" | "PRIVATE";

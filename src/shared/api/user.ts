@@ -1,5 +1,13 @@
 import type { MyProfile, NotificationSettings, PrivacySettings, Profile } from "../types/user.type";
 import type { ApiResponse } from "../types/common.type";
+import type { ApiResponse } from "../types/common.type";
+import type {
+  MyProfile,
+  NotificationSettings,
+  PrivacySettings,
+  Profile,
+  SearchUser,
+} from "../types/user.type";
 import { apiClient } from "./axios";
 
 export async function getProfileById({ userId }: { userId: string }): Promise<Profile> {
@@ -18,10 +26,10 @@ interface GetNotificationSettingsRes {
 }
 
 export async function getNotificationSettings(): Promise<GetNotificationSettingsRes> {
-  const res = await apiClient.get<GetNotificationSettingsRes>(
+  const res = await apiClient.get<ApiResponse<GetNotificationSettingsRes>>(
     "/api/v1/users/me/notification-settings",
   );
-  return res.data;
+  return res.data.data;
 }
 
 interface PatchNotificationSettingsRes {
@@ -34,11 +42,11 @@ export async function patchNotificationSettings({
 }: {
   notificationSettings: Partial<NotificationSettings>;
 }): Promise<PatchNotificationSettingsRes> {
-  const res = await apiClient.patch<PatchNotificationSettingsRes>(
+  const res = await apiClient.patch<ApiResponse<PatchNotificationSettingsRes>>(
     "/api/v1/users/me/notification-settings",
     notificationSettings,
   );
-  return res.data;
+  return res.data.data;
 }
 
 interface GetPrivacySettingsRes {
@@ -48,8 +56,10 @@ interface GetPrivacySettingsRes {
 }
 
 export async function getPrivacySettings(): Promise<GetPrivacySettingsRes> {
-  const res = await apiClient.get<GetPrivacySettingsRes>("/api/v1/users/me/privacy-settings");
-  return res.data;
+  const res = await apiClient.get<ApiResponse<GetPrivacySettingsRes>>(
+    "/api/v1/users/me/privacy-settings",
+  );
+  return res.data.data;
 }
 
 interface PatchPrivacySettingsRes {
@@ -63,11 +73,11 @@ export async function patchPrivacySettings({
 }: {
   privacySettings: Partial<PrivacySettings>;
 }): Promise<PatchPrivacySettingsRes> {
-  const res = await apiClient.patch<PatchPrivacySettingsRes>(
+  const res = await apiClient.patch<ApiResponse<GetPrivacySettingsRes>>(
     "/api/v1/users/me/privacy-settings",
     privacySettings,
   );
-  return res.data;
+  return res.data.data;
 }
 
 export async function getProfile(): Promise<MyProfile> {
@@ -123,22 +133,25 @@ export async function setupProfile({ profile }: { profile: SetupProfileReq }) {
 }
 
 interface GetProfileByNameRes {
-  items: {
-    userId: string;
-    nickname: string;
-    realName?: string;
-    profileImageUrl?: string;
-    profileEmoji?: string;
-    isPublic: boolean;
-    isMine: boolean;
-  }[];
+  items: SearchUser[];
   nextCursor?: string;
   hasNext: boolean;
 }
 
-export async function getProfileByName({ query }: { query: string }): Promise<GetProfileByNameRes> {
-  const res = await apiClient.get<GetProfileByNameRes>(`/api/v1/users/search`, {
-    params: { query },
+export async function getProfileByName({
+  query,
+  cursor,
+}: {
+  query: string;
+  cursor?: string | null;
+}): Promise<GetProfileByNameRes> {
+  const res = await apiClient.get<ApiResponse<GetProfileByNameRes>>(`/api/v1/users/search`, {
+    params: {
+      query,
+      cursor: cursor ?? undefined,
+      size: 10,
+    },
   });
-  return res.data;
+
+  return res.data.data;
 }
