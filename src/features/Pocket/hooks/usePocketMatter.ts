@@ -1,16 +1,9 @@
 import type { PocketBubbleType } from "@/shared/types/post.type";
 import { useEffect, useRef, useState } from "react";
-import { createPocketBodies, type BodyMap } from "../utils/createPocketBodies";
+import { createPocketBodies } from "../utils/createPocketBodies";
 import Matter from "matter-js";
 import { createPocketWalls } from "../utils/createPocketWalls";
-
-export interface PositionMap {
-  [postId: string]: {
-    x: number;
-    y: number;
-    angle: number;
-  };
-}
+import type { BodyMap, PositionMap } from "../types/matter.type";
 
 interface UsePocketMatterParams {
   sceneRef: React.RefObject<HTMLDivElement | null>;

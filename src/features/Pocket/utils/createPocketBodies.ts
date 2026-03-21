@@ -1,9 +1,6 @@
 import type { PocketBubbleType } from "@/shared/types/post.type";
 import Matter from "matter-js";
-
-export interface BodyMap {
-  [postId: string]: Matter.Body;
-}
+import type { BodyMap } from "../types/matter.type";
 
 interface CreatePocketBodiesParams {
   items: PocketBubbleType[];
