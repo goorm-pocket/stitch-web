@@ -32,7 +32,7 @@ const PostDetailPage = () => {
   return (
     <Container>
       <ContentSection>
-        <PostCard>{post && <PostForm post={post} />}</PostCard>
+        <PostCard>{post && <PostForm post={post} mode="detail" />}</PostCard>
 
         <CommentSection>
           <CommentHeader>

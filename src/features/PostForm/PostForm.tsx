@@ -1,12 +1,28 @@
+import { useState } from "react";
 import styled from "styled-components";
 import type { Post } from "../../shared/types/post.type";
 
 interface PostFormProps {
   post: Post;
+  mode?: "default" | "detail";
 }
 
-const PostForm = ({ post }: PostFormProps) => {
-  const representativeImage = post.images?.[0]?.imageUrl;
+const PostForm = ({ post, mode = "default" }: PostFormProps) => {
+  const images = post.images ?? [];
+  const representativeImage = images[0]?.imageUrl;
+
+  const isDetailMode = mode === "detail";
+  const shouldShowSlider = isDetailMode && images.length > 1;
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
 
   return (
     <Container>
@@ -41,7 +57,24 @@ const PostForm = ({ post }: PostFormProps) => {
           </MarkerBadge>
         )}
 
-        {representativeImage ? (
+        {shouldShowSlider ? (
+          <SliderWrapper>
+            <PostImage src={images[currentIndex].imageUrl} alt={`post-${currentIndex + 1}`} />
+
+            <NavButton $left onClick={handlePrev} type="button">
+              ‹
+            </NavButton>
+            <NavButton onClick={handleNext} type="button">
+              ›
+            </NavButton>
+
+            <Indicator>
+              {images.map((_, index) => (
+                <Dot key={index} $active={index === currentIndex} />
+              ))}
+            </Indicator>
+          </SliderWrapper>
+        ) : representativeImage ? (
           <PostImage src={representativeImage} alt="post" />
         ) : (
           <ImageFallback>
@@ -110,7 +143,6 @@ const LikeButton = styled.button<{ $liked: boolean }>`
   align-items: center;
   gap: 6px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-
   padding: 7px 12px;
   border-radius: 999px;
   background: ${({ $liked }) => ($liked ? "rgba(255, 77, 79, 0.08)" : "rgba(255, 255, 255, 0.72)")};
@@ -171,11 +203,58 @@ const MarkerImage = styled.img`
   display: block;
 `;
 
+const SliderWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
 const PostImage = styled.img`
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
   display: block;
+`;
+
+const NavButton = styled.button<{ $left?: boolean }>`
+  position: absolute;
+  top: 50%;
+  ${({ $left }) => ($left ? "left: 12px;" : "right: 12px;")}
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.92);
+  }
+`;
+
+const Indicator = styled.div`
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+`;
+
+const Dot = styled.div<{ $active: boolean }>`
+  width: ${({ $active }) => ($active ? "18px" : "6px")};
+  height: 6px;
+  border-radius: 999px;
+  background: ${({ $active }) => ($active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)")};
+  transition: all 0.2s ease;
 `;
 
 const ImageFallback = styled.div`
