@@ -7,9 +7,6 @@ interface SearchUserItemProps {
 }
 
 const SearchUserItem = ({ user, handleAdd }: SearchUserItemProps) => {
-  if (user.isMine) {
-    return;
-  }
   return (
     <Container>
       <UserInfo>
@@ -28,8 +25,8 @@ const SearchUserItem = ({ user, handleAdd }: SearchUserItemProps) => {
         </UserTextBox>
       </UserInfo>
 
-      <AddButton disabled={user.isMine} onClick={handleAdd}>
-        {user.isMine ? "My Account" : "Add"}
+      <AddButton disabled={user.mine} onClick={handleAdd}>
+        {user.mine ? "My Account" : "Add"}
       </AddButton>
     </Container>
   );
