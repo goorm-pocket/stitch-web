@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFriends, getReceivedRequests, getSentRequests, sendFriendRequest } from "../api/friend";
+import {
+  acceptFriendRequest,
+  getFriends,
+  getReceivedRequests,
+  getSentRequests,
+  sendFriendRequest,
+} from "../api/friend";
 
 export function useGetFriendsQuery() {
   return useQuery({
@@ -31,6 +37,18 @@ export function useSendFriendRequestMutation() {
       queryClient.invalidateQueries({
         queryKey: ["friends-sent"],
       });
+    },
+  });
+}
+
+export function useAcceptFriendRequestMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: acceptFriendRequest,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["friends-received"] });
     },
   });
 }
