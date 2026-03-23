@@ -1,9 +1,8 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../../shared/ui/StitchedBox";
-import type { Friend } from "@/shared/types/friend.type";
+import type { Friend, FriendState } from "@/shared/types/friend.type";
 
-const FriendItem = ({ friend }: { friend: Friend }) => {
-  const status = friend.status;
+const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) => {
   return (
     <Container>
       <Left>
@@ -14,9 +13,9 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
         </NameBox>
       </Left>
       <Right>
-        {status == "SENT" && <RemoveButton>REMOVE</RemoveButton>}
-        {status == "RECEIVED" && <AcceptButton>ACCEPT</AcceptButton>}
-        {status == "RECEIVED" && <RejectButton>REJECT</RejectButton>}
+        {(state == "SENT" || state == "ACCEPTED") && <RemoveButton>REMOVE</RemoveButton>}
+        {state == "RECEIVED" && <AcceptButton>ACCEPT</AcceptButton>}
+        {state == "RECEIVED" && <RejectButton>REJECT</RejectButton>}
       </Right>
     </Container>
   );

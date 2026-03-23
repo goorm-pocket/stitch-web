@@ -110,14 +110,16 @@ const FriendPage = () => {
 
       <FriendListContainer>
         {selectList == "friend" &&
-          friends.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+          friends.map((friend) => (
+            <FriendItem key={friend.friendId} friend={friend} state="ACCEPTED" />
+          ))}
         {selectList == "sent" &&
           sentRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} />
+            <FriendItem key={friend.friendId} friend={friend} state="SENT" />
           ))}
         {selectList == "received" &&
           receivedRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} />
+            <FriendItem key={friend.friendId} friend={friend} state="RECEIVED" />
           ))}
       </FriendListContainer>
     </Container>
