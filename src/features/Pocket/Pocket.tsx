@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
-import { useGetBoardQuery } from "../../shared/hooks/useBoard";
+import { useGetBoardQuery, useReadBoardPostMutation } from "../../shared/hooks/useBoard";
 import type { PocketBubbleType } from "../../shared/types/post.type";
 import PostModal from "../PostModal/PostModal";
 import { usePocketSize } from "./hooks/usePocketSize";
@@ -131,13 +131,9 @@ const SAMPLE_ITEMS: PocketBubbleType[] = [
 ];
 
 const Pocket = () => {
-  const { data: board } = useGetBoardQuery("WEB");
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-
+  // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
-
   const clickStartRef = useRef<{
     id: string | null;
     x: number;
@@ -147,6 +143,16 @@ const Pocket = () => {
     x: 0,
     y: 0,
   });
+
+  // state
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
+  // query
+  const { data: board } = useGetBoardQuery("WEB");
+
+  // mutate
+  const { mutateAsync: readBoardPost } = useReadBoardPostMutation();
 
   const size = usePocketSize(wrapperRef);
 
@@ -166,6 +172,13 @@ const Pocket = () => {
     wallThickness,
   });
 
+  const handleClickPost = async (id: string) => {
+    if (!id) return;
+    await readBoardPost({ postId: id });
+    setSelectedPostId(id);
+    setIsModalOpen(true);
+  };
+
   const handleMouseDown = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
     clickStartRef.current = {
       id,
@@ -183,8 +196,7 @@ const Pocket = () => {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance < 8) {
-      setIsModalOpen(true);
-      setSelectedPostId(id);
+      handleClickPost(id);
     }
 
     clickStartRef.current = { id: null, x: 0, y: 0 };
