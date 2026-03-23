@@ -33,3 +33,8 @@ export async function acceptFriendRequest({ friendId }: { friendId: string }) {
   const res = await apiClient.patch(`/api/v1/friends/${friendId}/accept`);
   return res.data.data;
 }
+
+export async function deleteFriendRequest({ friendId }: { friendId: string }) {
+  const res = await apiClient.delete(`/api/v1/friends/${friendId}`);
+  return res.data.data;
+}

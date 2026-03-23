@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptFriendRequest,
+  deleteFriendRequest,
   getFriends,
   getReceivedRequests,
   getSentRequests,
@@ -48,6 +49,19 @@ export function useAcceptFriendRequestMutation() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["friends-received"] });
+    },
+  });
+}
+
+export function useDeleteFriendRequestMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteFriendRequest,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["friends-sent"] });
       queryClient.invalidateQueries({ queryKey: ["friends-received"] });
     },
   });
