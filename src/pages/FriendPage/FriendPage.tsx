@@ -36,12 +36,10 @@ const FriendPage = () => {
   const friends = friendsPages?.items ?? [];
   const sentRequests = sentRequestsRes?.items ?? [];
   const receivedRequests = receivedRequestsRes?.items ?? [];
-  console.log("fff", friends);
-  console.log("sss", sentRequests);
-  console.log("rrr", receivedRequests);
 
   const handleAddFriend = (id: string) => {
     sendFriendRequest({ userId: id });
+    setSearchName("");
   };
 
   // 밖에 클릭하면 친구 요청 리스트 닫는거

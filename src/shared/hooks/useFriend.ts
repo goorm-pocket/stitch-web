@@ -50,6 +50,7 @@ export function useAcceptFriendRequestMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       queryClient.invalidateQueries({ queryKey: ["friends-received"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 }
