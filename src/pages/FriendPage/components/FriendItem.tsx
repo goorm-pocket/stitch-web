@@ -1,8 +1,10 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../../shared/ui/StitchedBox";
 import type { Friend, FriendState } from "@/shared/types/friend.type";
+import { useAcceptFriendRequestMutation } from "@/shared/hooks/useFriend";
 
 const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) => {
+  const { mutate: acceptFriendRequest } = useAcceptFriendRequestMutation();
   return (
     <Container>
       <Left>
@@ -14,7 +16,11 @@ const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) =
       </Left>
       <Right>
         {(state == "SENT" || state == "ACCEPTED") && <RemoveButton>REMOVE</RemoveButton>}
-        {state == "RECEIVED" && <AcceptButton>ACCEPT</AcceptButton>}
+        {state == "RECEIVED" && (
+          <AcceptButton onClick={() => acceptFriendRequest({ friendId: friend.friendId })}>
+            ACCEPT
+          </AcceptButton>
+        )}
         {state == "RECEIVED" && <RejectButton>REJECT</RejectButton>}
       </Right>
     </Container>
