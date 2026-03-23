@@ -4,7 +4,7 @@ import BoardIcon from "../../assets/board-icon.svg";
 import FriendIcon from "../../assets/friend-icon.svg";
 import ArchiveIcon from "../../assets/archive-icon.svg";
 import ProfileModal from "../../features/ProfileModal/ProfileModal";
-import { NavLink, useNavigate, useLocation } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { useState } from "react";
 
 const Header = () => {
@@ -13,12 +13,9 @@ const Header = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const location = useLocation();
-  const isHomePage = location.pathname === "/";
-
   return (
     <HeaderContainer>
-      <Left onClick={() => navigate("/")}>
+      <Left onClick={() => navigate("/pocket")}>
         <Logo />
         <LogoText>Stitch</LogoText>
       </Left>
