@@ -48,3 +48,8 @@ export async function createPostLike({ postId }: { postId: string }) {
   const res = await apiClient.post(`/api/v1/posts/${postId}/likes`);
   return res.data.data;
 }
+
+export async function deletePostLike({ postId }: { postId: string }) {
+  const res = await apiClient.delete(`/api/v1/posts/${postId}/likes`);
+  return res.data.data;
+}
