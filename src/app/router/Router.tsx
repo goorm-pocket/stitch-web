@@ -8,6 +8,7 @@ import CreatePostPage from "../../pages/CreatePostPage/CreatePostPage";
 import FriendPage from "../../pages/FriendPage/FriendPage";
 import SettingPage from "../../pages/SettingPage/SettingPage";
 import PostDetailPage from "../../pages/PostDetailPage/PostDetailPage";
+import ProtectedRouter from "./ProtectedRouter";
 
 const Router = () => {
   return (
@@ -15,12 +16,14 @@ const Router = () => {
       <Route path="/callback" element={<CallbackPage />} />
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
-        <Route path="/pocket" element={<PocketPage />} />
-        <Route path="/mypage" element={<MyPage />} />
-        <Route path="/createpost" element={<CreatePostPage />} />
-        <Route path="/friend" element={<FriendPage />} />
-        <Route path="setting" element={<SettingPage />} />
-        <Route path="/posts/:id" element={<PostDetailPage />} />
+        <Route element={<ProtectedRouter />}>
+          <Route path="/pocket" element={<PocketPage />} />
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/createpost" element={<CreatePostPage />} />
+          <Route path="/friend" element={<FriendPage />} />
+          <Route path="setting" element={<SettingPage />} />
+          <Route path="/posts/:id" element={<PostDetailPage />} />
+        </Route>
       </Route>
     </Routes>
   );

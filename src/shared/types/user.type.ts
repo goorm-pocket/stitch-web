@@ -16,8 +16,8 @@ export interface SearchUser {
   realName: string | null;
   profileImageUrl: string | null;
   profileEmoji: string | null;
-  isPublic: boolean;
-  isMine: boolean;
+  public: boolean;
+  mine: boolean;
 }
 
 export interface MyProfile extends Profile {
