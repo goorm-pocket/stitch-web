@@ -30,7 +30,7 @@ export async function sendFriendRequest({ userId }: { userId: string }): Promise
 }
 
 export async function acceptFriendRequest({ friendId }: { friendId: string }) {
-  const res = await apiClient.patch(`/api/v1/friends/${friendId}/accept`);
+  const res = await apiClient.patch(`/api/v1/friends/requests/${friendId}`);
   return res.data.data;
 }
 
