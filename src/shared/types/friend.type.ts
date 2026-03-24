@@ -1,10 +1,12 @@
 import type { Profile } from "./user.type";
 
+export type FriendState = "ACCEPTED" | "SENT" | "RECEIVED";
+
 export interface Friend {
   friendId: string;
   friendedAt: string;
   user: Profile;
-  status: "FRIEND" | "SENT" | "RECEIVED" | null;
+  status: "ACCEPTED" | "SENT" | "RECEIVED" | null;
 }
 
 export interface FriendRequest {

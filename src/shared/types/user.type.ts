@@ -18,6 +18,7 @@ export interface SearchUser {
   profileEmoji: string | null;
   public: boolean;
   mine: boolean;
+  state: "MINE" | "NONRELATION" | "FRIENDS" | "RECEIVED" | "SENT";
 }
 
 export interface MyProfile extends Profile {
