@@ -1,6 +1,8 @@
+import type { Area } from "react-easy-crop";
+
 export const getCroppedImg = async (
   imageSrc: string,
-  pixelCrop: any,
+  pixelCrop: Area,
   isRound: boolean,
 ): Promise<string> => {
   const image = new Image();
