@@ -4,7 +4,12 @@ import { StitchedBox } from "../../shared/ui/StitchedBox";
 const HomePage = () => {
   const handleKakaoLogin = () => {
     const clientId = import.meta.env.VITE_KAKAO_OAUTH_KEY;
-    const redirectUri = import.meta.env.VITE_REDIRECTION_URL;
+
+    const isApp = !!window.ReactNativeWebView;
+    //const redirectUri = import.meta.env.VITE_REDIRECTION_URL;
+    const redirectUri = isApp
+      ? import.meta.env.VITE_REDIRECTION_APP_URL // 앱용
+      : import.meta.env.VITE_REDIRECTION_URL; // 웹용
 
     const kakaoUrl =
       `https://kauth.kakao.com/oauth/authorize` +

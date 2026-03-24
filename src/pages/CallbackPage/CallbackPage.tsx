@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useOauthLoginMutation } from "../../shared/hooks/useAuth";
 import { useNavigate } from "react-router";
+import { sendToApp } from "@/shared/webview/webview";
 
 const CallbackPage = () => {
   const navigate = useNavigate();
@@ -18,7 +19,19 @@ const CallbackPage = () => {
           return;
         }
 
-        await oauthLogin({ provider, code });
+        // 🔥 로그인 요청
+        const result = await oauthLogin({ provider, code });
+
+        // 👉 여기서 토큰 꺼내기 (중요)
+        //const accessToken = result?.accessToken;
+
+        // 🔥 앱이면 토큰 전달
+        /*if (window.ReactNativeWebView) {
+          sendToApp({
+            type: "KAKAO_LOGIN_SUCCESS",
+          });
+        }*/
+
         navigate("/pocket");
       } catch (err) {
         console.error("OAuth login failed:", err);
