@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import type { Post } from "../../shared/types/post.type";
+import { useCreatePostLikeMutation, useDeletePostLikeMutation } from "@/shared/hooks/usePost";
 
 interface PostFormProps {
   post: Post;
@@ -8,6 +9,10 @@ interface PostFormProps {
 }
 
 const PostForm = ({ post, mode = "default" }: PostFormProps) => {
+  // mutate
+  const { mutate: createPostLike } = useCreatePostLikeMutation({ postId: post.postId });
+  const { mutate: deletePostLike } = useDeletePostLikeMutation({ postId: post.postId });
+
   const images = post.images ?? [];
   const representativeImage = images[0]?.imageUrl;
 
@@ -15,6 +20,15 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
   const shouldShowSlider = isDetailMode && images.length > 1;
 
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (post.likedByMe) {
+      deletePostLike({ postId: post.postId });
+    } else {
+      createPostLike({ postId: post.postId });
+    }
+  };
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -38,7 +52,7 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
           </AuthorInfo>
         </AuthorRow>
 
-        <LikeButton $liked={post.likedByMe}>
+        <LikeButton $liked={post.likedByMe} onClick={handleLike}>
           <HeartIcon $liked={post.likedByMe}>❤</HeartIcon>
           <span>{post.likeCount}</span>
         </LikeButton>
