@@ -97,7 +97,7 @@ export function usePatchProfileMutation() {
 }
 
 //민감 정보(실명, 생일)
-export function usepatchPrivateProfileMutation() {
+export function usePatchPrivateProfileMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({

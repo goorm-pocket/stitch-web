@@ -15,6 +15,10 @@ import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/sha
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
+type UploadItem = {
+  uploadUrl: string;
+  key: string;
+};
 
 //글자수 제한
 const MAX_LENGTH = 500;
@@ -34,7 +38,7 @@ export default function CreatePocketPost() {
   const [cropImage, setCropImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isRoundCrop, setIsRoundCrop] = useState(true);
 
   const { mutate: createPost } = useCreatePostMutation();
@@ -59,9 +63,9 @@ export default function CreatePocketPost() {
   const dataURLtoBlob = (dataurl: string) => {
     const arr = dataurl.split(","),
       mime = arr[0].match(/:(.*?);/)![1];
-    let bstr = atob(arr[1]),
-      n = bstr.length,
-      u8arr = new Uint8Array(n);
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
     while (n--) u8arr[n] = bstr.charCodeAt(n);
     return new Blob([u8arr], { type: mime });
   };
@@ -110,12 +114,12 @@ export default function CreatePocketPost() {
         if (multipleRes.uploads) {
           //S3에 업로드
           await Promise.all(
-            multipleRes.uploads.map((u: any, idx: number) =>
+            multipleRes.uploads.map((u: UploadItem, idx: number) =>
               uploadFileToS3(u.uploadUrl, images[idx]),
             ),
           );
           //key 추출
-          postImageKeys = multipleRes.uploads.map((u: any) => u.key);
+          postImageKeys = multipleRes.uploads.map((u: UploadItem) => u.key);
         }
       }
 
@@ -160,7 +164,7 @@ export default function CreatePocketPost() {
     e.target.value = "";
   };
 
-  const onCropComplete = (_: any, croppedAreaPixels: any) => {
+  const onCropComplete = (_: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
