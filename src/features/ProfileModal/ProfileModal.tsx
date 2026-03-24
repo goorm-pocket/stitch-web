@@ -1,20 +1,16 @@
 import styled from "styled-components";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import Cropper from "react-easy-crop";
+import { useState, useEffect, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
 import {
   useGetProfileQuery,
   usePatchProfileMutation,
   useSetupProfileMutation,
-  usepatchPrivateProfileMutation,
+  usePatchPrivateProfileMutation,
 } from "@/shared/hooks/useUser";
-import { apiClient } from "@/shared/api/axios";
 import { SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
 
 const S3_BASE_URL = "https://pocket-stitch-media-dev.s3.ap-northeast-2.amazonaws.com/"; //나중에 분리
-
-type CropShape = "rect" | "round";
 
 //입력 데이터
 interface FormData {
@@ -22,7 +18,7 @@ interface FormData {
   realName: string;
   birth: string;
   profileImageUrl: string | null;
-  emojiContent: string | null;
+  profileEmoji: string | null;
 }
 
 const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
@@ -30,19 +26,20 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery();
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
-  const { mutateAsync: patchPrivateProfileMutate } = usepatchPrivateProfileMutation();
+  const { mutateAsync: patchPrivateProfileMutate } = usePatchPrivateProfileMutation();
+  type ProfileData = NonNullable<typeof profileData>;
 
   //조회, 수정 모드
   const [isEditing, setIsEditing] = useState(isInitial);
   //복구 데이터
   const [initialData, setInitialData] = useState<FormData | null>(null);
-  const [formData, setFormData] = useState<FormData>({
-    nickname: "",
-    realName: "",
-    birth: "",
-    profileImageUrl: "",
-    emojiContent: "",
-  });
+  const [formData, setFormData] = useState<FormData>(() => ({
+    nickname: profileData?.nickname || "",
+    realName: profileData?.realName || "",
+    birth: profileData?.birth || "",
+    profileImageUrl: profileData?.profileImageUrl || "",
+    profileEmoji: profileData?.profileEmoji || "",
+  }));
 
   //화면 표시용
   const [profileImg, setProfileImg] = useState<string | null>(null);
@@ -54,17 +51,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const [emojiContent, setEmojiContent] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  //크롭 이미지 객체
-  const [imageToCrop, setImageToCrop] = useState<{ url: string; type: "photo" | "emoji" } | null>(
-    null,
-  );
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const [cropShape, setCropShape] = useState<CropShape>("round");
-
-  const aspect = cropShape === "rect" ? undefined : 1;
-
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const isInitialized = useRef(false);
@@ -74,12 +60,36 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   const isFormValid =
     formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
 
+  const updateUIWithData = (data: ProfileData) => {
+    const key = data.profileImageUrl || "";
+    const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
+
+    return {
+      formData: {
+        nickname: data.nickname || "",
+        realName: data.realName || "",
+        birth: data.birth || "",
+        profileImageUrl: key,
+        profileEmoji: data.profileEmoji || "",
+      },
+      profileImageKey: key,
+      profileImg: profileFullUrl,
+      emojiContent: data.profileEmoji || null,
+    };
+  };
+
   //정보 조회
   useEffect(() => {
-    if (profileData && !isInitialized.current) {
-      updateUIWithData(profileData);
-      isInitialized.current = true;
-    }
+    if (!profileData || isInitialized.current) return;
+
+    const mapped = updateUIWithData(profileData);
+
+    setFormData(mapped.formData);
+    setInitialData(mapped.formData);
+    setProfileImageKey(mapped.profileImageKey);
+    setProfileImg(mapped.profileImg);
+    setEmojiContent(mapped.emojiContent);
+    isInitialized.current = true;
   }, [profileData]);
 
   useEffect(() => {
@@ -96,27 +106,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showEmojiPicker]);
 
-  const updateUIWithData = (data: any) => {
-    const key = data.profileImageUrl || "";
-    const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
-
-    const mappedData = {
-      nickname: data.nickname || "",
-      realName: data.realName || "",
-      birth: data.birth || data.birthDate || "",
-      profileImageUrl: key,
-      emojiContent: data.profileEmoji || "",
-    };
-
-    setFormData(mappedData);
-    setInitialData(mappedData);
-
-    setProfileImageKey(key);
-    setProfileImg(profileFullUrl);
-
-    setEmojiContent(mappedData.emojiContent || null);
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -130,11 +119,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
         if (type === "photo") {
           setProfileFile(file);
           setProfileImg(reader.result as string);
-          setImageToCrop(null);
-        } else {
-          setCrop({ x: 0, y: 0 });
-          setZoom(1);
-          setImageToCrop({ url: reader.result as string, type: "emoji" });
         }
       };
       reader.readAsDataURL(file);
@@ -150,34 +134,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     if (!content) return false;
     return !content.startsWith("data:image");
   };
-  /*
-  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
-    setCroppedAreaPixels(croppedPixels);
-  }, []);
-
-  const getCroppedImg = async () => {
-    if (!imageToCrop || !croppedAreaPixels) return;
-
-    const image = new Image();
-    image.src = imageToCrop.url;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    const { width, height, x, y } = croppedAreaPixels;
-    canvas.width = width;
-    canvas.height = height;
-
-    ctx?.drawImage(image, x, y, width, height, 0, 0, width, height);
-
-    const base64Image = canvas.toDataURL("image/jpeg");
-
-    if (imageToCrop.type === "photo") {
-      setProfileImg(base64Image);
-    } else {
-      setEmojiContent(base64Image);
-    }
-    setImageToCrop(null);
-  };*/
 
   const handleSave = async () => {
     const userId = profileData?.userId;
@@ -245,10 +201,9 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
       setIsEditing(false);
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Save Error:", err);
-      const errorMsg = err.response?.data?.message || "저장 중 오류가 발생했습니다.";
-      alert(errorMsg);
+      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -262,7 +217,7 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       const fullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
 
       setProfileImg(fullUrl);
-      setEmojiContent(initialData.emojiContent);
+      setEmojiContent(initialData.profileEmoji);
     }
 
     setIsEditing(false);
