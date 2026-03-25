@@ -6,8 +6,11 @@ import ArchiveIcon from "../../assets/archive-icon.svg";
 import ProfileModal from "../../features/ProfileModal/ProfileModal";
 import { NavLink, useNavigate } from "react-router";
 import { useState } from "react";
+import { useGetProfileQuery } from "../hooks/useUser";
 
 const Header = () => {
+  const { data: profile } = useGetProfileQuery();
+
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
@@ -38,7 +41,7 @@ const Header = () => {
         </NavBar>
         <AvatorBox>
           <AvatorButton onClick={openModal}>
-            <Avator></Avator>
+            <Avator src={profile?.profileImageUrl} />
           </AvatorButton>
         </AvatorBox>
       </Right>
