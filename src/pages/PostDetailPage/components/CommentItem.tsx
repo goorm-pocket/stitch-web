@@ -3,6 +3,7 @@ import type { Comment } from "../../../shared/types/comment.type";
 
 interface CommentItemProps {
   comment: Comment;
+  onReply: () => void;
 }
 
 const formatCommentTime = (dateString: string) => {
@@ -16,7 +17,7 @@ const formatCommentTime = (dateString: string) => {
   }).format(date);
 };
 
-const CommentItem = ({ comment }: CommentItemProps) => {
+const CommentItem = ({ comment, onReply }: CommentItemProps) => {
   const isReply = comment.depth > 1;
 
   return (
@@ -35,7 +36,9 @@ const CommentItem = ({ comment }: CommentItemProps) => {
           </UserMeta>
 
           <ActionRow>
-            <ReplyButton type="button">Reply</ReplyButton>
+            <ReplyButton type="button" onClick={onReply}>
+              Reply
+            </ReplyButton>
           </ActionRow>
         </TopRow>
 

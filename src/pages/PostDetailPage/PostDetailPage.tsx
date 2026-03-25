@@ -32,6 +32,10 @@ const PostDetailPage = () => {
     setCommentInput("");
   };
 
+  const handleReply = (commentId: string) => {
+    setReplyTarget(commentId);
+  };
+
   return (
     <Container>
       <ContentSection>
@@ -66,7 +70,11 @@ const PostDetailPage = () => {
 
           <CommentList>
             {comments.map((comment) => (
-              <CommentItem key={comment.commentId} comment={comment} />
+              <CommentItem
+                key={comment.commentId}
+                comment={comment}
+                onReply={() => handleReply(comment.author.nickname)}
+              />
             ))}
           </CommentList>
         </CommentSection>
