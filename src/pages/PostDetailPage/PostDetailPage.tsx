@@ -14,7 +14,9 @@ const PostDetailPage = () => {
   const { data: commentsPages } = useGetCommentsQuery({ postId: id! });
 
   // mutate
-  const { mutate: createCommnet } = useCreateCommentMutation({ postId: post?.postId as string });
+  const { mutateAsync: createCommnet } = useCreateCommentMutation({
+    postId: post?.postId as string,
+  });
 
   // state
   const [commentInput, setCommentInput] = useState("");
@@ -26,7 +28,8 @@ const PostDetailPage = () => {
   const handleCreateComment = async () => {
     if (!commentInput.trim()) return;
     if (!post) return;
-    createCommnet({ postId: post?.postId, content: commentInput, parentId: replyTarget });
+    await createCommnet({ postId: post?.postId, content: commentInput, parentId: replyTarget });
+    setCommentInput("");
   };
 
   return (
