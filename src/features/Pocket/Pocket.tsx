@@ -37,7 +37,7 @@ const Pocket = () => {
 
   const items = board?.items ?? [];
 
-  const itemSize = Math.min(size.width * 0.2, 65);
+  const itemSize = Math.max(size.width * 0.15, 50);
   const wallThickness = 20;
 
   const positions = usePocketMatter({
