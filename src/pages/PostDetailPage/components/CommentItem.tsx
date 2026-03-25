@@ -1,5 +1,7 @@
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import type { Comment } from "../../../shared/types/comment.type";
+import { useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
 
 interface CommentItemProps {
   comment: Comment;
@@ -19,6 +21,20 @@ const formatCommentTime = (dateString: string) => {
 
 const CommentItem = ({ comment, onReply }: CommentItemProps) => {
   const isReply = comment.depth > 1;
+  const [showReplies, setShowReplies] = useState(false);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useGetReplyCommentsQuery({
+      commentId: comment.commentId,
+    });
+
+  const replies = useMemo(() => {
+    return data?.pages.flatMap((page) => page.comments) ?? [];
+  }, [data]);
+
+  const handleToggleReplies = () => {
+    setShowReplies((prev) => !prev);
+  };
 
   return (
     <Container $isReply={isReply}>
@@ -39,10 +55,42 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
             <ReplyButton type="button" onClick={onReply}>
               Reply
             </ReplyButton>
+
+            {comment.hasChild && (
+              <ReplyButton type="button" onClick={handleToggleReplies}>
+                {showReplies ? "Hide replies" : "View replies"}
+              </ReplyButton>
+            )}
           </ActionRow>
         </TopRow>
 
         <Content>{comment.content}</Content>
+
+        {showReplies && comment.hasChild && (
+          <ReplySection>
+            {isLoading ? (
+              <ReplyInfoText>Loading...</ReplyInfoText>
+            ) : (
+              <>
+                <ReplyList>
+                  {replies.map((reply) => (
+                    <CommentItem key={reply.commentId} comment={reply} onReply={onReply} />
+                  ))}
+                </ReplyList>
+
+                {hasNextPage && (
+                  <MoreButton
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                  >
+                    {isFetchingNextPage ? "Loading..." : "More replies"}
+                  </MoreButton>
+                )}
+              </>
+            )}
+          </ReplySection>
+        )}
       </Body>
     </Container>
   );
@@ -54,10 +102,9 @@ const Container = styled.li<{ $isReply: boolean }>`
   display: flex;
   gap: 14px;
   padding: 16px;
-  margin-left: ${({ $isReply }) => ($isReply ? "36px" : "0")};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 20px;
-  background: "white";
+  background: white;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 `;
 
@@ -136,4 +183,47 @@ const Content = styled.p`
   font-size: 15px;
   color: ${({ theme }) => theme.colors.text_primary};
   word-break: break-word;
+`;
+
+const ReplySection = styled.div`
+  margin-top: 8px;
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const ReplyList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const ReplyInfoText = styled.span`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.text_secondary};
+`;
+
+const MoreButton = styled.button`
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+    text-decoration: none;
+  }
 `;

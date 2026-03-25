@@ -39,3 +39,27 @@ export async function createComment({ postId, content, parentId }: CreateComment
   const res = await apiClient.post(`/api/v1/posts/${postId}/comments`, { content, parentId });
   return res.data.data;
 }
+
+interface getReplyCommentsRes {
+  comments: Comment[];
+  hasNext: boolean;
+  nextCursor: string | null;
+}
+
+export async function getReplyComments({
+  commentId,
+  pageParam,
+}: {
+  commentId: string;
+  pageParam?: string | null;
+}): Promise<getReplyCommentsRes> {
+  const res = await apiClient.get<ApiResponse<getReplyCommentsRes>>(
+    `/api/v1/comments/${commentId}/replies`,
+    {
+      params: {
+        cursor: pageParam ?? undefined,
+      },
+    },
+  );
+  return res.data.data;
+}

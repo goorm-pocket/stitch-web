@@ -8,6 +8,10 @@ import { useState } from "react";
 
 const PostDetailPage = () => {
   const { id } = useParams();
+  // state
+  const [commentInput, setCommentInput] = useState<string>("");
+  const [replyTargetId, setReplyTargetId] = useState<string>("");
+  const [replyTargetName, setReplyTargetName] = useState<string>("");
 
   // query
   const { data: post } = useGetPostByIdQuery({ postId: id! });
@@ -16,12 +20,8 @@ const PostDetailPage = () => {
   // mutate
   const { mutateAsync: createCommnet } = useCreateCommentMutation({
     postId: post?.postId as string,
+    parentId: replyTargetId,
   });
-
-  // state
-  const [commentInput, setCommentInput] = useState<string>("");
-  const [replyTargetId, setReplyTargetId] = useState<string>("");
-  const [replyTargetName, setReplyTargetName] = useState<string>("");
 
   const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];
 
