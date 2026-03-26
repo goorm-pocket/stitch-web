@@ -20,7 +20,7 @@ const CallbackPage = () => {
         }
 
         // 🔥 로그인 요청
-        const result = await oauthLogin({ provider, code });
+        await oauthLogin({ provider, code });
 
         // 👉 여기서 토큰 꺼내기 (중요)
         //const accessToken = result?.accessToken;

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
 import { useGetBoardQuery } from "../../shared/hooks/useBoard";
@@ -134,6 +134,27 @@ const Pocket = () => {
   const { data: board } = useGetBoardQuery("WEB");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "TILT") {
+          setTilt((prev) => ({
+            x: prev.x + (data.x - prev.x) * 0.1,
+            y: prev.y + (data.y - prev.y) * 0.1,
+          }));
+        }
+      } catch {}
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -211,6 +232,7 @@ const Pocket = () => {
                 x={pos.x}
                 y={pos.y}
                 angle={pos.angle}
+                tilt={tilt}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
               />
