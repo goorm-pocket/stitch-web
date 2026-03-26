@@ -1,7 +1,11 @@
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
+import { useGetRecapBoardQuery } from "@/shared/hooks/useBoard";
 
 const RecapPage = () => {
+  const date = new Date().toISOString().slice(0, 10);
+  const { data: board } = useGetRecapBoardQuery(date);
+
   return (
     <Container>
       <TitleContainer>
@@ -9,7 +13,7 @@ const RecapPage = () => {
         <Subtitle>Look back on what you’ve collected.</Subtitle>
       </TitleContainer>
 
-      <Pocket />
+      <Pocket board={board} />
     </Container>
   );
 };
