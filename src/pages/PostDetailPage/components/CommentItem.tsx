@@ -48,8 +48,6 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
         <TopRow>
           <UserMeta>
             <Nickname>{comment.author.nickname}</Nickname>
-            <Dot>•</Dot>
-            <DateText>{formatCommentTime(comment.createdAt)}</DateText>
           </UserMeta>
 
           <ActionRow>
@@ -59,12 +57,6 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
             >
               Reply
             </ReplyButton>
-
-            {comment.hasChild && (
-              <ReplyButton type="button" onClick={handleToggleReplies}>
-                {showReplies ? "Hide replies" : "View replies"}
-              </ReplyButton>
-            )}
           </ActionRow>
         </TopRow>
 
@@ -72,6 +64,18 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
           {comment?.mentionNickname && <ReplyMention>@{comment.mentionNickname}</ReplyMention>}{" "}
           {comment.content}
         </Content>
+        <MetaRow>
+          <DateText>{formatCommentTime(comment.createdAt)}</DateText>
+
+          {comment.hasChild && (
+            <ToggleRepliesButton onClick={handleToggleReplies}>
+              <ChevronIcon $open={showReplies} viewBox="0 0 24 24">
+                <path d="M7 10L12 15L17 10" />
+              </ChevronIcon>
+              <span>{showReplies ? "Hide" : "View"}</span>
+            </ToggleRepliesButton>
+          )}
+        </MetaRow>
 
         {showReplies && comment.hasChild && (
           <ReplySection>
@@ -128,7 +132,6 @@ const Body = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 `;
 
 const TopRow = styled.div`
@@ -136,6 +139,14 @@ const TopRow = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+`;
+
+const MetaRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
 `;
 
 const UserMeta = styled.div`
@@ -150,11 +161,6 @@ const Nickname = styled.span`
   font-size: 15px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
-`;
-
-const Dot = styled.span`
-  color: ${({ theme }) => theme.colors.text_disable};
-  font-size: 12px;
 `;
 
 const DateText = styled.span`
@@ -186,7 +192,6 @@ const ReplyButton = styled.button`
 
 const Content = styled.p`
   margin: 0;
-  line-height: 1.6;
   font-size: 15px;
   color: ${({ theme }) => theme.colors.text_primary};
   word-break: break-word;
@@ -198,12 +203,56 @@ const ReplyMention = styled.span`
   color: ${({ theme }) => theme.colors.primary};
 `;
 
+const ToggleRepliesButton = styled.button`
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.hover};
+  }
+`;
+
+const ChevronIcon = styled.svg<{ $open: boolean }>`
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transform: ${({ $open }) => ($open ? "rotate(180deg)" : "rotate(0deg)")};
+  transition: transform 0.22s ease;
+`;
+
 const ReplySection = styled.div`
   margin-top: 8px;
   margin-left: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  animation: fadeIn 0.2s ease;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const ReplyList = styled.ul`

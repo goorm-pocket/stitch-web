@@ -29,8 +29,6 @@ const ReCommentItem = ({ comment, onReply }: CommentItemProps) => {
         <TopRow>
           <UserMeta>
             <Nickname>{comment.author.nickname}</Nickname>
-            <Dot>•</Dot>
-            <DateText>{formatCommentTime(comment.createdAt)}</DateText>
           </UserMeta>
 
           <ActionRow>
@@ -44,9 +42,13 @@ const ReCommentItem = ({ comment, onReply }: CommentItemProps) => {
         </TopRow>
 
         <Content>
-          {comment?.mentionNickname && <ReplyMention>@{comment.mentionNickname}</ReplyMention>}{" "}
+          {comment.mentionNickname && <ReplyMention>@{comment.mentionNickname}</ReplyMention>}{" "}
           {comment.content}
         </Content>
+
+        <MetaRow>
+          <DateText>{formatCommentTime(comment.createdAt)}</DateText>
+        </MetaRow>
       </Body>
     </Container>
   );
@@ -56,20 +58,21 @@ export default ReCommentItem;
 
 const Container = styled.li`
   display: flex;
-  gap: 14px;
-  padding: 16px;
+  gap: 12px;
+  padding: 14px 16px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 20px;
-  background: white;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: 18px;
+  background: ${({ theme }) => theme.colors.background};
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 `;
 
 const Avatar = styled.img`
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const Body = styled.div`
@@ -77,7 +80,6 @@ const Body = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 `;
 
 const TopRow = styled.div`
@@ -96,19 +98,9 @@ const UserMeta = styled.div`
 `;
 
 const Nickname = styled.span`
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
-`;
-
-const Dot = styled.span`
-  color: ${({ theme }) => theme.colors.text_disable};
-  font-size: 12px;
-`;
-
-const DateText = styled.span`
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const ActionRow = styled.div`
@@ -124,19 +116,22 @@ const ReplyButton = styled.button`
   color: ${({ theme }) => theme.colors.text_secondary};
   padding: 6px 8px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 
   &:hover {
     background: ${({ theme }) => theme.colors.hover};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
 const Content = styled.p`
   margin: 0;
-  line-height: 1.6;
-  font-size: 15px;
+  font-size: 14px;
   color: ${({ theme }) => theme.colors.text_primary};
   word-break: break-word;
 `;
@@ -145,4 +140,17 @@ const ReplyMention = styled.span`
   font-size: 14px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
+`;
+
+const MetaRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+`;
+
+const DateText = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;
