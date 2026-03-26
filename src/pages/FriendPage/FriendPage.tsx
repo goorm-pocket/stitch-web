@@ -11,8 +11,10 @@ import {
 import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 import type { Friend } from "@/shared/types/friend.type";
+import { useNavigate } from "react-router";
 
 const FriendPage = () => {
+  const navigate = useNavigate();
   const searchInputRef = useRef<HTMLDivElement | null>(null);
 
   // state
@@ -79,7 +81,11 @@ const FriendPage = () => {
                   <SearchUserItem
                     key={item.userId}
                     user={item}
-                    handleAdd={() => handleAddFriend(item.userId)}
+                    handleAdd={(e) => {
+                      e.stopPropagation();
+                      handleAddFriend(item.userId);
+                    }}
+                    handleClick={() => navigate(`/profile/${item.userId}`)}
                   />
                 ))
               ) : (
