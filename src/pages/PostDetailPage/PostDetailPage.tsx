@@ -20,7 +20,6 @@ const PostDetailPage = () => {
   // mutate
   const { mutateAsync: createCommnet } = useCreateCommentMutation({
     postId: post?.postId as string,
-    parentId: replyTargetId,
   });
 
   const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];

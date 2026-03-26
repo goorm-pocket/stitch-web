@@ -14,13 +14,7 @@ export function useGetCommentsQuery({ postId }: { postId: string }) {
   });
 }
 
-export function useCreateCommentMutation({
-  postId,
-  parentId,
-}: {
-  postId: string;
-  parentId?: string;
-}) {
+export function useCreateCommentMutation({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createComment,
@@ -29,7 +23,7 @@ export function useCreateCommentMutation({
         queryKey: ["comments", postId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["reply-comments", parentId],
+        queryKey: ["reply-comments"],
       });
     },
   });

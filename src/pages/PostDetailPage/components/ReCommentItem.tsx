@@ -1,8 +1,5 @@
-import { useMemo, useState } from "react";
 import styled from "styled-components";
 import type { Comment } from "../../../shared/types/comment.type";
-import { useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
-import ReCommentItem from "./ReCommentItem";
 
 interface CommentItemProps {
   comment: Comment;
@@ -20,25 +17,9 @@ const formatCommentTime = (dateString: string) => {
   }).format(date);
 };
 
-const CommentItem = ({ comment, onReply }: CommentItemProps) => {
-  const isReply = comment.depth > 1;
-  const [showReplies, setShowReplies] = useState(false);
-
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useGetReplyCommentsQuery({
-      commentId: comment.commentId,
-    });
-
-  const replies = useMemo(() => {
-    return data?.pages.flatMap((page) => page.comments) ?? [];
-  }, [data]);
-
-  const handleToggleReplies = () => {
-    setShowReplies((prev) => !prev);
-  };
-
+const ReCommentItem = ({ comment, onReply }: CommentItemProps) => {
   return (
-    <Container $isReply={isReply}>
+    <Container>
       <Avatar
         src={comment.author.profileImageUrl || "https://i.pravatar.cc/100?img=1"}
         alt={comment.author.nickname}
@@ -59,12 +40,6 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
             >
               Reply
             </ReplyButton>
-
-            {comment.hasChild && (
-              <ReplyButton type="button" onClick={handleToggleReplies}>
-                {showReplies ? "Hide replies" : "View replies"}
-              </ReplyButton>
-            )}
           </ActionRow>
         </TopRow>
 
@@ -72,40 +47,14 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
           {comment?.mentionNickname && <ReplyMention>@{comment.mentionNickname}</ReplyMention>}{" "}
           {comment.content}
         </Content>
-
-        {showReplies && comment.hasChild && (
-          <ReplySection>
-            {isLoading ? (
-              <ReplyInfoText>Loading...</ReplyInfoText>
-            ) : (
-              <>
-                <ReplyList>
-                  {replies.map((reply) => (
-                    <ReCommentItem key={reply.commentId} comment={reply} onReply={onReply} />
-                  ))}
-                </ReplyList>
-
-                {hasNextPage && (
-                  <MoreButton
-                    type="button"
-                    onClick={() => fetchNextPage()}
-                    disabled={isFetchingNextPage}
-                  >
-                    {isFetchingNextPage ? "Loading..." : "More replies"}
-                  </MoreButton>
-                )}
-              </>
-            )}
-          </ReplySection>
-        )}
       </Body>
     </Container>
   );
 };
 
-export default CommentItem;
+export default ReCommentItem;
 
-const Container = styled.li<{ $isReply: boolean }>`
+const Container = styled.li`
   display: flex;
   gap: 14px;
   padding: 16px;
@@ -196,47 +145,4 @@ const ReplyMention = styled.span`
   font-size: 14px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
-`;
-
-const ReplySection = styled.div`
-  margin-top: 8px;
-  margin-left: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const ReplyList = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
-
-const ReplyInfoText = styled.span`
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.text_secondary};
-`;
-
-const MoreButton = styled.button`
-  align-self: flex-start;
-  border: none;
-  background: transparent;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.primary};
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.6;
-    text-decoration: none;
-  }
 `;
