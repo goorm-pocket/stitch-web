@@ -1,12 +1,15 @@
 import styled from "styled-components";
 import Archive from "../../features/Archive/Archive";
 import SettingsIcon from "../../assets/setting-icon.svg";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { ProfileStitchedBox } from "../../shared/ui/StitchedBox";
-import { useGetProfileQuery } from "@/shared/hooks/useUser";
+import { useGetProfileByIdQuery } from "@/shared/hooks/useUser";
 
 const UserProfilePage = () => {
-  const { data: profile } = useGetProfileQuery();
+  const params = useParams();
+  const { id } = params;
+
+  const { data: profile } = useGetProfileByIdQuery({ userId: id as string });
   const navigate = useNavigate();
 
   return (
