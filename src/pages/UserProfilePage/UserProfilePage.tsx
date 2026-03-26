@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import Archive from "../../features/Archive/Archive";
-import SettingsIcon from "../../assets/setting-icon.svg";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import { ProfileStitchedBox } from "../../shared/ui/StitchedBox";
 import { useGetProfileByIdQuery } from "@/shared/hooks/useUser";
 
@@ -10,7 +9,6 @@ const UserProfilePage = () => {
   const { id } = params;
 
   const { data: profile } = useGetProfileByIdQuery({ userId: id as string });
-  const navigate = useNavigate();
 
   return (
     <Container>
@@ -32,15 +30,8 @@ const UserProfilePage = () => {
             </BadgeContainer>
           </ProfileTextBox>
         </Left>
-
-        <Right>
-          <SettingButton onClick={() => navigate("/setting")}>
-            <SettingIcon as={SettingsIcon} />
-            Settings
-          </SettingButton>
-        </Right>
       </ProfileContainer>
-      <Archive />
+      <Archive userId={profile?.userId} />
     </Container>
   );
 };
@@ -73,11 +64,6 @@ const Left = styled.div`
   display: flex;
   align-items: center;
   gap: 32px;
-`;
-
-const Right = styled.div`
-  display: flex;
-  align-items: center;
 `;
 
 const Avator = styled.img`
@@ -128,30 +114,4 @@ const BadgeNumber = styled.span`
   &::after {
     content: " ";
   }
-`;
-
-const SettingButton = styled.button`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: ${({ theme }) => theme.colors.sub};
-  border: none;
-  border-radius: 8px;
-
-  color: white;
-  font-size: 12px;
-
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-`;
-
-const SettingIcon = styled.svg`
-  color: currentColor;
-  margin-right: 5px;
 `;
