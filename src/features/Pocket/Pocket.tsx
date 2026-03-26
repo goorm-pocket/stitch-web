@@ -10,9 +10,10 @@ import { useNavigate } from "react-router";
 
 interface PocketProps {
   board?: { items: PocketBubbleType[] };
+  mode?: "BOARD" | "RECAP";
 }
 
-const Pocket = ({ board }: PocketProps) => {
+const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   const navigate = useNavigate();
   // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -52,7 +53,10 @@ const Pocket = ({ board }: PocketProps) => {
 
   const handleClickPost = async (id: string) => {
     if (!id) return;
-    await readBoardPost({ postId: id });
+    if (mode == "BOARD") {
+      await readBoardPost({ postId: id });
+    }
+
     setSelectedPostId(id);
     setIsModalOpen(true);
   };

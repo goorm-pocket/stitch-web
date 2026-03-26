@@ -13,7 +13,7 @@ const RecapPage = () => {
         <Subtitle>Look back on what you’ve collected.</Subtitle>
       </TitleContainer>
 
-      <Pocket board={board} />
+      <Pocket board={board} mode="RECAP" />
     </Container>
   );
 };

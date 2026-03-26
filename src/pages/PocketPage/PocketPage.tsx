@@ -44,7 +44,7 @@ const PocketPage = () => {
         <Subtitle>Discover what&apos;s tucked away in your space today.</Subtitle>
       </TitleContainer>
 
-      <Pocket board={board} />
+      <Pocket board={board} mode="BOARD" />
 
       <PluseButton onClick={() => navigate("/createpost")}>
         <PlusIcon>+</PlusIcon>
