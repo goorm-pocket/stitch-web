@@ -96,6 +96,8 @@ const CloseButton = styled.button`
 `;
 
 const Content = styled.div`
+  display: flex;
+  justify-content: center;
   padding: 20px;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
