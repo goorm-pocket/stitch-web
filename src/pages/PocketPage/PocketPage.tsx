@@ -5,12 +5,19 @@ import { useEffect, useState } from "react";
 import { useFetchMeQuery } from "../../shared/hooks/useAuth";
 import ProfileModal from "@/features/ProfileModal/ProfileModal";
 import { useGetProfileQuery } from "@/shared/hooks/useUser";
+import { useGetBoardQuery } from "@/shared/hooks/useBoard";
 
 const PocketPage = () => {
   const navigate = useNavigate();
+
+  // state
+  const [profileModal, setProfileModal] = useState(false);
+
+  // query
+
   const { data: me, isLoading: isMeLoading } = useFetchMeQuery();
   const { data: profile, isLoading: isProfileLoading } = useGetProfileQuery();
-  const [profileModal, setProfileModal] = useState(false);
+  const { data: board } = useGetBoardQuery("WEB");
 
   useEffect(() => {
     // 로딩 중에는 판단을 보류합니다.
@@ -37,7 +44,7 @@ const PocketPage = () => {
         <Subtitle>Discover what&apos;s tucked away in your space today.</Subtitle>
       </TitleContainer>
 
-      <Pocket />
+      <Pocket board={board} />
 
       <PluseButton onClick={() => navigate("/createpost")}>
         <PlusIcon>+</PlusIcon>

@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
-import { useGetBoardQuery } from "../../shared/hooks/useBoard";
 import type { PocketBubbleType } from "../../shared/types/post.type";
 import PostModal from "../PostModal/PostModal";
 import { usePocketSize } from "./hooks/usePocketSize";
@@ -130,8 +129,11 @@ const SAMPLE_ITEMS: PocketBubbleType[] = [
   },
 ];
 
-const Pocket = () => {
-  const { data: board } = useGetBoardQuery("WEB");
+interface PocketProps {
+  board?: { items: PocketBubbleType[] };
+}
+
+const Pocket = ({ board }: PocketProps) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
