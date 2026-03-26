@@ -115,15 +115,30 @@ const FriendPage = () => {
       <FriendListContainer>
         {selectList == "friend" &&
           friends.map((friend) => (
-            <FriendItem key={friend.friendId} friend={friend} state="ACCEPTED" />
+            <FriendItem
+              key={friend.friendId}
+              friend={friend}
+              state="ACCEPTED"
+              handleClick={() => navigate(`/profile/${friend.user.userId}`)}
+            />
           ))}
         {selectList == "sent" &&
           sentRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} state="SENT" />
+            <FriendItem
+              key={friend.friendId}
+              friend={friend}
+              state="SENT"
+              handleClick={() => navigate(`/profile/${friend.user.userId}`)}
+            />
           ))}
         {selectList == "received" &&
           receivedRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} state="RECEIVED" />
+            <FriendItem
+              key={friend.friendId}
+              friend={friend}
+              state="RECEIVED"
+              handleClick={() => navigate(`/profile/${friend.user.userId}`)}
+            />
           ))}
       </FriendListContainer>
     </Container>
