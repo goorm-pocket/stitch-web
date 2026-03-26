@@ -1,9 +1,15 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../../shared/ui/StitchedBox";
-import type { Friend } from "@/shared/types/friend.type";
+import type { Friend, FriendState } from "@/shared/types/friend.type";
+import {
+  useAcceptFriendRequestMutation,
+  useDeleteFriendRequestMutation,
+} from "@/shared/hooks/useFriend";
 
-const FriendItem = ({ friend }: { friend: Friend }) => {
-  const status = friend.status;
+const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) => {
+  const { mutate: acceptFriendRequest } = useAcceptFriendRequestMutation();
+  const { mutate: deleteFriendRequest } = useDeleteFriendRequestMutation();
+
   return (
     <Container>
       <Left>
@@ -14,9 +20,21 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
         </NameBox>
       </Left>
       <Right>
-        {status == "SENT" && <RemoveButton>REMOVE</RemoveButton>}
-        {status == "RECEIVED" && <AcceptButton>ACCEPT</AcceptButton>}
-        {status == "RECEIVED" && <RejectButton>REJECT</RejectButton>}
+        {(state == "SENT" || state == "ACCEPTED") && (
+          <RemoveButton onClick={() => deleteFriendRequest({ friendId: friend.friendId })}>
+            REMOVE
+          </RemoveButton>
+        )}
+        {state == "RECEIVED" && (
+          <AcceptButton onClick={() => acceptFriendRequest({ friendId: friend.friendId })}>
+            ACCEPT
+          </AcceptButton>
+        )}
+        {state == "RECEIVED" && (
+          <RejectButton onClick={() => deleteFriendRequest({ friendId: friend.friendId })}>
+            REJECT
+          </RejectButton>
+        )}
       </Right>
     </Container>
   );

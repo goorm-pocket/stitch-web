@@ -25,9 +25,11 @@ const SearchUserItem = ({ user, handleAdd }: SearchUserItemProps) => {
         </UserTextBox>
       </UserInfo>
 
-      <AddButton disabled={user.mine} onClick={handleAdd}>
-        {user.mine ? "My Account" : "Add"}
-      </AddButton>
+      {(user.state == "NONRELATION" || user.state == "MINE") && (
+        <AddButton disabled={user.state !== "NONRELATION"} onClick={handleAdd}>
+          {user.mine ? "My Account" : "Add"}
+        </AddButton>
+      )}
     </Container>
   );
 };

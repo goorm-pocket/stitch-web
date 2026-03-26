@@ -1,139 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
-import { useGetBoardQuery } from "../../shared/hooks/useBoard";
-import type { PocketBubbleType } from "../../shared/types/post.type";
+import { useGetBoardQuery, useReadBoardPostMutation } from "../../shared/hooks/useBoard";
 import PostModal from "../PostModal/PostModal";
 import { usePocketSize } from "./hooks/usePocketSize";
 import { usePocketMatter } from "./hooks/usePocketMatter";
-
-const SAMPLE_ITEMS: PocketBubbleType[] = [
-  {
-    postId: "1",
-    userId: "user1",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMAGE",
-      value: "https://i.pravatar.cc/100?img=1",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "2",
-    userId: "user2",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMAGE",
-      value: "https://i.pravatar.cc/100?img=2",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "3",
-    userId: "user3",
-    ownerType: "ME",
-    representative: {
-      type: "IMOGI",
-      value: "😊",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: true,
-  },
-  {
-    postId: "4",
-    userId: "user4",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMAGE",
-      value: "https://i.pravatar.cc/100?img=4",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "5",
-    userId: "user5",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMOGI",
-      value: "🔥",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "6",
-    userId: "user6",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMAGE",
-      value: "https://i.pravatar.cc/100?img=6",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: true,
-  },
-  {
-    postId: "7",
-    userId: "user7",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMOGI",
-      value: "🎉",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "8",
-    userId: "user8",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMAGE",
-      value: "https://i.pravatar.cc/100?img=8",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "9",
-    userId: "user9",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMOGI",
-      value: "😎",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: false,
-  },
-  {
-    postId: "10",
-    userId: "user10",
-    ownerType: "FRIEND",
-    representative: {
-      type: "IMAGE",
-      value: "https://i.pravatar.cc/100?img=10",
-    },
-    createdAt: "2026-03-14T10:00:00Z",
-    exposedAt: "2026-03-14T10:00:00Z",
-    read: true,
-  },
-];
+import { useNavigate } from "react-router";
 
 const Pocket = () => {
-  const { data: board } = useGetBoardQuery("WEB");
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -156,9 +31,9 @@ const Pocket = () => {
     };
   }, []);
 
+  // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
-
   const clickStartRef = useRef<{
     id: string | null;
     x: number;
@@ -169,13 +44,21 @@ const Pocket = () => {
     y: 0,
   });
 
+  // state
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
+  // query
+  const { data: board } = useGetBoardQuery("WEB");
+
+  // mutate
+  const { mutateAsync: readBoardPost } = useReadBoardPostMutation();
+
   const size = usePocketSize(wrapperRef);
 
-  const items = useMemo(() => {
-    return board?.items?.length ? board.items : SAMPLE_ITEMS;
-  }, [board]);
+  const items = board?.items ?? [];
 
-  const itemSize = Math.min(size.width * 0.2, 65);
+  const itemSize = Math.max(size.width * 0.15, 50);
   const wallThickness = 20;
 
   const positions = usePocketMatter({
@@ -186,6 +69,13 @@ const Pocket = () => {
     itemSize,
     wallThickness,
   });
+
+  const handleClickPost = async (id: string) => {
+    if (!id) return;
+    await readBoardPost({ postId: id });
+    setSelectedPostId(id);
+    setIsModalOpen(true);
+  };
 
   const handleMouseDown = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
     clickStartRef.current = {
@@ -204,11 +94,14 @@ const Pocket = () => {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance < 8) {
-      setIsModalOpen(true);
-      setSelectedPostId(id);
+      handleClickPost(id);
     }
 
     clickStartRef.current = { id: null, x: 0, y: 0 };
+  };
+
+  const handlePostClick = (postId: string) => {
+    navigate(`/posts/${postId}`);
   };
 
   return (
@@ -241,7 +134,11 @@ const Pocket = () => {
         </PocketArea>
       </PocketWrapper>
       {isModalOpen && selectedPostId && (
-        <PostModal onClose={() => setIsModalOpen(false)} postId={selectedPostId} userId={""} />
+        <PostModal
+          onClose={() => setIsModalOpen(false)}
+          postId={selectedPostId}
+          onPostClick={() => handlePostClick(selectedPostId)}
+        />
       )}
     </Container>
   );

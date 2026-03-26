@@ -36,12 +36,10 @@ const FriendPage = () => {
   const friends = friendsPages?.items ?? [];
   const sentRequests = sentRequestsRes?.items ?? [];
   const receivedRequests = receivedRequestsRes?.items ?? [];
-  console.log("fff", friends);
-  console.log("sss", sentRequests);
-  console.log("rrr", receivedRequests);
 
   const handleAddFriend = (id: string) => {
     sendFriendRequest({ userId: id });
+    setSearchName("");
   };
 
   // 밖에 클릭하면 친구 요청 리스트 닫는거
@@ -110,14 +108,16 @@ const FriendPage = () => {
 
       <FriendListContainer>
         {selectList == "friend" &&
-          friends.map((friend) => <FriendItem key={friend.friendId} friend={friend} />)}
+          friends.map((friend) => (
+            <FriendItem key={friend.friendId} friend={friend} state="ACCEPTED" />
+          ))}
         {selectList == "sent" &&
           sentRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} />
+            <FriendItem key={friend.friendId} friend={friend} state="SENT" />
           ))}
         {selectList == "received" &&
           receivedRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} />
+            <FriendItem key={friend.friendId} friend={friend} state="RECEIVED" />
           ))}
       </FriendListContainer>
     </Container>

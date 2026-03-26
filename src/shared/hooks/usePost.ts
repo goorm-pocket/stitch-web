@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPost } from "../api/post";
+import { createPost, createPostLike, deletePostLike } from "../api/post";
 import { useQuery } from "@tanstack/react-query";
 import { getCalendar, getPostById } from "../api/post";
 
@@ -27,5 +27,25 @@ export function useGetCalendarQuery({ year, month }: { year: number; month: numb
     queryKey: ["calendar", "me", { year, month }],
     queryFn: () => getCalendar({ year, month }),
     enabled: !!year && !!month,
+  });
+}
+
+export function useCreatePostLikeMutation({ postId }: { postId: string }) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createPostLike,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    },
+  });
+}
+
+export function useDeletePostLikeMutation({ postId }: { postId: string }) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePostLike,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    },
   });
 }
