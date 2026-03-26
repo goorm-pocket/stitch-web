@@ -3,12 +3,12 @@ import PostForm from "../PostForm/PostForm";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
 
 interface PostModalProps {
-  userId: string;
   postId: string;
   onClose: () => void;
+  onPostClick: () => void;
 }
 
-const PostModal = ({ onClose, postId }: PostModalProps) => {
+const PostModal = ({ onClose, postId, onPostClick }: PostModalProps) => {
   const { data: post } = useGetPostByIdQuery({ postId });
 
   return (
@@ -18,7 +18,9 @@ const PostModal = ({ onClose, postId }: PostModalProps) => {
           <CloseButton onClick={onClose}>×</CloseButton>
         </Header>
 
-        <Content>{post && <PostForm post={post} />}</Content>
+        <Content>
+          <PostCard onClick={onPostClick}>{post && <PostForm post={post} />}</PostCard>
+        </Content>
       </ModalContainer>
     </Overlay>
   );
@@ -96,4 +98,35 @@ const CloseButton = styled.button`
 const Content = styled.div`
   padding: 20px;
   color: ${({ theme }) => theme.colors.text_primary};
+`;
+
+const PostCard = styled.div`
+  width: min(720px, 100%);
+
+  display: flex;
+  flex-direction: column;
+
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 24px;
+  background: white;
+
+  overflow: hidden;
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-radius: 16px;
+  }
 `;
