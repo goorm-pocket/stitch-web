@@ -67,7 +67,10 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
           </ActionRow>
         </TopRow>
 
-        <Content>{comment.content}</Content>
+        <Content>
+          {comment?.mentionNickname && <ReplyMention>@{comment.mentionNickname}</ReplyMention>}{" "}
+          {comment.content}
+        </Content>
 
         {showReplies && comment.hasChild && (
           <ReplySection>
@@ -186,6 +189,12 @@ const Content = styled.p`
   font-size: 15px;
   color: ${({ theme }) => theme.colors.text_primary};
   word-break: break-word;
+`;
+
+const ReplyMention = styled.span`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.primary};
 `;
 
 const ReplySection = styled.div`
