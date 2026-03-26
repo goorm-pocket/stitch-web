@@ -6,12 +6,14 @@ import PostModal from "../PostModal/PostModal";
 import { usePocketSize } from "./hooks/usePocketSize";
 import { usePocketMatter } from "./hooks/usePocketMatter";
 import type { PocketBubbleType } from "@/shared/types/post.type";
+import { useNavigate } from "react-router";
 
 interface PocketProps {
   board?: { items: PocketBubbleType[] };
 }
 
 const Pocket = ({ board }: PocketProps) => {
+  const navigate = useNavigate();
   // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
