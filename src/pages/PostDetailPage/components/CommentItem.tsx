@@ -5,7 +5,7 @@ import { useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
 
 interface CommentItemProps {
   comment: Comment;
-  onReply: () => void;
+  onReply: (commentId: string, name: string) => void;
 }
 
 const formatCommentTime = (dateString: string) => {
@@ -52,7 +52,10 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
           </UserMeta>
 
           <ActionRow>
-            <ReplyButton type="button" onClick={onReply}>
+            <ReplyButton
+              type="button"
+              onClick={() => onReply(comment.commentId, comment.author.nickname)}
+            >
               Reply
             </ReplyButton>
 

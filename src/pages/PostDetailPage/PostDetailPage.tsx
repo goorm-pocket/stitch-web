@@ -79,11 +79,7 @@ const PostDetailPage = () => {
 
           <CommentList>
             {comments.map((comment) => (
-              <CommentItem
-                key={comment.commentId}
-                comment={comment}
-                onReply={() => handleReply(comment.commentId, comment.author.nickname)}
-              />
+              <CommentItem key={comment.commentId} comment={comment} onReply={handleReply} />
             ))}
           </CommentList>
         </CommentSection>
