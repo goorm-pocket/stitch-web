@@ -16,3 +16,8 @@ export async function getBoard({ platform }: getBoardProps): Promise<getBoardRes
   });
   return res.data.data;
 }
+
+export async function readBoardPost({ postId }: { postId: string }) {
+  const res = await apiClient.patch(`/api/v1/boards/posts/${postId}/read`);
+  return res.data.data;
+}
