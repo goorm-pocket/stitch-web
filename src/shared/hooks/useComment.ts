@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createComment, getComments } from "../api/comment";
+import { createComment, getComments, getReplyComments } from "../api/comment";
 
 export function useGetCommentsQuery({ postId }: { postId: string }) {
   return useInfiniteQuery({
@@ -14,7 +14,7 @@ export function useGetCommentsQuery({ postId }: { postId: string }) {
   });
 }
 
-export function useCreateCommentMutation({ postId }: { postId: string; parentId?: string }) {
+export function useCreateCommentMutation({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createComment,
@@ -22,6 +22,22 @@ export function useCreateCommentMutation({ postId }: { postId: string; parentId?
       queryClient.invalidateQueries({
         queryKey: ["comments", postId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["reply-comments"],
+      });
     },
+  });
+}
+
+export function useGetReplyCommentsQuery({ commentId }: { commentId: string }) {
+  return useInfiniteQuery({
+    queryKey: ["reply-comments", commentId],
+    queryFn: ({ pageParam }) => getReplyComments({ commentId, pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasNext) return undefined;
+      return lastPage.nextCursor;
+    },
+    enabled: !!commentId,
   });
 }

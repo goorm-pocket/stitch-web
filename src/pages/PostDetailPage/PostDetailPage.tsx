@@ -8,17 +8,19 @@ import { useState } from "react";
 
 const PostDetailPage = () => {
   const { id } = useParams();
+  // state
+  const [commentInput, setCommentInput] = useState<string>("");
+  const [replyTargetId, setReplyTargetId] = useState<string>("");
+  const [replyTargetName, setReplyTargetName] = useState<string>("");
 
   // query
   const { data: post } = useGetPostByIdQuery({ postId: id! });
   const { data: commentsPages } = useGetCommentsQuery({ postId: id! });
 
   // mutate
-  const { mutate: createCommnet } = useCreateCommentMutation({ postId: post?.postId as string });
-
-  // state
-  const [commentInput, setCommentInput] = useState("");
-  const [replyTarget, setReplyTarget] = useState("");
+  const { mutateAsync: createCommnet } = useCreateCommentMutation({
+    postId: post?.postId as string,
+  });
 
   const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];
 
@@ -26,7 +28,20 @@ const PostDetailPage = () => {
   const handleCreateComment = async () => {
     if (!commentInput.trim()) return;
     if (!post) return;
-    createCommnet({ postId: post?.postId, content: commentInput, parentId: replyTarget });
+    await createCommnet({ postId: post?.postId, content: commentInput, parentId: replyTargetId });
+    setCommentInput("");
+    setReplyTargetId("");
+    setReplyTargetName("");
+  };
+
+  const handleReply = (commentId: string, name: string) => {
+    setReplyTargetId(commentId);
+    setReplyTargetName(name);
+  };
+
+  const handleRemoveReply = () => {
+    setReplyTargetId("");
+    setReplyTargetName("");
   };
 
   return (
@@ -40,19 +55,19 @@ const PostDetailPage = () => {
           </CommentHeader>
 
           <CommentInputBox>
-            {replyTarget && (
-              <ReplyTargetBox>
-                <ReplyMention>@{replyTarget}</ReplyMention>
-                <ReplyRemoveButton type="button" onClick={() => setReplyTarget("")}>
+            {replyTargetId && (
+              <ReplyTargetIdBox>
+                <ReplyMention>@{replyTargetName}</ReplyMention>
+                <ReplyRemoveButton type="button" onClick={handleRemoveReply}>
                   ×
                 </ReplyRemoveButton>
-              </ReplyTargetBox>
+              </ReplyTargetIdBox>
             )}
 
             <CommentEditorRow>
               <CommentTextarea
                 value={commentInput}
-                placeholder={replyTarget ? "Write a reply..." : "Write a comment..."}
+                placeholder={replyTargetId ? "Write a reply..." : "Write a comment..."}
                 onChange={(e) => setCommentInput(e.target.value)}
               />
               <CommentSubmitButton type="button" onClick={handleCreateComment}>
@@ -63,7 +78,7 @@ const PostDetailPage = () => {
 
           <CommentList>
             {comments.map((comment) => (
-              <CommentItem key={comment.commentId} comment={comment} />
+              <CommentItem key={comment.commentId} comment={comment} onReply={handleReply} />
             ))}
           </CommentList>
         </CommentSection>
@@ -131,7 +146,7 @@ const CommentInputBox = styled.div`
   background: white;
 `;
 
-const ReplyTargetBox = styled.div`
+const ReplyTargetIdBox = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
