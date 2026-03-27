@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   getNotificationSettings,
   getPrivacySettings,
@@ -63,6 +63,14 @@ export function useWithdrawAccountMutation() {
 
 export function useGetProfileQuery() {
   return useQuery({
+    queryKey: ["user-profile"],
+    queryFn: getProfile,
+    select: (res: any) => res,
+  });
+}
+
+export function useSuspenseGetProfileQuery() {
+  return useSuspenseQuery({
     queryKey: ["user-profile"],
     queryFn: getProfile,
     select: (res: any) => res,
