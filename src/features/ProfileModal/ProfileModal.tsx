@@ -141,7 +141,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
     try {
       if (!userId) {
-        alert("로그인 정보가 없습니다.");
         return;
       }
 
@@ -189,21 +188,17 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
         await patchPrivateProfileMutate({ profile: privatePayload });
 
         updateUIWithData(response);
-        alert("프로필이 생성되었습니다!");
       } else {
         await Promise.all([
           patchProfileMutate({ profile: publicPayload }),
           patchPrivateProfileMutate({ profile: privatePayload }),
         ]);
-
-        alert("프로필이 수정되었습니다!");
       }
 
       setIsEditing(false);
       onClose();
     } catch (err) {
       console.error("Save Error:", err);
-      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
