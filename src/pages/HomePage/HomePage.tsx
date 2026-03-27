@@ -7,13 +7,6 @@ const HomePage = () => {
     const clientId = import.meta.env.VITE_KAKAO_OAUTH_KEY;
     const redirectUri = import.meta.env.VITE_REDIRECTION_URL;
 
-    /*
-    const isApp = !!window.ReactNativeWebView;
-    const redirectUri = isApp
-      ? import.meta.env.VITE_REDIRECTION_APP_URL // 앱용
-      : import.meta.env.VITE_REDIRECTION_URL; // 웹용
-    */
-
     const kakaoUrl =
       `https://kauth.kakao.com/oauth/authorize` +
       `?client_id=${clientId}` +
@@ -23,30 +16,6 @@ const HomePage = () => {
 
     window.location.href = kakaoUrl;
   };
-
-  /*
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get("code");
-
-    if (code) {
-      const isApp = !!window.ReactNativeWebView;
-
-      if (isApp) {
-        // 👉 앱으로 전달
-        window.ReactNativeWebView?.postMessage(
-          JSON.stringify({
-            type: "KAKAO_LOGIN_SUCCESS",
-            code,
-          }),
-        );
-      } else {
-        // 👉 웹 로그인 처리 (선택)
-        console.log("웹 로그인 code:", code);
-      }
-    }
-  }, []); 
-  */
 
   return (
     <Container>

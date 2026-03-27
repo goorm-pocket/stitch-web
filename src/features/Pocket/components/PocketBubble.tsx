@@ -7,7 +7,6 @@ type PocketBubbleProps = {
   x: number;
   y: number;
   angle: number;
-  tilt: { x: number; y: number };
   onMouseDown: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
   onMouseUp: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
 };
@@ -18,7 +17,6 @@ const PocketBubble = ({
   x,
   y,
   angle,
-  tilt,
   onMouseDown,
   onMouseUp,
 }: PocketBubbleProps) => {
@@ -31,10 +29,7 @@ const PocketBubble = ({
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        transform: `translate(
-  ${x - size / 2 + tilt.x * 40}px,
-  ${y - size / 2 + tilt.y * 40}px
-) rotate(${angle}rad)`,
+        transform: `translate(${x - size / 2}px, ${y - size / 2}px) rotate(${angle}rad)`,
       }}
       onMouseDown={(e) => onMouseDown(postId, e)}
       onMouseUp={(e) => onMouseUp(postId, e)}

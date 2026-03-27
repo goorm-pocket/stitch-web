@@ -12,6 +12,17 @@ interface UsePocketMatterParams {
   height: number;
   itemSize: number;
   wallThickness: number;
+  motion: {
+    tilt: {
+      x: number;
+      y: number;
+    };
+    rotation: {
+      x: number;
+      y: number;
+      z: number;
+    };
+  };
 }
 
 export function usePocketMatter({
@@ -21,18 +32,23 @@ export function usePocketMatter({
   height,
   itemSize,
   wallThickness,
+  motion,
 }: UsePocketMatterParams) {
   const [positions, setPositions] = useState<PositionMap>({}); // bubble들 위치 저장
   const runnerRef = useRef<Matter.Runner | null>(null); // 공들 계속 움직히게 함
   const animationRef = useRef<number | null>(null); // 화면 업데이트 타이머
   const bodyMapRef = useRef<BodyMap>({}); // bubble들의 Ref
+  const engineRef = useRef<Matter.Engine | null>(null);
 
   useEffect(() => {
     if (!sceneRef.current || width === 0 || height === 0 || items.length === 0) return;
     bodyMapRef.current = {};
 
     const engine = Matter.Engine.create();
-    engine.gravity.y = 3;
+    engineRef.current = engine;
+    engine.gravity.scale = 0.0015;
+    engine.gravity.x = 0;
+    engine.gravity.y = 1.8;
 
     // pocket 생성
     const world = engine.world;
@@ -97,8 +113,27 @@ export function usePocketMatter({
       Matter.Runner.stop(runner);
       Matter.World.clear(world, false);
       Matter.Engine.clear(engine);
+      engineRef.current = null;
     };
   }, [sceneRef, items, width, height, itemSize, wallThickness]);
+
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+
+    engine.gravity.x = motion.tilt.x * 1.2;
+    engine.gravity.y = 1.8 + motion.tilt.y * 1.2;
+
+    const force = {
+      x: motion.rotation.y * 0.00012,
+      y: motion.rotation.x * 0.00012,
+    };
+
+    Object.values(bodyMapRef.current).forEach((body) => {
+      Matter.Body.applyForce(body, body.position, force);
+      Matter.Body.setAngularVelocity(body, body.angularVelocity + motion.rotation.z * 0.002);
+    });
+  }, [motion]);
 
   return positions;
 }
