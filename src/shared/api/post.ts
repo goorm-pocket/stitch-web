@@ -44,6 +44,26 @@ export async function getCalendar({
   return res.data.data;
 }
 
+interface GetCalendarByIdRes {
+  userId: string;
+  year: number;
+  month: number;
+  calendar: Calendar[];
+}
+
+export async function getCalendarById({
+  year,
+  month,
+  userId,
+}: {
+  year: number;
+  month: number;
+  userId: string;
+}): Promise<GetCalendarByIdRes> {
+  const res = await apiClient.get(`/api/v1/posts/calendar/${userId}`, { params: { year, month } });
+  return res.data.data;
+}
+
 export async function createPostLike({ postId }: { postId: string }) {
   const res = await apiClient.post(`/api/v1/posts/${postId}/likes`);
   return res.data.data;

@@ -6,12 +6,19 @@ import {
   useDeleteFriendRequestMutation,
 } from "@/shared/hooks/useFriend";
 
-const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) => {
+interface FriendItemProps {
+  friend: Friend;
+  state: FriendState;
+  handleClick: () => void;
+}
+
+const FriendItem = ({ friend, state, handleClick }: FriendItemProps) => {
+  // mutate
   const { mutate: acceptFriendRequest } = useAcceptFriendRequestMutation();
   const { mutate: deleteFriendRequest } = useDeleteFriendRequestMutation();
 
   return (
-    <Container>
+    <Container onClick={handleClick}>
       <Left>
         <Avator src={friend.user?.profileImageUrl} />
         <NameBox>
