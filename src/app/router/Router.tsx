@@ -10,6 +10,7 @@ import SettingPage from "../../pages/SettingPage/SettingPage";
 import PostDetailPage from "../../pages/PostDetailPage/PostDetailPage";
 import ProtectedRouter from "./ProtectedRouter";
 import UserProfilePage from "@/pages/UserProfilePage/UserProfilePage";
+import RecapPage from "@/pages/RecapPage/RecapPage";
 
 const Router = () => {
   return (
@@ -25,6 +26,7 @@ const Router = () => {
           <Route path="/setting" element={<SettingPage />} />
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/profile/:id" element={<UserProfilePage />} />
+          <Route path="/recap" element={<RecapPage />} />
         </Route>
       </Route>
     </Routes>
