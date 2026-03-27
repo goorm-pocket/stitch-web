@@ -37,6 +37,10 @@ const MyPage = () => {
           </SettingButton>
         </Right>
       </ProfileContainer>
+      <RecapButton onClick={() => navigate("/recap")}>
+        <RecapTitle>My Recap</RecapTitle>
+        <RecapSubtitle>See your recent highlights</RecapSubtitle>
+      </RecapButton>
       <Archive />
     </Container>
   );
@@ -64,6 +68,38 @@ const ProfileContainer = styled(ProfileStitchedBox)`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   padding: 30px;
   margin-bottom: 32px;
+`;
+
+const RecapButton = styled.button`
+  width: 100%;
+  padding: 20px;
+  border-radius: 16px;
+  border: 2px dashed ${({ theme }) => theme.colors.border3};
+  background: ${({ theme }) => theme.colors.background};
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const RecapTitle = styled.div`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text_primary};
+`;
+
+const RecapSubtitle = styled.div`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const Left = styled.div`

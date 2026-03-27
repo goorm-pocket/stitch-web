@@ -1,15 +1,20 @@
 import { useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
-import { useGetBoardQuery, useReadBoardPostMutation } from "../../shared/hooks/useBoard";
+import { useReadBoardPostMutation } from "../../shared/hooks/useBoard";
 import PostModal from "../PostModal/PostModal";
 import { usePocketSize } from "./hooks/usePocketSize";
 import { usePocketMatter } from "./hooks/usePocketMatter";
+import type { PocketBubbleType } from "@/shared/types/post.type";
 import { useNavigate } from "react-router";
 
-const Pocket = () => {
-  const navigate = useNavigate();
+interface PocketProps {
+  board?: { items: PocketBubbleType[] };
+  mode?: "BOARD" | "RECAP";
+}
 
+const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
+  const navigate = useNavigate();
   // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -26,9 +31,6 @@ const Pocket = () => {
   // state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-
-  // query
-  const { data: board } = useGetBoardQuery("WEB");
 
   // mutate
   const { mutateAsync: readBoardPost } = useReadBoardPostMutation();
@@ -51,7 +53,10 @@ const Pocket = () => {
 
   const handleClickPost = async (id: string) => {
     if (!id) return;
-    await readBoardPost({ postId: id });
+    if (mode == "BOARD") {
+      await readBoardPost({ postId: id });
+    }
+
     setSelectedPostId(id);
     setIsModalOpen(true);
   };
