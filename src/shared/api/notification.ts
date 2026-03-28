@@ -26,7 +26,7 @@ export async function getNotifications({
 }
 
 export const connectNotificationSSE = () => {
-  const es = new EventSource(`${import.meta.env.VITE_API_URL}/api/v1/notifications/subscribe`, {
+  const es = new EventSource(`${import.meta.env.VITE_API_BASE_URL}api/v1/notifications/subscribe`, {
     withCredentials: true,
   });
 

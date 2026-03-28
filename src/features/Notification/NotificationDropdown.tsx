@@ -4,6 +4,8 @@ import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
 import { notificationMock } from "./mock/notificationMock";
 import { useGetNotificationsInfiniteQuery } from "@/shared/hooks/useNotification";
+import { connectNotificationSSE } from "@/shared/api/notification";
+import type { Notification } from "@/shared/types/notification.type";
 
 const NotificationDropdown = () => {
   // ref
@@ -11,20 +13,59 @@ const NotificationDropdown = () => {
 
   // state
   const [isOpen, setIsOpen] = useState(false);
+  const [liveNotifications, setLiveNotifications] = useState<Notification[]>([]);
 
   // data
-  const { data: notificationsPages } = useGetNotificationsInfiniteQuery();
+  const { data: notificationsPages, hasNextPage } = useGetNotificationsInfiniteQuery();
 
-  const notifications = useMemo(() => {
+  // 서버에서 받은 기존 알림
+  const serverNotifications = useMemo(() => {
     return notificationsPages?.pages.flatMap((page) => page.items) ?? [];
   }, [notificationsPages]);
 
-  console.log(notifications);
+  // 서버 알림 + SSE 알림 합치기 (중복 제거)
+  const notifications = useMemo(() => {
+    const merged = [...liveNotifications, ...serverNotifications];
+    const map = new Map<string, Notification>();
+
+    merged.forEach((item) => {
+      map.set(item.notificationId, item);
+    });
+
+    return Array.from(map.values());
+  }, [liveNotifications, serverNotifications]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((item) => !item.readAt).length;
   }, [notifications]);
 
+  // SSE 설정 Effect
+  useEffect(() => {
+    const es = connectNotificationSSE();
+
+    es.addEventListener("notification", (e) => {
+      const newNotification: Notification = JSON.parse(e.data);
+
+      setLiveNotifications((prev) => {
+        const exists = prev.some((item) => item.notificationId === newNotification.notificationId);
+
+        if (exists) return prev;
+
+        return [newNotification, ...prev];
+      });
+    });
+
+    es.onerror = (e) => {
+      console.error("SSE error", e);
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
+  }, []);
+
+  // 밖 클릭하면 드롭다운 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!wrapperRef.current) return;
@@ -34,6 +75,7 @@ const NotificationDropdown = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -43,9 +85,31 @@ const NotificationDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleClickNotification = () => {};
+  const handleClickNotification = (clickedNotification: Notification) => {
+    setLiveNotifications((prev) =>
+      prev.map((item) =>
+        item.notificationId === clickedNotification.notificationId
+          ? {
+              ...item,
+              readAt: item.readAt ?? new Date().toISOString(),
+            }
+          : item,
+      ),
+    );
 
-  const handleReadAll = () => {};
+    console.log("clicked notification:", clickedNotification);
+  };
+
+  const handleReadAll = () => {
+    const now = new Date().toISOString();
+
+    setLiveNotifications((prev) =>
+      prev.map((item) => ({
+        ...item,
+        readAt: item.readAt ?? now,
+      })),
+    );
+  };
 
   return (
     <Wrapper ref={wrapperRef}>
@@ -79,7 +143,9 @@ const NotificationDropdown = () => {
             )}
           </List>
 
-          {notificationMock.hasNext && <FooterText>더 많은 알림이 있어요</FooterText>}
+          {(hasNextPage ?? notificationMock.hasNext) && (
+            <FooterText>더 많은 알림이 있어요</FooterText>
+          )}
         </Dropdown>
       )}
     </Wrapper>
