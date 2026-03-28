@@ -17,7 +17,7 @@ export interface Notification {
   notificationId: string;
   type: NotificationType;
 
-  targetId: string | null;
+  target: NotificationTarget;
 
   title: string;
   content: string;
@@ -26,4 +26,10 @@ export interface Notification {
   sender: NotificationSender | null;
 
   createdAt: string;
+}
+
+export interface NotificationTarget {
+  userId: string | null;
+  postId: string | null;
+  commentId: string | null;
 }
