@@ -19,7 +19,7 @@ import {
 } from "@/shared/hooks/useUser";
 
 const privacyItems: {
-  key: Exclude<keyof PrivacySettings, "isPublic">;
+  key: Exclude<keyof PrivacySettings, "publicEnable">;
   label: string;
   icon: ReactNode;
 }[] = [
@@ -34,7 +34,7 @@ const PrivacySection = () => {
   const { mutate: patchPrivacySettings } = usePatchPrivacySettingsMutation();
 
   const privacyStates = privacyStatesData?.privacySettings;
-  const privacyEnabled = privacyStates?.isPublic ?? false;
+  const privacyEnabled = privacyStates?.publicEnable ?? false;
 
   const handleToggle = (privacy: PrivacyKey) => {
     if (!privacyStates) return;
@@ -48,7 +48,7 @@ const PrivacySection = () => {
       <SectionHeader>
         <PrivacyIcon />
         <div>Privacy Settings</div>
-        <SectionToggle checked={privacyEnabled} onChange={() => handleToggle("isPublic")} />
+        <SectionToggle checked={privacyEnabled} onChange={() => handleToggle("publicEnable")} />
       </SectionHeader>
 
       <SectionList $active={privacyEnabled}>
