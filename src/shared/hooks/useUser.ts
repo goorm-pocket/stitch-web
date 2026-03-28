@@ -59,7 +59,7 @@ export function useGetProfileQuery() {
   return useQuery({
     queryKey: ["user-profile"],
     queryFn: getProfile,
-    select: (res) => res,
+    select: (res: any) => res,
   });
 }
 
