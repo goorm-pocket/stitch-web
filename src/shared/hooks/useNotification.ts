@@ -28,6 +28,7 @@ export function useReadNotificationMutation() {
     mutationFn: (notificationId: string) => readNotification(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-notification-count"] });
     },
   });
 }
@@ -39,6 +40,7 @@ export function useAllReadNotificationMutation() {
     mutationFn: allReadNotification,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-notification-count"] });
     },
   });
 }

@@ -116,7 +116,7 @@ const NotificationDropdown = () => {
     <Wrapper ref={wrapperRef}>
       <IconButton type="button" onClick={handleToggleDropdown} aria-label="알림 열기">
         <StyledNotificationIcon />
-        {unreadNotificationCount && (
+        {unreadNotificationCount && unreadNotificationCount.unreadCount > 0 && (
           <Badge>
             {unreadNotificationCount.unreadCount > 9 ? "9+" : unreadNotificationCount.unreadCount}
           </Badge>

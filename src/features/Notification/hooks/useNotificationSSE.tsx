@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { connectNotificationSSE } from "@/shared/api/notification";
 import type { Notification } from "@/shared/types/notification.type";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useNotificationSSE() {
+  const queryClient = useQueryClient();
   const [liveNotifications, setLiveNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
@@ -17,6 +19,9 @@ export function useNotificationSSE() {
         if (exists) return prev;
 
         return [newNotification, ...prev];
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["unread-notification-count"],
       });
     };
 
