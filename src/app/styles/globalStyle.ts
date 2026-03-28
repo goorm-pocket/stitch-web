@@ -2,10 +2,10 @@ import { createGlobalStyle } from "styled-components";
 
 export const GlobalStyle = createGlobalStyle`
   :root {
-    --app-safe-top: env(safe-area-inset-top, 0px);
-    --app-safe-right: env(safe-area-inset-right, 0px);
-    --app-safe-bottom: env(safe-area-inset-bottom, 0px);
-    --app-safe-left: env(safe-area-inset-left, 0px);
+    --app-safe-top: 0px;
+    --app-safe-right: 0px;
+    --app-safe-bottom: 0px;
+    --app-safe-left: 0px;
     --app-height: 100dvh;
   }
 
@@ -39,24 +39,5 @@ export const GlobalStyle = createGlobalStyle`
     padding-right: var(--app-safe-right);
     padding-bottom: var(--app-safe-bottom);
     padding-left: var(--app-safe-left);
-  }
-
-  #root {
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-
-  img,
-  svg,
-  video,
-  canvas {
-    max-width: 100%;
-  }
-
-  button,
-  input,
-  textarea,
-  select {
-    font: inherit;
   }
 `;

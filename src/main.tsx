@@ -16,6 +16,49 @@ window.addEventListener("resize", () => {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
 });
 
+const applyAppContext = (rawData: unknown) => {
+  if (!rawData || typeof rawData !== "object") return;
+
+  const message = rawData as {
+    type?: string;
+    payload?: {
+      safeArea?: {
+        top?: number;
+        right?: number;
+        bottom?: number;
+        left?: number;
+      };
+    };
+  };
+
+  if (message.type !== "APP_CONTEXT" || !message.payload?.safeArea) return;
+
+  const { top = 0, right = 0, bottom = 0, left = 0 } = message.payload.safeArea;
+  const rootStyle = document.documentElement.style;
+
+  rootStyle.setProperty("--app-safe-top", `${top}px`);
+  rootStyle.setProperty("--app-safe-right", `${right}px`);
+  rootStyle.setProperty("--app-safe-bottom", `${bottom}px`);
+  rootStyle.setProperty("--app-safe-left", `${left}px`);
+};
+
+const handleBridgeMessage = (event: MessageEvent) => {
+  try {
+    const rawData = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+    applyAppContext(rawData);
+  } catch {
+    // Ignore non-bridge messages.
+  }
+};
+
+window.addEventListener("message", handleBridgeMessage);
+document.addEventListener("message", handleBridgeMessage as EventListener);
+window.addEventListener("stitch:app-context", ((event: Event) => {
+  applyAppContext((event as CustomEvent).detail);
+}) as EventListener);
+
+applyAppContext(window.__STITCH_APP_CONTEXT__);
+
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
