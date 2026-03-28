@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
@@ -10,6 +10,7 @@ import type { Notification } from "@/shared/types/notification.type";
 import { useNotificationSSE } from "./hooks/useNotificationSSE";
 import { getNotificationRedirectUrl } from "./utils/redirectNotification";
 import { useNavigate } from "react-router";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 const NotificationDropdown = () => {
   const navigate = useNavigate();
@@ -24,6 +25,13 @@ const NotificationDropdown = () => {
 
   // mutate
   const { mutateAsync: readNotification } = useReadNotificationMutation();
+
+  // 커스텀 훅
+  // 밖 클릭했을 때 닫는 훅
+  useClickOutside({
+    ref: wrapperRef,
+    onClickOutside: () => setIsOpen(false),
+  });
 
   // 서버에서 받은 기존 알림
   const serverNotifications = useMemo(() => {
@@ -47,22 +55,6 @@ const NotificationDropdown = () => {
   const unreadCount = useMemo(() => {
     return notifications.filter((item) => !item.readAt).length;
   }, [notifications]);
-
-  // 밖 클릭하면 드롭다운 닫기
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!wrapperRef.current) return;
-      if (!wrapperRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   const handleToggleDropdown = () => {
     setIsOpen((prev) => !prev);
