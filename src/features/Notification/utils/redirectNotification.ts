@@ -10,13 +10,13 @@ export function getNotificationRedirectUrl(notification: Notification) {
       return `/friend`;
 
     case "POST_LIKE":
-      return `/posts/${notification.target.postId}`;
+      return `/posts/${notification.target?.postId || notification.route?.postId}`;
 
     case "COMMENTED":
-      return `/posts/${notification.target.postId}`;
+      return `/posts/${notification.target?.postId || notification.route?.postId}`;
 
     case "MENTIONED":
-      return `/posts/${notification.target.postId}`;
+      return `/posts/${notification.target?.postId || notification.route?.postId}`;
 
     case "WEEKLY_RECAP":
       return `/recap`;

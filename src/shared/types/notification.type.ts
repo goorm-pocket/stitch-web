@@ -18,6 +18,7 @@ export interface Notification {
   type: NotificationType;
 
   target: NotificationTarget;
+  route: NotificationRoute;
 
   title: string;
   content: string;
@@ -29,6 +30,12 @@ export interface Notification {
 }
 
 export interface NotificationTarget {
+  userId: string | null;
+  postId: string | null;
+  commentId: string | null;
+}
+
+export interface NotificationRoute {
   userId: string | null;
   postId: string | null;
   commentId: string | null;
