@@ -47,3 +47,8 @@ export async function readNotification(notificationId: string): Promise<ReadNoti
 
   return res.data.data;
 }
+
+export async function allReadNotification() {
+  const res = await apiClient.patch("/api/v1/notifications/read-all");
+  return res.data.data;
+}

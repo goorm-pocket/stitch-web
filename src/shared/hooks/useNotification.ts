@@ -1,4 +1,4 @@
-import { getNotifications } from "../api/notification";
+import { allReadNotification, getNotifications } from "../api/notification";
 import { useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { readNotification } from "@/shared/api/notification";
 
@@ -22,6 +22,17 @@ export function useReadNotificationMutation() {
 
   return useMutation({
     mutationFn: (notificationId: string) => readNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useAllReadNotificationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: allReadNotification,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
