@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useOauthLoginMutation } from "../../shared/hooks/useAuth";
 import { useNavigate } from "react-router";
-import { sendToApp } from "@/shared/webview/webview";
 
 const CallbackPage = () => {
   const navigate = useNavigate();

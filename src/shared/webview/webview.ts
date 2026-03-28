@@ -1,4 +1,4 @@
-export const sendToApp = (data: any) => {
+export const sendToApp = (data: unknown) => {
   const message = JSON.stringify(data);
 
   if (window.ReactNativeWebView) {

@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
-import { useEffect } from "react";
 
 const HomePage = () => {
   const handleKakaoLogin = () => {
