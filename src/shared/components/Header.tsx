@@ -70,6 +70,7 @@ const HeaderContainer = styled.header`
   @media (max-width: 480px) {
     padding: 10px 14px;
     gap: 12px;
+    align-items: flex-start;
   }
 `;
 
@@ -79,6 +80,7 @@ const Left = styled.div`
   justify-content: center;
   gap: 8px;
   cursor: pointer;
+  flex-shrink: 0;
 `;
 
 const LogoText = styled.span`
@@ -90,6 +92,7 @@ const Right = styled.div`
   display: flex;
   gap: 15px;
   min-width: 0;
+  align-items: center;
 `;
 
 const NavBar = styled.nav`
@@ -97,6 +100,8 @@ const NavBar = styled.nav`
   align-items: center;
   gap: 14px;
   min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 
   @media (max-width: 480px) {
     gap: 10px;
@@ -110,6 +115,7 @@ const NavItem = styled(NavLink)`
   color: ${({ theme }) => theme.colors.icon};
   gap: 2px;
   min-width: 0;
+  white-space: nowrap;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
@@ -148,6 +154,7 @@ const Avator = styled.img`
   border-radius: 50%;
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
+  background: ${({ theme }) => theme.colors.hover};
 `;
 
 const AvatorButton = styled.button`

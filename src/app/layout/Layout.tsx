@@ -30,4 +30,9 @@ const Main = styled.main`
   justify-content: center;
   width: 100%;
   min-width: 0;
+  padding: 0 16px;
+
+  @media (max-width: 480px) {
+    padding: 0 12px;
+  }
 `;

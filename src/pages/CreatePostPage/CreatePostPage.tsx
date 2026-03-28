@@ -383,9 +383,9 @@ export default function CreatePocketPost() {
 }
 
 const Container = styled.div`
-  width: 1000px;
+  width: min(100%, 1000px);
   margin: 0 auto;
-  padding: 10px 0px;
+  padding: 10px 0 32px;
 `;
 
 const Box = styled.section`
@@ -403,6 +403,11 @@ const HeaderSection = styled.div`
   margin-bottom: 50px;
   padding-left: 10px;
   text-align: left;
+
+  @media (max-width: 768px) {
+    margin-bottom: 32px;
+    padding-left: 0;
+  }
 `;
 
 const FormMessage = styled.div`
@@ -417,7 +422,7 @@ const FormMessage = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 36px;
+  font-size: clamp(28px, 7vw, 36px);
   font-weight: 800;
   color: ${({ theme }) => theme.colors.text_primary};
   margin-bottom: 8px;
@@ -443,6 +448,12 @@ const MarkSettings = styled.div`
   background: ${({ theme }) => theme.colors.background};
   padding: 20px;
   border-radius: 12px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
 `;
 
 const MarkPreview = styled.div<{ $isRound: boolean }>`
@@ -476,6 +487,10 @@ const MarkButtons = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-start;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
 `;
 
 const MarkBtn = styled.button<{ $active: boolean }>`
@@ -500,6 +515,10 @@ const MarkBtn = styled.button<{ $active: boolean }>`
   &:hover {
     background: #f9fafb;
   }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const MarkIcon = styled.div`
@@ -515,6 +534,11 @@ const EmojiPickerWrapper = styled.div`
   top: 60px;
   left: 130px;
   z-index: 100;
+
+  @media (max-width: 768px) {
+    left: 0;
+    top: 120px;
+  }
 
   .overlay {
     position: fixed;
@@ -543,6 +567,7 @@ const CropModal = styled.div`
 const CropContainer = styled.div`
   background: white;
   width: 580px;
+  max-width: 100%;
   max-height: 90vh;
   padding: 30px;
   border-radius: 16px;
@@ -561,6 +586,10 @@ const CropView = styled.div`
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    height: 280px;
+  }
 `;
 
 const ControlBottom = styled.div`
@@ -571,6 +600,11 @@ const ControlBottom = styled.div`
   padding: 10px;
   background: #f1f3f5;
   border-radius: 8px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const ShapeButtons = styled.div`
@@ -601,6 +635,10 @@ const ActionButtons = styled.div`
   justify-content: flex-end;
   border-top: 1px solid #eee;
   padding-top: 15px;
+
+  @media (max-width: 480px) {
+    justify-content: stretch;
+  }
 `;
 
 const CancelBtn = styled.button`
@@ -632,6 +670,12 @@ const SubContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 `;
 
 const VisibilityToggle = styled.div`
@@ -680,6 +724,10 @@ const UploadBoxContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 768px) {
+    height: 320px;
+  }
 `;
 
 const UploadBox = styled.div<{ $hasImage: boolean }>`
@@ -722,6 +770,11 @@ const PreviewItem = styled.div`
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    flex-basis: 240px;
+    height: 220px;
+  }
 `;
 
 const PreviewImage = styled.img`
@@ -769,6 +822,11 @@ const AddMoreBtn = styled.div`
   &:hover {
     background: #f3f4f6;
   }
+
+  @media (max-width: 480px) {
+    flex-basis: 160px;
+    height: 220px;
+  }
 `;
 
 const UploadIcon = styled.div`
@@ -813,6 +871,12 @@ const StoryBox = styled.textarea<{ $hasError?: boolean }>`
   box-sizing: border-box;
   &:focus {
     border-color: ${(props) => (props.$hasError ? "#ff6b6b" : props.theme.colors.border3)};
+  }
+
+  @media (max-width: 480px) {
+    height: 240px;
+    padding: 16px;
+    font-size: 15px;
   }
 `;
 
