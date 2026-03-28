@@ -6,6 +6,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
+const isAppWebView = Boolean(window.ReactNativeWebView) || /stitch-app/i.test(navigator.userAgent);
+
+document.documentElement.classList.toggle("app-webview", isAppWebView);
+document.body.classList.toggle("app-webview", isAppWebView);
+
+document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+window.addEventListener("resize", () => {
+  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+});
+
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
