@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
-import { notificationMock } from "./mock/notificationMock";
 import {
   useGetNotificationsInfiniteQuery,
   useReadNotificationMutation,
@@ -109,9 +108,7 @@ const NotificationDropdown = () => {
             )}
           </List>
 
-          {(hasNextPage ?? notificationMock.hasNext) && (
-            <FooterText>더 많은 알림이 있어요</FooterText>
-          )}
+          {hasNextPage && <FooterText>더 많은 알림이 있어요</FooterText>}
         </Dropdown>
       )}
     </Wrapper>
