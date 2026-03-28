@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
@@ -13,6 +13,7 @@ import { useNotificationSSE } from "./hooks/useNotificationSSE";
 import { getNotificationRedirectUrl } from "./utils/redirectNotification";
 import { useNavigate } from "react-router";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { useInfiniteScroll } from "@/shared/hooks/useInfiniteScroll";
 
 const NotificationDropdown = () => {
   const navigate = useNavigate();
@@ -43,6 +44,16 @@ const NotificationDropdown = () => {
   useClickOutside({
     ref: wrapperRef,
     onClickOutside: () => setIsOpen(false),
+  });
+
+  // 리스트 하단 도달 시 다음 페이지 요청
+  useInfiniteScroll({
+    enabled: isOpen,
+    hasNextPage,
+    isFetchingNextPage,
+    rootRef: listRef,
+    targetRef: loadMoreRef,
+    onIntersect: fetchNextPage,
   });
 
   // 서버에서 받은 기존 알림
@@ -82,35 +93,6 @@ const NotificationDropdown = () => {
     await allReadNotification();
     setIsOpen(false);
   };
-
-  // 리스트 하단 도달 시 다음 페이지 요청
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!hasNextPage) return;
-    if (!listRef.current) return;
-    if (!loadMoreRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      {
-        root: listRef.current,
-        rootMargin: "80px",
-        threshold: 0.1,
-      },
-    );
-
-    observer.observe(loadMoreRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isOpen, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <Wrapper ref={wrapperRef}>
