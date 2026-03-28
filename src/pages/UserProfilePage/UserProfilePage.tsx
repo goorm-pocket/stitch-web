@@ -97,6 +97,10 @@ const BadgeContainer = styled.div`
   margin-top: 8px;
   display: flex;
   gap: 10px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
 `;
 
 const Badge = styled.div`
@@ -106,6 +110,10 @@ const Badge = styled.div`
   font-size: 13px;
   color: ${({ theme }) => theme.colors.text_secondary};
   font-weight: bold;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const BadgeNumber = styled.span`
