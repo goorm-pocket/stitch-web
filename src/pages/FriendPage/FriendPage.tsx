@@ -11,8 +11,10 @@ import {
 import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 import type { Friend } from "@/shared/types/friend.type";
+import { useNavigate } from "react-router";
 
 const FriendPage = () => {
+  const navigate = useNavigate();
   const searchInputRef = useRef<HTMLDivElement | null>(null);
 
   // state
@@ -79,7 +81,11 @@ const FriendPage = () => {
                   <SearchUserItem
                     key={item.userId}
                     user={item}
-                    handleAdd={() => handleAddFriend(item.userId)}
+                    handleAdd={(e) => {
+                      e.stopPropagation();
+                      handleAddFriend(item.userId);
+                    }}
+                    handleClick={() => navigate(`/profile/${item.userId}`)}
                   />
                 ))
               ) : (
@@ -109,15 +115,30 @@ const FriendPage = () => {
       <FriendListContainer>
         {selectList == "friend" &&
           friends.map((friend) => (
-            <FriendItem key={friend.friendId} friend={friend} state="ACCEPTED" />
+            <FriendItem
+              key={friend.friendId}
+              friend={friend}
+              state="ACCEPTED"
+              handleClick={() => navigate(`/profile/${friend.user.userId}`)}
+            />
           ))}
         {selectList == "sent" &&
           sentRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} state="SENT" />
+            <FriendItem
+              key={friend.friendId}
+              friend={friend}
+              state="SENT"
+              handleClick={() => navigate(`/profile/${friend.user.userId}`)}
+            />
           ))}
         {selectList == "received" &&
           receivedRequests.map((friend: Friend) => (
-            <FriendItem key={friend.friendId} friend={friend} state="RECEIVED" />
+            <FriendItem
+              key={friend.friendId}
+              friend={friend}
+              state="RECEIVED"
+              handleClick={() => navigate(`/profile/${friend.user.userId}`)}
+            />
           ))}
       </FriendListContainer>
     </Container>

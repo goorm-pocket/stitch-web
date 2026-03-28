@@ -10,6 +10,7 @@ import {
   patchProfile,
   patchPrivateProfile,
   setupProfile,
+  getProfileById,
 } from "../api/user";
 /*
 export function useGetProfileQuery() {
@@ -127,5 +128,13 @@ export function useGetProfileByNameQuery({ query }: { query: string }) {
       if (!lastPage.hasNext) return undefined;
       return lastPage.nextCursor;
     },
+  });
+}
+
+export function useGetProfileByIdQuery({ userId }: { userId: string }) {
+  return useQuery({
+    queryKey: ["user-profile", userId],
+    queryFn: () => getProfileById({ userId }),
+    enabled: !!userId,
   });
 }

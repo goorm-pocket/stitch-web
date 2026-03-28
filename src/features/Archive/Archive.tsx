@@ -4,9 +4,13 @@ import styled from "styled-components";
 import DayCell from "./components/DayCell";
 import ArchivePostSlider from "../../features/ArchivePostSlider/ArchivePostSlider";
 import { useNavigate } from "react-router";
-import { useGetCalendarQuery } from "@/shared/hooks/usePost";
+import { useArchiveCalendar } from "./hooks/useArchive";
 
-const Archive = () => {
+interface ArchiveProps {
+  userId?: string;
+}
+
+const Archive = ({ userId }: ArchiveProps) => {
   const navigate = useNavigate();
   const [visibleDate, setVisibleDate] = useState(dayjs());
 
@@ -16,7 +20,7 @@ const Archive = () => {
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
   const [isSliderOpen, setIsSliderOpen] = useState(false);
 
-  const { data: calendarData } = useGetCalendarQuery({ year, month });
+  const { data: calendarData } = useArchiveCalendar({ year, month, userId });
 
   const cells = useMemo(() => {
     const startOfMonth = visibleDate.startOf("month");

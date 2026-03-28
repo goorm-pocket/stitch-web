@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
-import { useGetBoardQuery, useReadBoardPostMutation } from "../../shared/hooks/useBoard";
+import { useReadBoardPostMutation } from "../../shared/hooks/useBoard";
 import PostModal from "../PostModal/PostModal";
 import { usePocketSize } from "./hooks/usePocketSize";
 import { usePocketMatter } from "./hooks/usePocketMatter";
+import type { PocketBubbleType } from "@/shared/types/post.type";
 import { useNavigate } from "react-router";
 
 const MAX_TILT = 1;
@@ -14,7 +15,12 @@ const WEBVIEW_ROTATION_SMOOTHING = 0.24;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const Pocket = () => {
+interface PocketProps {
+  board?: { items: PocketBubbleType[] };
+  mode?: "BOARD" | "RECAP";
+}
+
+const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   const navigate = useNavigate();
   const [motion, setMotion] = useState({
     tilt: { x: 0, y: 0 },
@@ -88,7 +94,9 @@ const Pocket = () => {
     document.addEventListener("message", handleMessage as EventListener);
     window.addEventListener("stitch:device-motion", handleCustomMotion as EventListener);
 
-    applyMotion((window as Window & { __STITCH_DEVICE_MOTION__?: unknown }).__STITCH_DEVICE_MOTION__);
+    applyMotion(
+      (window as Window & { __STITCH_DEVICE_MOTION__?: unknown }).__STITCH_DEVICE_MOTION__,
+    );
 
     return () => {
       window.removeEventListener("message", handleMessage);
@@ -96,7 +104,6 @@ const Pocket = () => {
       window.removeEventListener("stitch:device-motion", handleCustomMotion as EventListener);
     };
   }, []);
-
   // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -113,9 +120,6 @@ const Pocket = () => {
   // state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-
-  // query
-  const { data: board } = useGetBoardQuery("WEB");
 
   // mutate
   const { mutateAsync: readBoardPost } = useReadBoardPostMutation();
@@ -139,7 +143,10 @@ const Pocket = () => {
 
   const handleClickPost = async (id: string) => {
     if (!id) return;
-    await readBoardPost({ postId: id });
+    if (mode == "BOARD") {
+      await readBoardPost({ postId: id });
+    }
+
     setSelectedPostId(id);
     setIsModalOpen(true);
   };
@@ -180,7 +187,6 @@ const Pocket = () => {
             height: size.height ? `${size.height}px` : undefined,
           }}
         >
-
           {items.map((item) => {
             const pos = positions[item.postId];
             if (!pos) return null;
