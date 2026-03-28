@@ -30,24 +30,26 @@ const Container = styled.main`
   flex-direction: column;
   align-items: center;
   width: min(100%, 900px);
-  padding: 16px 32px;
-  gap: 24px;
+  padding: 12px 24px 24px;
+  gap: 18px;
 
   @media (max-width: 768px) {
-    padding: 16px 12px 32px;
+    padding: 10px 10px 24px;
+    gap: 14px;
   }
 `;
 
 const TitleContainer = styled.div`
-  margin-top: 10px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 6px;
 `;
 
 const Title = styled.h1`
   margin: 0;
-  font-size: clamp(36px, 8vw, 52px);
+  font-size: clamp(28px, 7vw, 40px);
   font-weight: 800;
   line-height: 1.1;
   color: #1e293b;
@@ -55,7 +57,7 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  font-size: 16px;
+  font-size: 14px;
   color: #64748b;
   margin-bottom: 0;
   text-align: center;
@@ -63,10 +65,10 @@ const Subtitle = styled.p`
 
 const PluseButton = styled.button`
   position: fixed;
-  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-  right: 20px;
-  width: 65px;
-  height: 65px;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  right: 18px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.sub};
   color: white;
@@ -90,15 +92,15 @@ const PluseButton = styled.button`
   }
 
   @media (max-width: 480px) {
-    width: 58px;
-    height: 58px;
-    right: 16px;
-    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    width: 52px;
+    height: 52px;
+    right: 14px;
+    bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   }
 `;
 
 const PlusIcon = styled.span`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 400;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 `;

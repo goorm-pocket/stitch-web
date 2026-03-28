@@ -13,9 +13,10 @@ interface UsePocketMatterParams {
   itemSize: number;
   wallThickness: number;
   motion: {
-    tilt: {
+    gravity: {
       x: number;
       y: number;
+      z: number;
     };
     rotation: {
       x: number;
@@ -121,8 +122,8 @@ export function usePocketMatter({
     const engine = engineRef.current;
     if (!engine) return;
 
-    engine.gravity.x = motion.tilt.x * 1.2;
-    engine.gravity.y = 1.8 + motion.tilt.y * 1.2;
+    engine.gravity.x = motion.gravity.x * 1.8;
+    engine.gravity.y = motion.gravity.y * 1.8;
 
     const force = {
       x: motion.rotation.y * 0.00012,
