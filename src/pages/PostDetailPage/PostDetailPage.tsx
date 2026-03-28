@@ -93,7 +93,7 @@ const Container = styled.main`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 32px 24px 56px;
+  padding: 24px 20px 48px;
   background: ${({ theme }) => theme.colors.background};
 `;
 
@@ -101,7 +101,7 @@ const ContentSection = styled.div`
   width: min(900px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
 `;
 
 const PostCard = styled.section`
@@ -117,10 +117,10 @@ const CommentSection = styled.section`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 28px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 `;
 
 const CommentHeader = styled.div`
@@ -131,7 +131,7 @@ const CommentHeader = styled.div`
 
 const CommentTitle = styled.h2`
   margin: 0;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
@@ -139,38 +139,38 @@ const CommentTitle = styled.h2`
 const CommentInputBox = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 20px;
-  background: white;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.colors.background};
 `;
 
 const ReplyTargetIdBox = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   align-self: flex-start;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.hover};
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const ReplyMention = styled.span`
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
 `;
 
 const ReplyRemoveButton = styled.button`
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
@@ -184,20 +184,26 @@ const ReplyRemoveButton = styled.button`
 
 const CommentEditorRow = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  align-items: flex-end;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const CommentTextarea = styled.textarea`
   flex: 1;
-  min-height: 88px;
-  padding: 14px 16px;
-  border-radius: 16px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 14px;
   resize: none;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.background};
+  background: white;
   color: ${({ theme }) => theme.colors.text_primary};
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
 
   &::placeholder {
     color: ${({ theme }) => theme.colors.text_secondary};
@@ -215,11 +221,16 @@ const CommentSubmitButton = styled.button`
   border-radius: 12px;
   background: ${({ theme }) => theme.colors.primary};
   color: white;
-  padding: 0 18px;
-  font-size: 14px;
+  padding: 0 16px;
+  height: 42px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 
   &:hover {
     opacity: 0.92;
