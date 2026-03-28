@@ -27,9 +27,3 @@ export interface Notification {
 
   createdAt: string;
 }
-
-export interface NotificationListResponse {
-  items: Notification[];
-  nextCursor: string | null;
-  hasNext: boolean;
-}
