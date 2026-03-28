@@ -23,7 +23,7 @@ interface PocketProps {
 const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   const navigate = useNavigate();
   const [motion, setMotion] = useState({
-    tilt: { x: 0, y: 0 },
+    gravity: { x: 0, y: 1, z: 0 },
     rotation: { x: 0, y: 0, z: 0 },
   });
 
@@ -34,6 +34,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
       const message = rawData as {
         type?: string;
         payload?: {
+          gravity?: { x?: number; y?: number; z?: number };
           tilt?: { x?: number; y?: number };
           rotation?: { x?: number; y?: number; z?: number };
           x?: number;
@@ -42,16 +43,26 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
       };
 
       if (message.type === "DEVICE_MOTION" && message.payload) {
-        const nextTiltX = clamp(message.payload.tilt?.x ?? 0, -MAX_TILT, MAX_TILT);
-        const nextTiltY = clamp(message.payload.tilt?.y ?? 0, -MAX_TILT, MAX_TILT);
+        const nextGravityX = clamp(
+          message.payload.gravity?.x ?? message.payload.tilt?.x ?? 0,
+          -MAX_TILT,
+          MAX_TILT,
+        );
+        const nextGravityY = clamp(
+          message.payload.gravity?.y ?? 1 + (message.payload.tilt?.y ?? 0),
+          -MAX_ROTATION,
+          MAX_ROTATION,
+        );
+        const nextGravityZ = clamp(message.payload.gravity?.z ?? 0, -MAX_TILT, MAX_TILT);
         const nextRotationX = clamp(message.payload.rotation?.x ?? 0, -MAX_ROTATION, MAX_ROTATION);
         const nextRotationY = clamp(message.payload.rotation?.y ?? 0, -MAX_ROTATION, MAX_ROTATION);
         const nextRotationZ = clamp(message.payload.rotation?.z ?? 0, -MAX_ROTATION, MAX_ROTATION);
 
         setMotion((prev) => ({
-          tilt: {
-            x: prev.tilt.x + (nextTiltX - prev.tilt.x) * WEBVIEW_TILT_SMOOTHING,
-            y: prev.tilt.y + (nextTiltY - prev.tilt.y) * WEBVIEW_TILT_SMOOTHING,
+          gravity: {
+            x: prev.gravity.x + (nextGravityX - prev.gravity.x) * WEBVIEW_TILT_SMOOTHING,
+            y: prev.gravity.y + (nextGravityY - prev.gravity.y) * WEBVIEW_TILT_SMOOTHING,
+            z: prev.gravity.z + (nextGravityZ - prev.gravity.z) * WEBVIEW_TILT_SMOOTHING,
           },
           rotation: {
             x: prev.rotation.x + (nextRotationX - prev.rotation.x) * WEBVIEW_ROTATION_SMOOTHING,
@@ -66,12 +77,13 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
       if (message.type !== "TILT" || !message.payload) return;
 
       const nextX = clamp(message.payload.x ?? 0, -MAX_TILT, MAX_TILT);
-      const nextY = clamp(message.payload.y ?? 0, -MAX_TILT, MAX_TILT);
+      const nextY = clamp(1 + (message.payload.y ?? 0), -MAX_ROTATION, MAX_ROTATION);
 
       setMotion((prev) => ({
-        tilt: {
-          x: prev.tilt.x + (nextX - prev.tilt.x) * WEBVIEW_TILT_SMOOTHING,
-          y: prev.tilt.y + (nextY - prev.tilt.y) * WEBVIEW_TILT_SMOOTHING,
+        gravity: {
+          x: prev.gravity.x + (nextX - prev.gravity.x) * WEBVIEW_TILT_SMOOTHING,
+          y: prev.gravity.y + (nextY - prev.gravity.y) * WEBVIEW_TILT_SMOOTHING,
+          z: prev.gravity.z,
         },
         rotation: prev.rotation,
       }));
