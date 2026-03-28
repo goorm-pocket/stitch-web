@@ -85,7 +85,7 @@ const BubbleImage = styled.img`
   object-fit: cover;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 `;
 
 const Emoji = styled.div`
