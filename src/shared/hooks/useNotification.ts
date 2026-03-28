@@ -1,5 +1,9 @@
-import { allReadNotification, getNotifications } from "../api/notification";
-import { useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  allReadNotification,
+  getNotifications,
+  getUnreadNotificationCount,
+} from "../api/notification";
+import { useMutation, useQueryClient, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { readNotification } from "@/shared/api/notification";
 
 export function useGetNotificationsInfiniteQuery(size = 10) {
@@ -36,5 +40,12 @@ export function useAllReadNotificationMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
+  });
+}
+
+export function useGetUnreadNotificationCountQuery() {
+  return useQuery({
+    queryKey: ["unread-notification-count"],
+    queryFn: getUnreadNotificationCount,
   });
 }

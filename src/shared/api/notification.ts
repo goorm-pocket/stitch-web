@@ -35,13 +35,13 @@ export const connectNotificationSSE = () => {
   return es;
 };
 
-interface ReadNotificationResponse {
+interface ReadNotificationRes {
   notificationId: string;
   readAt: string | null;
 }
 
-export async function readNotification(notificationId: string): Promise<ReadNotificationResponse> {
-  const res = await apiClient.patch<ApiResponse<ReadNotificationResponse>>(
+export async function readNotification(notificationId: string): Promise<ReadNotificationRes> {
+  const res = await apiClient.patch<ApiResponse<ReadNotificationRes>>(
     `/api/v1/notifications/${notificationId}/read`,
   );
 
@@ -50,5 +50,17 @@ export async function readNotification(notificationId: string): Promise<ReadNoti
 
 export async function allReadNotification() {
   const res = await apiClient.patch("/api/v1/notifications/read-all");
+  return res.data.data;
+}
+
+interface GetUnreadNotificationCountRes {
+  unreadCount: number;
+  checkedAt: string;
+}
+
+export async function getUnreadNotificationCount(): Promise<GetUnreadNotificationCountRes> {
+  const res = await apiClient.get<ApiResponse<GetUnreadNotificationCountRes>>(
+    "/api/v1/notifications/unread-count",
+  );
   return res.data.data;
 }
