@@ -21,6 +21,7 @@ const CallbackPage = () => {
           navigate("/");
           return;
         }
+
         await oauthLogin({ provider, code });
 
         //프로필 초기 세팅 페이지로 이동

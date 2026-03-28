@@ -10,11 +10,21 @@ const ActionSection = () => {
 
   const handleLogout = async () => {
     await logout();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "LOGOUT" }));
     navigate("/");
   };
 
   const handleWithdraw = async () => {
     await withdraw();
+    // 1. 저장된 인증 정보 제거
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 2. 앱(WebView)에게 탈퇴 알림
+    window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "USER_DELETED" }));
     navigate("/");
   };
 

@@ -12,13 +12,6 @@ import {
   setupProfile,
   getProfileById,
 } from "../api/user";
-/*
-export function useGetProfileQuery() {
-  return useQuery({
-    queryKey: ["profile"],
-    queryFn: getProfile,
-  });
-}*/
 
 export function useGetNotificationSettingsQuery() {
   return useQuery({

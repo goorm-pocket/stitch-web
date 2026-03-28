@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import PocketBubble from "./components/PocketBubble";
 import { useReadBoardPostMutation } from "../../shared/hooks/useBoard";
@@ -8,6 +8,13 @@ import { usePocketMatter } from "./hooks/usePocketMatter";
 import type { PocketBubbleType } from "@/shared/types/post.type";
 import { useNavigate } from "react-router";
 
+const MAX_TILT = 1;
+const MAX_ROTATION = 4;
+const WEBVIEW_TILT_SMOOTHING = 0.2;
+const WEBVIEW_ROTATION_SMOOTHING = 0.24;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 interface PocketProps {
   board?: { items: PocketBubbleType[] };
   mode?: "BOARD" | "RECAP";
@@ -15,6 +22,88 @@ interface PocketProps {
 
 const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   const navigate = useNavigate();
+  const [motion, setMotion] = useState({
+    tilt: { x: 0, y: 0 },
+    rotation: { x: 0, y: 0, z: 0 },
+  });
+
+  useEffect(() => {
+    const applyMotion = (rawData: unknown) => {
+      if (!rawData || typeof rawData !== "object") return;
+
+      const message = rawData as {
+        type?: string;
+        payload?: {
+          tilt?: { x?: number; y?: number };
+          rotation?: { x?: number; y?: number; z?: number };
+          x?: number;
+          y?: number;
+        };
+      };
+
+      if (message.type === "DEVICE_MOTION" && message.payload) {
+        const nextTiltX = clamp(message.payload.tilt?.x ?? 0, -MAX_TILT, MAX_TILT);
+        const nextTiltY = clamp(message.payload.tilt?.y ?? 0, -MAX_TILT, MAX_TILT);
+        const nextRotationX = clamp(message.payload.rotation?.x ?? 0, -MAX_ROTATION, MAX_ROTATION);
+        const nextRotationY = clamp(message.payload.rotation?.y ?? 0, -MAX_ROTATION, MAX_ROTATION);
+        const nextRotationZ = clamp(message.payload.rotation?.z ?? 0, -MAX_ROTATION, MAX_ROTATION);
+
+        setMotion((prev) => ({
+          tilt: {
+            x: prev.tilt.x + (nextTiltX - prev.tilt.x) * WEBVIEW_TILT_SMOOTHING,
+            y: prev.tilt.y + (nextTiltY - prev.tilt.y) * WEBVIEW_TILT_SMOOTHING,
+          },
+          rotation: {
+            x: prev.rotation.x + (nextRotationX - prev.rotation.x) * WEBVIEW_ROTATION_SMOOTHING,
+            y: prev.rotation.y + (nextRotationY - prev.rotation.y) * WEBVIEW_ROTATION_SMOOTHING,
+            z: prev.rotation.z + (nextRotationZ - prev.rotation.z) * WEBVIEW_ROTATION_SMOOTHING,
+          },
+        }));
+
+        return;
+      }
+
+      if (message.type !== "TILT" || !message.payload) return;
+
+      const nextX = clamp(message.payload.x ?? 0, -MAX_TILT, MAX_TILT);
+      const nextY = clamp(message.payload.y ?? 0, -MAX_TILT, MAX_TILT);
+
+      setMotion((prev) => ({
+        tilt: {
+          x: prev.tilt.x + (nextX - prev.tilt.x) * WEBVIEW_TILT_SMOOTHING,
+          y: prev.tilt.y + (nextY - prev.tilt.y) * WEBVIEW_TILT_SMOOTHING,
+        },
+        rotation: prev.rotation,
+      }));
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const rawData = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        applyMotion(rawData);
+      } catch {
+        // Ignore non-bridge messages.
+      }
+    };
+
+    const handleCustomMotion = (event: Event) => {
+      applyMotion((event as CustomEvent).detail);
+    };
+
+    window.addEventListener("message", handleMessage);
+    document.addEventListener("message", handleMessage as EventListener);
+    window.addEventListener("stitch:device-motion", handleCustomMotion as EventListener);
+
+    applyMotion(
+      (window as Window & { __STITCH_DEVICE_MOTION__?: unknown }).__STITCH_DEVICE_MOTION__,
+    );
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      document.removeEventListener("message", handleMessage as EventListener);
+      window.removeEventListener("stitch:device-motion", handleCustomMotion as EventListener);
+    };
+  }, []);
   // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +138,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
     height: size.height,
     itemSize,
     wallThickness,
+    motion,
   });
 
   const handleClickPost = async (id: string) => {
