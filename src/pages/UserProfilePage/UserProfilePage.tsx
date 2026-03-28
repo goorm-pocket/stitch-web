@@ -20,11 +20,11 @@ const UserProfilePage = () => {
             <ProfileDescription>{profile?.realName}</ProfileDescription>
             <BadgeContainer>
               <Badge>
-                <BadgeNumber>1.2k</BadgeNumber>
+                <BadgeNumber>{profile?.friendCount}</BadgeNumber>
                 <span>FRIENDS</span>
               </Badge>
               <Badge>
-                <BadgeNumber>48</BadgeNumber>
+                <BadgeNumber>{profile?.postCount}</BadgeNumber>
                 <span>POCKET</span>
               </Badge>
             </BadgeContainer>
