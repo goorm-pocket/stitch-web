@@ -11,7 +11,15 @@ type PocketBubbleProps = {
   onMouseUp: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
-const PocketBubble = ({ item, size, x, y, angle, onMouseDown, onMouseUp }: PocketBubbleProps) => {
+const PocketBubble = ({
+  item,
+  size,
+  x,
+  y,
+  angle,
+  onMouseDown,
+  onMouseUp,
+}: PocketBubbleProps) => {
   const { postId, representative, read, ownerType } = item;
   const hasImage = representative.type === "IMAGE";
 

@@ -19,4 +19,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  server: {
+    host: true, // 🔥 이거 없으면 외부 접속 안됨
+    port: 5173,
+  },
 });
