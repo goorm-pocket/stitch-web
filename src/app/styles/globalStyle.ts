@@ -40,4 +40,11 @@ export const GlobalStyle = createGlobalStyle`
     padding-bottom: var(--app-safe-bottom);
     padding-left: var(--app-safe-left);
   }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 `;
