@@ -30,9 +30,11 @@ export default function CreatePocketPost() {
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [story, setStory] = useState("");
+  const [formMessage, setFormMessage] = useState<string | null>(null);
   const [markType, setMarkType] = useState<MarkType>("emoji");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [markImage, setMarkImage] = useState<string | null>(null);
+  const [savedMarkIsRound, setSavedMarkIsRound] = useState(true);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
 
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -47,7 +49,6 @@ export default function CreatePocketPost() {
   const { data: profileData } = useGetProfileQuery();
   useEffect(() => {
     if (!profileData?.userId) {
-      alert("사용자 정보를 불러올 수 없습니다.");
       return;
     }
     if (profileData) {
@@ -72,14 +73,16 @@ export default function CreatePocketPost() {
 
   const handleSubmit = async () => {
     if (story.length > MAX_LENGTH) {
-      alert("글자 수는 500자를 초과할 수 없습니다.");
+      setFormMessage(`글자 수는 ${MAX_LENGTH}자를 초과할 수 없습니다.`);
       return;
     }
 
     if (!story.trim() && images.length === 0) {
-      alert("내용 또는 사진을 최소 하나 이상 포함해야 합니다.");
+      setFormMessage("내용 또는 사진을 최소 하나 이상 포함해야 합니다.");
       return;
     }
+
+    setFormMessage(null);
 
     try {
       let markerKey = undefined;
@@ -134,16 +137,14 @@ export default function CreatePocketPost() {
         },
         {
           onSuccess: () => {
-            alert("성공적으로 발행되었습니다!");
-
             navigate("/pocket");
           },
-          onError: () => alert("포스트 생성 중 오류가 발생했습니다."),
+          onError: () => setFormMessage("포스트 생성 중 오류가 발생했습니다."),
         },
       );
     } catch (error) {
       console.error("Upload Error:", error);
-      alert("이미지 처리 중 오류가 발생했습니다. 전송 데이터를 확인해주세요.");
+      setFormMessage("이미지 처리 중 오류가 발생했습니다.");
     }
   };
 
@@ -151,6 +152,7 @@ export default function CreatePocketPost() {
     setSelectedEmoji(emojiData.emoji);
     setShowEmojiPicker(false);
     setMarkType("emoji");
+    setSavedMarkIsRound(true);
   };
 
   const handleMarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,6 +174,7 @@ export default function CreatePocketPost() {
     if (cropImage && croppedAreaPixels) {
       const croppedResult = await getCroppedImg(cropImage, croppedAreaPixels, isRoundCrop);
       setMarkImage(croppedResult);
+      setSavedMarkIsRound(isRoundCrop);
       setMarkType("image");
       setCropImage(null);
     }
@@ -188,10 +191,11 @@ export default function CreatePocketPost() {
     if (files.length === 0) return;
 
     if (images.length + files.length > MAX_IMAGES) {
-      alert(`사진은 최대 ${MAX_IMAGES}장까지 업로드 가능합니다.`);
+      setFormMessage(`사진은 최대 ${MAX_IMAGES}장까지 업로드 가능합니다.`);
       return;
     }
 
+    setFormMessage(null);
     const newImages = [...images, ...files];
     setImages(newImages);
 
@@ -224,7 +228,7 @@ export default function CreatePocketPost() {
         <MarkContainer>
           <SectionTitle>Bubble Icon</SectionTitle>
           <MarkSettings>
-            <MarkPreview $isRound={isRoundCrop}>
+            <MarkPreview $isRound={markType === "image" ? savedMarkIsRound : true}>
               {markType === "image" && markImage ? (
                 <img src={markImage} alt="mark" />
               ) : (
@@ -361,12 +365,18 @@ export default function CreatePocketPost() {
           {story.length} / {MAX_LENGTH}
         </LengthCount>
         <StoryBox
+          $hasError={story.length > MAX_LENGTH}
           placeholder="Tell the story behind this pocket..."
           value={story}
-          onChange={(e) => setStory(e.target.value)}
+          onChange={(e) => {
+            setStory(e.target.value);
+            if (formMessage) {
+              setFormMessage(null);
+            }
+          }}
         />
       </Box>
-
+      {formMessage && <FormMessage>{formMessage}</FormMessage>}
       <PublishBtn onClick={handleSubmit}>Publish to Pocket</PublishBtn>
     </Container>
   );
@@ -384,7 +394,7 @@ const Box = styled.section`
   border: 2px dashed ${({ theme }) => theme.colors.border3};
   border-radius: 16px;
   padding: 20px 25px 25px 25px;
-  margin-bottom: 50px;
+  margin-bottom: 40px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 `;
@@ -393,6 +403,17 @@ const HeaderSection = styled.div`
   margin-bottom: 50px;
   padding-left: 10px;
   text-align: left;
+`;
+
+const FormMessage = styled.div`
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: #fff5f5;
+  color: #e03131;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const Title = styled.h1`
@@ -777,12 +798,12 @@ const LengthCount = styled.span<{ $isMax: boolean }>`
   font-weight: ${(props) => (props.$isMax ? "700" : "400")};
 `;
 
-const StoryBox = styled.textarea`
+const StoryBox = styled.textarea<{ $hasError?: boolean }>`
   width: 100%;
   height: 300px;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 1px solid ${(props) => (props.$hasError ? "#ff6b6b" : props.theme.colors.border)};
   padding: 20px;
   margin-top: 5px;
   font-size: 17px;
@@ -791,7 +812,7 @@ const StoryBox = styled.textarea`
   outline: none;
   box-sizing: border-box;
   &:focus {
-    border-color: ${({ theme }) => theme.colors.border3};
+    border-color: ${(props) => (props.$hasError ? "#ff6b6b" : props.theme.colors.border3)};
   }
 `;
 

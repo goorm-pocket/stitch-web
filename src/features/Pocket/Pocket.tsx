@@ -129,7 +129,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   const items = board?.items ?? [];
 
   const itemSize = Math.max(size.width * 0.15, 50);
-  const wallThickness = 20;
+  const wallThickness = 30;
 
   const positions = usePocketMatter({
     sceneRef,

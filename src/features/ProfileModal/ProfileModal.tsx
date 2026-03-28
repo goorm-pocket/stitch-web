@@ -1,9 +1,9 @@
 import styled from "styled-components";
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
 import {
-  useGetProfileQuery,
+  useSuspenseGetProfileQuery, // Suspense 기반 프로필 조회 훅
   usePatchProfileMutation,
   useSetupProfileMutation,
   usePatchPrivateProfileMutation,
@@ -21,76 +21,70 @@ interface FormData {
   profileEmoji: string | null;
 }
 
-const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
+// 서버 응답 폼
+const mapProfileToUI = (data: {
+  nickname?: string | null;
+  realName?: string | null;
+  birth?: string | null;
+  profileImageUrl?: string | null;
+  profileEmoji?: string | null;
+}) => {
+  const key = data.profileImageUrl || "";
+  const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
+
+  return {
+    formData: {
+      nickname: data.nickname || "",
+      realName: data.realName || "",
+      birth: data.birth || "",
+      profileImageUrl: key,
+      profileEmoji: data.profileEmoji || "",
+    },
+    profileImageKey: key,
+    profileImg: profileFullUrl,
+    emojiContent: data.profileEmoji || null,
+  };
+};
+
+const ProfileModalContent = ({
+  onClose,
+  isInitial,
+  isPage,
+}: {
+  onClose: () => void;
+  isInitial?: boolean;
+  isPage?: boolean;
+}) => {
   //API
-  const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery();
+  const { data: profileData } = useSuspenseGetProfileQuery();
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
   const { mutateAsync: patchPrivateProfileMutate } = usePatchPrivateProfileMutation();
-  type ProfileData = NonNullable<typeof profileData>;
+  const initialUI = mapProfileToUI(profileData); // 조회 데이터를 초기 UI 상태로 변환
 
   //조회, 수정 모드
   const [isEditing, setIsEditing] = useState(isInitial);
   //복구 데이터
-  const [initialData, setInitialData] = useState<FormData | null>(null);
-  const [formData, setFormData] = useState<FormData>(() => ({
-    nickname: profileData?.nickname || "",
-    realName: profileData?.realName || "",
-    birth: profileData?.birth || "",
-    profileImageUrl: profileData?.profileImageUrl || "",
-    profileEmoji: profileData?.profileEmoji || "",
-  }));
+  const [initialData] = useState<FormData>(initialUI.formData);
+  const [formData, setFormData] = useState<FormData>(initialUI.formData);
 
   //화면 표시용
-  const [profileImg, setProfileImg] = useState<string | null>(null);
+  const [profileImg, setProfileImg] = useState<string | null>(initialUI.profileImg);
   //S3 key
-  const [profileImageKey, setProfileImageKey] = useState<string>("");
+  const [profileImageKey, setProfileImageKey] = useState<string>(initialUI.profileImageKey);
   //실제 파일
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
-  const [emojiContent, setEmojiContent] = useState<string | null>(null);
+  const [emojiContent, setEmojiContent] = useState<string | null>(initialUI.emojiContent);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const isInitialized = useRef(false);
 
   //날짜&필수값
   const today = new Date().toISOString().split("T")[0];
   const isFormValid =
     formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
-
-  const updateUIWithData = (data: ProfileData) => {
-    const key = data.profileImageUrl || "";
-    const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
-
-    return {
-      formData: {
-        nickname: data.nickname || "",
-        realName: data.realName || "",
-        birth: data.birth || "",
-        profileImageUrl: key,
-        profileEmoji: data.profileEmoji || "",
-      },
-      profileImageKey: key,
-      profileImg: profileFullUrl,
-      emojiContent: data.profileEmoji || null,
-    };
-  };
-
-  //정보 조회
-  useEffect(() => {
-    if (!profileData || isInitialized.current) return;
-
-    const mapped = updateUIWithData(profileData);
-
-    setFormData(mapped.formData);
-    setInitialData(mapped.formData);
-    setProfileImageKey(mapped.profileImageKey);
-    setProfileImg(mapped.profileImg);
-    setEmojiContent(mapped.emojiContent);
-    isInitialized.current = true;
-  }, [profileData]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -141,7 +135,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
     try {
       if (!userId) {
-        alert("로그인 정보가 없습니다.");
         return;
       }
 
@@ -182,28 +175,22 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       };
 
       if (isInitial) {
-        const response = await setupProfileMutate({
+        await setupProfileMutate({
           profile: { ...publicPayload, ...privatePayload },
         });
 
         await patchPrivateProfileMutate({ profile: privatePayload });
-
-        updateUIWithData(response);
-        alert("프로필이 생성되었습니다!");
       } else {
         await Promise.all([
           patchProfileMutate({ profile: publicPayload }),
           patchPrivateProfileMutate({ profile: privatePayload }),
         ]);
-
-        alert("프로필이 수정되었습니다!");
       }
 
       setIsEditing(false);
       onClose();
     } catch (err) {
       console.error("Save Error:", err);
-      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -224,16 +211,16 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     setShowEmojiPicker(false);
   };
 
-  if (isProfileLoading) return null;
-
   return (
-    <ModalOverlay>
-      <ModalContainer>
-        <CloseBtn onClick={onClose}>&times;</CloseBtn>
+    <ModalOverlay $isPage={isPage}>
+      <ModalContainer $isPage={isPage}>
+        {!isPage && <CloseBtn onClick={onClose}>&times;</CloseBtn>}
 
         <TitleContainer>
           <Title>Profile Settings</Title>
-          <Description> </Description>
+          <Description>
+            {isPage ? "필수 프로필 정보를 입력한 뒤 STITCH를 이용할 수 있어요." : " "}
+          </Description>
         </TitleContainer>
 
         <Box>
@@ -360,29 +347,59 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   );
 };
 
+const ProfileModal = ({
+  onClose,
+  isInitial,
+  isPage,
+}: {
+  onClose: () => void;
+  isInitial?: boolean;
+  isPage?: boolean;
+}) => {
+  return (
+    <Suspense fallback={<ProfileModalFallback isPage={isPage} />}>
+      <ProfileModalContent onClose={onClose} isInitial={isInitial} isPage={isPage} />
+    </Suspense>
+  );
+};
+
 export default ProfileModal;
 
-const ModalOverlay = styled.div`
-  position: fixed;
+const ProfileModalFallback = ({ isPage }: { isPage?: boolean }) => {
+  return (
+    <ModalOverlay $isPage={isPage}>
+      <LoadingModalContainer $isPage={isPage}>
+        <TitleContainer>
+          <Title>Profile Settings</Title>
+          <Description>프로필 정보를 불러오는 중입니다.</Description>
+        </TitleContainer>
+      </LoadingModalContainer>
+    </ModalOverlay>
+  );
+};
+
+const ModalOverlay = styled.div<{ $isPage?: boolean }>`
+  position: ${(props) => (props.$isPage ? "static" : "fixed")};
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  min-height: ${(props) => (props.$isPage ? "auto" : "100vh")};
+  background: ${(props) => (props.$isPage ? "transparent" : "rgba(0, 0, 0, 0.5)")};
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<{ $isPage?: boolean }>`
   background: white;
-  width: 580px;
-  max-height: 90vh;
+  width: ${(props) => (props.$isPage ? "min(720px, 100%)" : "580px")};
+  max-height: ${(props) => (props.$isPage ? "none" : "90vh")};
   padding: 40px;
   border-radius: 16px;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: ${(props) =>
+    props.$isPage ? "0 10px 25px -5px rgba(0, 0, 0, 0.08)" : "0 20px 40px rgba(0, 0, 0, 0.2)"};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -390,6 +407,11 @@ const ModalContainer = styled.div`
   &::-webkit-scrollbar {
     width: 8px;
   }
+`;
+
+const LoadingModalContainer = styled(ModalContainer)`
+  min-height: 220px;
+  justify-content: center;
 `;
 
 const TitleContainer = styled.div`

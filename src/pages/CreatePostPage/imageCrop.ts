@@ -35,5 +35,5 @@ export const getCroppedImg = async (
     pixelCrop.height,
   );
 
-  return canvas.toDataURL("image/jpeg");
+  return canvas.toDataURL(isRound ? "image/png" : "image/jpeg");
 };
