@@ -34,3 +34,16 @@ export const connectNotificationSSE = () => {
 
   return es;
 };
+
+interface ReadNotificationResponse {
+  notificationId: string;
+  readAt: string | null;
+}
+
+export async function readNotification(notificationId: string): Promise<ReadNotificationResponse> {
+  const res = await apiClient.patch<ApiResponse<ReadNotificationResponse>>(
+    `/api/v1/notifications/${notificationId}/read`,
+  );
+
+  return res.data.data;
+}
