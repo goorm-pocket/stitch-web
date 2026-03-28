@@ -36,7 +36,7 @@ export function useNotificationSSE() {
       es.removeEventListener("notification", handleNotification);
       es.close();
     };
-  }, []);
+  }, [queryClient]);
 
   return { liveNotifications };
 }
