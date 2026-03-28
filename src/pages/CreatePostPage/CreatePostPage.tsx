@@ -48,7 +48,6 @@ export default function CreatePocketPost() {
   const { data: profileData } = useGetProfileQuery();
   useEffect(() => {
     if (!profileData?.userId) {
-      setFormMessage("사용자 정보를 불러올 수 없습니다.");
       return;
     }
     if (profileData) {
