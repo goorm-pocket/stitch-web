@@ -34,6 +34,7 @@ export default function CreatePocketPost() {
   const [markType, setMarkType] = useState<MarkType>("emoji");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [markImage, setMarkImage] = useState<string | null>(null);
+  const [savedMarkIsRound, setSavedMarkIsRound] = useState(true);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
 
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -151,6 +152,7 @@ export default function CreatePocketPost() {
     setSelectedEmoji(emojiData.emoji);
     setShowEmojiPicker(false);
     setMarkType("emoji");
+    setSavedMarkIsRound(true);
   };
 
   const handleMarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,6 +174,7 @@ export default function CreatePocketPost() {
     if (cropImage && croppedAreaPixels) {
       const croppedResult = await getCroppedImg(cropImage, croppedAreaPixels, isRoundCrop);
       setMarkImage(croppedResult);
+      setSavedMarkIsRound(isRoundCrop);
       setMarkType("image");
       setCropImage(null);
     }
@@ -225,7 +228,7 @@ export default function CreatePocketPost() {
         <MarkContainer>
           <SectionTitle>Bubble Icon</SectionTitle>
           <MarkSettings>
-            <MarkPreview $isRound={isRoundCrop}>
+            <MarkPreview $isRound={markType === "image" ? savedMarkIsRound : true}>
               {markType === "image" && markImage ? (
                 <img src={markImage} alt="mark" />
               ) : (
