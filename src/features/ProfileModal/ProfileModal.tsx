@@ -49,9 +49,11 @@ const mapProfileToUI = (data: {
 const ProfileModalContent = ({
   onClose,
   isInitial,
+  isPage,
 }: {
   onClose: () => void;
   isInitial?: boolean;
+  isPage?: boolean;
 }) => {
   //API
   const { data: profileData } = useSuspenseGetProfileQuery();
@@ -210,13 +212,15 @@ const ProfileModalContent = ({
   };
 
   return (
-    <ModalOverlay>
-      <ModalContainer>
-        <CloseBtn onClick={onClose}>&times;</CloseBtn>
+    <ModalOverlay $isPage={isPage}>
+      <ModalContainer $isPage={isPage}>
+        {!isPage && <CloseBtn onClick={onClose}>&times;</CloseBtn>}
 
         <TitleContainer>
           <Title>Profile Settings</Title>
-          <Description> </Description>
+          <Description>
+            {isPage ? "필수 프로필 정보를 입력한 뒤 STITCH를 이용할 수 있어요." : " "}
+          </Description>
         </TitleContainer>
 
         <Box>
@@ -343,20 +347,28 @@ const ProfileModalContent = ({
   );
 };
 
-const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
+const ProfileModal = ({
+  onClose,
+  isInitial,
+  isPage,
+}: {
+  onClose: () => void;
+  isInitial?: boolean;
+  isPage?: boolean;
+}) => {
   return (
-    <Suspense fallback={<ProfileModalFallback />}>
-      <ProfileModalContent onClose={onClose} isInitial={isInitial} />
+    <Suspense fallback={<ProfileModalFallback isPage={isPage} />}>
+      <ProfileModalContent onClose={onClose} isInitial={isInitial} isPage={isPage} />
     </Suspense>
   );
 };
 
 export default ProfileModal;
 
-const ProfileModalFallback = () => {
+const ProfileModalFallback = ({ isPage }: { isPage?: boolean }) => {
   return (
-    <ModalOverlay>
-      <LoadingModalContainer>
+    <ModalOverlay $isPage={isPage}>
+      <LoadingModalContainer $isPage={isPage}>
         <TitleContainer>
           <Title>Profile Settings</Title>
           <Description>프로필 정보를 불러오는 중입니다.</Description>
@@ -366,27 +378,28 @@ const ProfileModalFallback = () => {
   );
 };
 
-const ModalOverlay = styled.div`
-  position: fixed;
+const ModalOverlay = styled.div<{ $isPage?: boolean }>`
+  position: ${(props) => (props.$isPage ? "static" : "fixed")};
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  min-height: ${(props) => (props.$isPage ? "auto" : "100vh")};
+  background: ${(props) => (props.$isPage ? "transparent" : "rgba(0, 0, 0, 0.5)")};
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<{ $isPage?: boolean }>`
   background: white;
-  width: 580px;
-  max-height: 90vh;
+  width: ${(props) => (props.$isPage ? "min(720px, 100%)" : "580px")};
+  max-height: ${(props) => (props.$isPage ? "none" : "90vh")};
   padding: 40px;
   border-radius: 16px;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: ${(props) =>
+    props.$isPage ? "0 10px 25px -5px rgba(0, 0, 0, 0.08)" : "0 20px 40px rgba(0, 0, 0, 0.2)"};
   display: flex;
   flex-direction: column;
   overflow-y: auto;

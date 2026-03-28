@@ -8,6 +8,7 @@ import CreatePostPage from "../../pages/CreatePostPage/CreatePostPage";
 import FriendPage from "../../pages/FriendPage/FriendPage";
 import SettingPage from "../../pages/SettingPage/SettingPage";
 import PostDetailPage from "../../pages/PostDetailPage/PostDetailPage";
+import ProfileSettingPage from "../../pages/ProfileSettingPage/ProfileSettingPage";
 import ProtectedRouter from "./ProtectedRouter";
 import RecapPage from "@/pages/RecapPage/RecapPage";
 
@@ -25,6 +26,7 @@ const Router = () => {
           <Route path="setting" element={<SettingPage />} />
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/recap" element={<RecapPage />} />
+          <Route path="/profilesetting" element={<ProfileSettingPage />} />
         </Route>
       </Route>
     </Routes>
