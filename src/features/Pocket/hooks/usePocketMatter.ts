@@ -49,7 +49,7 @@ export function usePocketMatter({
     engineRef.current = engine;
     engine.gravity.scale = 0.0015;
     engine.gravity.x = 0;
-    engine.gravity.y = 1.8;
+    engine.gravity.y = 1;
 
     // pocket 생성
     const world = engine.world;
@@ -122,8 +122,17 @@ export function usePocketMatter({
     const engine = engineRef.current;
     if (!engine) return;
 
-    engine.gravity.x = motion.gravity.x * 1.8;
-    engine.gravity.y = motion.gravity.y * 1.8;
+    const gravityX = motion.gravity.x;
+    const gravityY = motion.gravity.y;
+    const gravityLength = Math.hypot(gravityX, gravityY);
+
+    if (gravityLength > 0.01) {
+      engine.gravity.x = (gravityX / gravityLength) * 2.2;
+      engine.gravity.y = (gravityY / gravityLength) * 2.2;
+    } else {
+      engine.gravity.x = 0;
+      engine.gravity.y = 0;
+    }
 
     const force = {
       x: motion.rotation.y * 0.00012,
