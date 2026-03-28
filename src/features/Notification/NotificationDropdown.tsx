@@ -5,6 +5,7 @@ import NotificationItem from "./components/NotificationItem";
 import {
   useAllReadNotificationMutation,
   useGetNotificationsInfiniteQuery,
+  useGetUnreadNotificationCountQuery,
   useReadNotificationMutation,
 } from "@/shared/hooks/useNotification";
 import type { Notification } from "@/shared/types/notification.type";
@@ -31,6 +32,7 @@ const NotificationDropdown = () => {
     fetchNextPage,
     isFetchingNextPage,
   } = useGetNotificationsInfiniteQuery();
+  const { data: unreadNotificationCount } = useGetUnreadNotificationCountQuery();
 
   // mutate
   const { mutateAsync: readNotification } = useReadNotificationMutation();
@@ -62,11 +64,6 @@ const NotificationDropdown = () => {
 
     return Array.from(map.values());
   }, [liveNotifications, serverNotifications]);
-
-  // 안 읽은 알림 개수
-  const unreadCount = useMemo(() => {
-    return notifications.filter((item) => !item.readAt).length;
-  }, [notifications]);
 
   // 드롭다운 열고 닫기
   const handleToggleDropdown = () => {
@@ -119,7 +116,11 @@ const NotificationDropdown = () => {
     <Wrapper ref={wrapperRef}>
       <IconButton type="button" onClick={handleToggleDropdown} aria-label="알림 열기">
         <StyledNotificationIcon />
-        {unreadCount > 0 && <Badge>{unreadCount > 9 ? "9+" : unreadCount}</Badge>}
+        {unreadNotificationCount && (
+          <Badge>
+            {unreadNotificationCount.unreadCount > 9 ? "9+" : unreadNotificationCount.unreadCount}
+          </Badge>
+        )}
       </IconButton>
 
       {isOpen && (
