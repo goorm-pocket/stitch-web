@@ -3,12 +3,13 @@ import styled from "styled-components";
 
 interface SearchUserItemProps {
   user: SearchUser;
-  handleAdd: () => void;
+  handleAdd: (e: React.MouseEvent) => void;
+  handleClick: () => void;
 }
 
-const SearchUserItem = ({ user, handleAdd }: SearchUserItemProps) => {
+const SearchUserItem = ({ user, handleAdd, handleClick }: SearchUserItemProps) => {
   return (
-    <Container>
+    <Container onClick={handleClick}>
       <UserInfo>
         {user.profileImageUrl ? (
           <ProfileImage src={user.profileImageUrl} alt={user.nickname} />

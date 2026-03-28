@@ -6,12 +6,19 @@ import {
   useDeleteFriendRequestMutation,
 } from "@/shared/hooks/useFriend";
 
-const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) => {
+interface FriendItemProps {
+  friend: Friend;
+  state: FriendState;
+  handleClick: () => void;
+}
+
+const FriendItem = ({ friend, state, handleClick }: FriendItemProps) => {
+  // mutate
   const { mutate: acceptFriendRequest } = useAcceptFriendRequestMutation();
   const { mutate: deleteFriendRequest } = useDeleteFriendRequestMutation();
 
   return (
-    <Container>
+    <Container onClick={handleClick}>
       <Left>
         <Avator src={friend.user?.profileImageUrl} />
         <NameBox>
@@ -21,17 +28,32 @@ const FriendItem = ({ friend, state }: { friend: Friend; state: FriendState }) =
       </Left>
       <Right>
         {(state == "SENT" || state == "ACCEPTED") && (
-          <RemoveButton onClick={() => deleteFriendRequest({ friendId: friend.friendId })}>
+          <RemoveButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              deleteFriendRequest({ friendId: friend.friendId });
+            }}
+          >
             REMOVE
           </RemoveButton>
         )}
         {state == "RECEIVED" && (
-          <AcceptButton onClick={() => acceptFriendRequest({ friendId: friend.friendId })}>
+          <AcceptButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              acceptFriendRequest({ friendId: friend.friendId });
+            }}
+          >
             ACCEPT
           </AcceptButton>
         )}
         {state == "RECEIVED" && (
-          <RejectButton onClick={() => deleteFriendRequest({ friendId: friend.friendId })}>
+          <RejectButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              deleteFriendRequest({ friendId: friend.friendId });
+            }}
+          >
             REJECT
           </RejectButton>
         )}

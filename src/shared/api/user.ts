@@ -9,8 +9,8 @@ import type {
 import { apiClient } from "./axios";
 
 export async function getProfileById({ userId }: { userId: string }): Promise<Profile> {
-  const res = await apiClient.get<Profile>(`/api/v1/users/${userId}/profile`);
-  return res.data;
+  const res = await apiClient.get<ApiResponse<Profile>>(`/api/v1/users/${userId}/profile`);
+  return res.data.data;
 }
 
 export async function withdrawAccount() {

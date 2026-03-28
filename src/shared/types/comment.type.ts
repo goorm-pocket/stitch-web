@@ -20,7 +20,7 @@ export interface Comment {
   rootId: string;
   hasChild: boolean;
   status: "ACTIVE" | "DELETED";
-  mentions: CommentMention[];
+  mentionNickname: string;
   createdAt: string;
   updatedAt: string;
 }

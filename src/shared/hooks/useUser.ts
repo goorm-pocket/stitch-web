@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   getNotificationSettings,
   getPrivacySettings,
@@ -10,6 +10,7 @@ import {
   patchProfile,
   patchPrivateProfile,
   setupProfile,
+  getProfileById,
 } from "../api/user";
 /*
 export function useGetProfileQuery() {
@@ -63,6 +64,14 @@ export function useWithdrawAccountMutation() {
 
 export function useGetProfileQuery() {
   return useQuery({
+    queryKey: ["user-profile"],
+    queryFn: getProfile,
+    select: (res: any) => res,
+  });
+}
+
+export function useSuspenseGetProfileQuery() {
+  return useSuspenseQuery({
     queryKey: ["user-profile"],
     queryFn: getProfile,
     select: (res: any) => res,
@@ -127,5 +136,13 @@ export function useGetProfileByNameQuery({ query }: { query: string }) {
       if (!lastPage.hasNext) return undefined;
       return lastPage.nextCursor;
     },
+  });
+}
+
+export function useGetProfileByIdQuery({ userId }: { userId: string }) {
+  return useQuery({
+    queryKey: ["user-profile", userId],
+    queryFn: () => getProfileById({ userId }),
+    enabled: !!userId,
   });
 }
