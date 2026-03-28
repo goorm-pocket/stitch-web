@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
@@ -15,14 +15,22 @@ import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 const NotificationDropdown = () => {
   const navigate = useNavigate();
+
   // ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // state
   const [isOpen, setIsOpen] = useState(false);
 
   // data
-  const { data: notificationsPages, hasNextPage } = useGetNotificationsInfiniteQuery();
+  const {
+    data: notificationsPages,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useGetNotificationsInfiniteQuery();
 
   // mutate
   const { mutateAsync: readNotification } = useReadNotificationMutation();
@@ -40,6 +48,7 @@ const NotificationDropdown = () => {
     return notificationsPages?.pages.flatMap((page) => page.items) ?? [];
   }, [notificationsPages]);
 
+  // 실시간 SSE 알림
   const { liveNotifications } = useNotificationSSE();
 
   // 서버 알림 + SSE 알림 합치기 (중복 제거)
@@ -54,24 +63,57 @@ const NotificationDropdown = () => {
     return Array.from(map.values());
   }, [liveNotifications, serverNotifications]);
 
+  // 안 읽은 알림 개수
   const unreadCount = useMemo(() => {
     return notifications.filter((item) => !item.readAt).length;
   }, [notifications]);
 
+  // 드롭다운 열고 닫기
   const handleToggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleClickNotification = async (clickedNotnotificationIdification: Notification) => {
-    await readNotification(clickedNotnotificationIdification.notificationId);
-    navigate(getNotificationRedirectUrl(clickedNotnotificationIdification));
+  // 알림 클릭
+  const handleClickNotification = async (clickedNotification: Notification) => {
+    await readNotification(clickedNotification.notificationId);
+    navigate(getNotificationRedirectUrl(clickedNotification));
     setIsOpen(false);
   };
 
+  // 모두 읽음
   const handleReadAll = async () => {
     await allReadNotification();
     setIsOpen(false);
   };
+
+  // 리스트 하단 도달 시 다음 페이지 요청
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!hasNextPage) return;
+    if (!listRef.current) return;
+    if (!loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      {
+        root: listRef.current,
+        rootMargin: "80px",
+        threshold: 0.1,
+      },
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isOpen, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <Wrapper ref={wrapperRef}>
@@ -91,21 +133,29 @@ const NotificationDropdown = () => {
             )}
           </Header>
 
-          <List>
+          <List ref={listRef}>
             {notifications.length === 0 ? (
               <EmptyState>새로운 알림이 없어요.</EmptyState>
             ) : (
-              notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.notificationId}
-                  notification={notification}
-                  onClick={handleClickNotification}
-                />
-              ))
+              <>
+                {notifications.map((notification) => (
+                  <NotificationItem
+                    key={notification.notificationId}
+                    notification={notification}
+                    onClick={handleClickNotification}
+                  />
+                ))}
+
+                {hasNextPage && <LoadMoreTrigger ref={loadMoreRef} />}
+
+                {isFetchingNextPage && <FooterText>알림을 불러오는 중...</FooterText>}
+              </>
             )}
           </List>
 
-          {hasNextPage && <FooterText>더 많은 알림이 있어요</FooterText>}
+          {hasNextPage && !isFetchingNextPage && (
+            <FooterText>스크롤하면 더 많은 알림을 볼 수 있어요</FooterText>
+          )}
         </Dropdown>
       )}
     </Wrapper>
@@ -232,4 +282,8 @@ const FooterText = styled.div`
   font-size: 12px;
   text-align: center;
   color: ${({ theme }) => theme.colors.text_disable};
+`;
+
+const LoadMoreTrigger = styled.div`
+  height: 1px;
 `;
