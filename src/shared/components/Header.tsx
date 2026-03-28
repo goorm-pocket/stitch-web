@@ -7,7 +7,7 @@ import ProfileModal from "../../features/ProfileModal/ProfileModal";
 import { NavLink, useNavigate } from "react-router";
 import { useState } from "react";
 import { useGetProfileQuery } from "../hooks/useUser";
-import Notification from "@/features/Notification/Notification";
+import Notification from "@/features/Notification/NotificationDropdown";
 
 const Header = () => {
   const { data: profile } = useGetProfileQuery();
