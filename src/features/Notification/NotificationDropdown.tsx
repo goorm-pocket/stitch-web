@@ -7,27 +7,31 @@ import {
   useGetNotificationsInfiniteQuery,
   useReadNotificationMutation,
 } from "@/shared/hooks/useNotification";
-import { connectNotificationSSE } from "@/shared/api/notification";
 import type { Notification } from "@/shared/types/notification.type";
+import { useNotificationSSE } from "./hooks/useNotificationSSE";
+import { getNotificationRedirectUrl } from "./utils/redirectNotification";
+import { useNavigate } from "react-router";
 
 const NotificationDropdown = () => {
+  const navigate = useNavigate();
   // ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   // state
   const [isOpen, setIsOpen] = useState(false);
-  const [liveNotifications, setLiveNotifications] = useState<Notification[]>([]);
 
   // data
   const { data: notificationsPages, hasNextPage } = useGetNotificationsInfiniteQuery();
 
   // mutate
-  const { mutate: readNotification } = useReadNotificationMutation();
+  const { mutateAsync: readNotification } = useReadNotificationMutation();
 
   // 서버에서 받은 기존 알림
   const serverNotifications = useMemo(() => {
     return notificationsPages?.pages.flatMap((page) => page.items) ?? [];
   }, [notificationsPages]);
+
+  const { liveNotifications } = useNotificationSSE();
 
   // 서버 알림 + SSE 알림 합치기 (중복 제거)
   const notifications = useMemo(() => {
@@ -44,32 +48,6 @@ const NotificationDropdown = () => {
   const unreadCount = useMemo(() => {
     return notifications.filter((item) => !item.readAt).length;
   }, [notifications]);
-
-  // SSE 설정 Effect
-  useEffect(() => {
-    const es = connectNotificationSSE();
-
-    es.addEventListener("notification", (e) => {
-      const newNotification: Notification = JSON.parse(e.data);
-
-      setLiveNotifications((prev) => {
-        const exists = prev.some((item) => item.notificationId === newNotification.notificationId);
-
-        if (exists) return prev;
-
-        return [newNotification, ...prev];
-      });
-    });
-
-    es.onerror = (e) => {
-      console.error("SSE error", e);
-      es.close();
-    };
-
-    return () => {
-      es.close();
-    };
-  }, []);
 
   // 밖 클릭하면 드롭다운 닫기
   useEffect(() => {
@@ -91,20 +69,13 @@ const NotificationDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleClickNotification = (clickedNotnotificationIdification: Notification) => {
-    readNotification(clickedNotnotificationIdification.notificationId);
+  const handleClickNotification = async (clickedNotnotificationIdification: Notification) => {
+    await readNotification(clickedNotnotificationIdification.notificationId);
+    navigate(getNotificationRedirectUrl(clickedNotnotificationIdification));
+    setIsOpen(false);
   };
 
-  const handleReadAll = () => {
-    const now = new Date().toISOString();
-
-    setLiveNotifications((prev) =>
-      prev.map((item) => ({
-        ...item,
-        readAt: item.readAt ?? now,
-      })),
-    );
-  };
+  const handleReadAll = () => {};
 
   return (
     <Wrapper ref={wrapperRef}>
