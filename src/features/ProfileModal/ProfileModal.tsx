@@ -389,13 +389,14 @@ const ModalOverlay = styled.div<{ $isPage?: boolean }>`
   justify-content: center;
   align-items: center;
   z-index: 999;
+  padding: ${(props) => (props.$isPage ? "0" : "16px")};
 `;
 
 const ModalContainer = styled.div<{ $isPage?: boolean }>`
   background: white;
   width: ${(props) => (props.$isPage ? "min(720px, 100%)" : "580px")};
   max-height: ${(props) => (props.$isPage ? "none" : "90vh")};
-  padding: 40px;
+  padding: ${(props) => (props.$isPage ? "28px" : "32px")};
   border-radius: 16px;
   position: relative;
   box-shadow: ${(props) =>
@@ -407,6 +408,17 @@ const ModalContainer = styled.div<{ $isPage?: boolean }>`
   &::-webkit-scrollbar {
     width: 8px;
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-height: ${(props) => (props.$isPage ? "none" : "calc(100vh - 24px)")};
+    padding: 24px 20px;
+    border-radius: 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 16px;
+  }
 `;
 
 const LoadingModalContainer = styled(ModalContainer)`
@@ -415,28 +427,29 @@ const LoadingModalContainer = styled(ModalContainer)`
 `;
 
 const TitleContainer = styled.div`
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 `;
 
 const Title = styled.h1`
-  font-size: 26px;
+  font-size: clamp(22px, 6vw, 26px);
   font-weight: 800;
   color: #212529;
+  margin: 0;
 `;
 
 const Description = styled.p`
-  font-size: 14px;
+  font-size: 13px;
   color: #868e96;
   margin-top: 4px;
 `;
 
 const CloseBtn = styled.button`
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 14px;
+  right: 14px;
   background: none;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   color: #ccc;
   cursor: pointer;
   &:hover {
@@ -450,12 +463,12 @@ const Box = styled.div`
 
 const SectionTitle = styled.div`
   background: ${({ theme }) => theme.colors.border};
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.text_primary};
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
 `;
@@ -463,20 +476,25 @@ const SectionTitle = styled.div`
 const AppearanceBox = styled.div`
   display: flex;
   justify-content: center;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   position: relative;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
-  padding: 20px;
-  width: 220px;
+  padding: 16px;
+  width: min(100%, 190px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
   transition: all 0.2s ease;
 
@@ -485,11 +503,15 @@ const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   &:hover {
     background: ${(props) => (props.$isEditing ? "#e9ecef" : "#f8f9fa")};
   }
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const PickerCircle = styled.div<{ $shape?: "round" | "rect"; $isError?: boolean }>`
-  width: 130px;
-  height: 130px;
+  width: 104px;
+  height: 104px;
 
   border-radius: ${(props) => (props.$shape === "rect" ? "0" : "50%")};
 
@@ -509,18 +531,18 @@ const PreviewImg = styled.img`
 `;
 
 const PlusIcon = styled.span`
-  font-size: 28px;
+  font-size: 24px;
   color: #adb5bd;
   font-weight: 300;
 `;
 
 const EmojiDisplay = styled.span`
-  font-size: 44px;
+  font-size: 36px;
   line-height: 1;
 `;
 
 const LabelText = styled.span`
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   color: #adb5bd;
   text-align: center;
@@ -529,7 +551,11 @@ const LabelText = styled.span`
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const InputWrapper = styled.div`
@@ -537,17 +563,17 @@ const InputWrapper = styled.div`
   flex-direction: column;
   gap: 8px;
   label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: ${({ theme }) => theme.colors.text_secondary};
   }
 `;
 
 const StyledInput = styled.input<{ $isError?: boolean }>`
-  padding: 14px;
+  padding: 12px 13px;
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "#dee2e6")};
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   background: ${(props) => (props.disabled ? "#f8f9fa" : "white")};
   transition: all 0.2s;
 
@@ -562,27 +588,33 @@ const ButtonWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 16px;
-  margin-top: 40px;
+  gap: 12px;
+  margin-top: 28px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+  }
 `;
 
 const EditBtn = styled.button`
-  padding: 12px 28px;
+  padding: 10px 20px;
   background: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
   border-radius: 10px;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
 `;
 
 const SaveBtn = styled.button`
-  padding: 12px 28px;
+  padding: 10px 20px;
   background: ${(props) => (props.disabled ? "#e9ecef" : props.theme.colors.primary)};
   color: ${(props) => (props.disabled ? "#adb5bd" : "white")};
   border: none;
   border-radius: 10px;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 13px;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
@@ -591,6 +623,7 @@ const CancelBtn = styled.button`
   border: none;
   color: #868e96;
   font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
   &:hover {
     color: #495057;
@@ -604,8 +637,8 @@ const Buttons = styled.div`
 `;
 
 const MiniBtn = styled.button`
-  padding: 6px 12px;
-  font-size: 11px;
+  padding: 6px 10px;
+  font-size: 10px;
   font-weight: 700;
   background: white;
   border: 1px solid #dee2e6;
@@ -626,8 +659,8 @@ const MiniBtn = styled.button`
 
 const PickerWrapper = styled.div`
   position: fixed;
-  top: 70%;
-  left: 40%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
 
   z-index: 10000;
@@ -635,4 +668,9 @@ const PickerWrapper = styled.div`
   background: white;
   border-radius: 8px;
   line-height: 0;
+
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 24px);
+    overflow: hidden;
+  }
 `;
