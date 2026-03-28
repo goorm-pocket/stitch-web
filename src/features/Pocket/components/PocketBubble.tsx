@@ -7,8 +7,8 @@ type PocketBubbleProps = {
   x: number;
   y: number;
   angle: number;
-  onMouseDown: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
-  onMouseUp: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
+  onPointerDown: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
 };
 
 const PocketBubble = ({
@@ -17,8 +17,8 @@ const PocketBubble = ({
   x,
   y,
   angle,
-  onMouseDown,
-  onMouseUp,
+  onPointerDown,
+  onPointerUp,
 }: PocketBubbleProps) => {
   const { postId, representative, read, ownerType } = item;
   const hasImage = representative.type === "IMAGE";
@@ -33,8 +33,8 @@ const PocketBubble = ({
         height: `${size}px`,
         transform: `translate(${x - size / 2}px, ${y - size / 2}px) rotate(${angle}rad)`,
       }}
-      onMouseDown={(e) => onMouseDown(postId, e)}
-      onMouseUp={(e) => onMouseUp(postId, e)}
+      onPointerDown={(e) => onPointerDown(postId, e)}
+      onPointerUp={(e) => onPointerUp(postId, e)}
     >
       {representative.type === "IMAGE" ? (
         <BubbleImage src={representative.value} alt={`bubble-${postId}`} draggable={false} />

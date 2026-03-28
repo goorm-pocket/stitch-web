@@ -68,9 +68,9 @@ const HeaderContainer = styled.header`
   background-color: white;
 
   @media (max-width: 480px) {
-    padding: 10px 14px;
-    gap: 12px;
-    align-items: flex-start;
+    min-height: 52px;
+    padding: 10px 12px;
+    gap: 10px;
   }
 `;
 
@@ -84,13 +84,17 @@ const Left = styled.div`
 `;
 
 const LogoText = styled.span`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const Right = styled.div`
   display: flex;
-  gap: 15px;
+  gap: 12px;
   min-width: 0;
   align-items: center;
 `;
@@ -98,13 +102,13 @@ const Right = styled.div`
 const NavBar = styled.nav`
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 
   @media (max-width: 480px) {
-    gap: 10px;
+    gap: 4px;
   }
 `;
 
@@ -113,44 +117,56 @@ const NavItem = styled(NavLink)`
   align-items: center;
   text-decoration: none;
   color: ${({ theme }) => theme.colors.icon};
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
   white-space: nowrap;
+  padding: 8px 10px;
+  border-radius: 999px;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.hover};
   }
 
   &.active {
     color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.hover};
+  }
+
+  @media (max-width: 480px) {
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
   }
 `;
 
 const NavIcon = styled.svg`
   color: currentColor;
+  flex-shrink: 0;
 `;
 
 const NavText = styled.span`
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
 
-  @media (max-width: 390px) {
+  @media (max-width: 640px) {
     display: none;
   }
 `;
 
 const AvatorBox = styled.div`
-  padding-left: 15px;
+  padding-left: 12px;
   border-left: 1px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: 480px) {
-    padding-left: 10px;
+    padding-left: 8px;
   }
 `;
 
 const Avator = styled.img`
-  width: 45px;
-  height: 45px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
