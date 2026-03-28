@@ -29,9 +29,13 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 900px;
+  width: min(100%, 900px);
   padding: 16px 32px;
   gap: 24px;
+
+  @media (max-width: 768px) {
+    padding: 16px 12px 32px;
+  }
 `;
 
 const TitleContainer = styled.div`
@@ -43,22 +47,24 @@ const TitleContainer = styled.div`
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 52px;
+  font-size: clamp(36px, 8vw, 52px);
   font-weight: 800;
   line-height: 1.1;
   color: #1e293b;
+  text-align: center;
 `;
 
 const Subtitle = styled.p`
   font-size: 16px;
   color: #64748b;
   margin-bottom: 0;
+  text-align: center;
 `;
 
 const PluseButton = styled.button`
   position: fixed;
-  bottom: 120px;
-  right: 60px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  right: 20px;
   width: 65px;
   height: 65px;
   border-radius: 50%;
@@ -81,6 +87,13 @@ const PluseButton = styled.button`
 
   &:active {
     transform: scale(0.95);
+  }
+
+  @media (max-width: 480px) {
+    width: 58px;
+    height: 58px;
+    right: 16px;
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 `;
 
