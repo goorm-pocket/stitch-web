@@ -3,7 +3,10 @@ import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
 import { notificationMock } from "./mock/notificationMock";
-import { useGetNotificationsInfiniteQuery } from "@/shared/hooks/useNotification";
+import {
+  useGetNotificationsInfiniteQuery,
+  useReadNotificationMutation,
+} from "@/shared/hooks/useNotification";
 import { connectNotificationSSE } from "@/shared/api/notification";
 import type { Notification } from "@/shared/types/notification.type";
 
@@ -17,6 +20,9 @@ const NotificationDropdown = () => {
 
   // data
   const { data: notificationsPages, hasNextPage } = useGetNotificationsInfiniteQuery();
+
+  // mutate
+  const { mutate: readNotification } = useReadNotificationMutation();
 
   // 서버에서 받은 기존 알림
   const serverNotifications = useMemo(() => {
@@ -85,19 +91,8 @@ const NotificationDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleClickNotification = (clickedNotification: Notification) => {
-    setLiveNotifications((prev) =>
-      prev.map((item) =>
-        item.notificationId === clickedNotification.notificationId
-          ? {
-              ...item,
-              readAt: item.readAt ?? new Date().toISOString(),
-            }
-          : item,
-      ),
-    );
-
-    console.log("clicked notification:", clickedNotification);
+  const handleClickNotification = (clickedNotnotificationIdification: Notification) => {
+    readNotification(clickedNotnotificationIdification.notificationId);
   };
 
   const handleReadAll = () => {
