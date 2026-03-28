@@ -3,6 +3,7 @@ import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
 import {
+  useAllReadNotificationMutation,
   useGetNotificationsInfiniteQuery,
   useReadNotificationMutation,
 } from "@/shared/hooks/useNotification";
@@ -25,6 +26,7 @@ const NotificationDropdown = () => {
 
   // mutate
   const { mutateAsync: readNotification } = useReadNotificationMutation();
+  const { mutateAsync: allReadNotification } = useAllReadNotificationMutation();
 
   // 커스텀 훅
   // 밖 클릭했을 때 닫는 훅
@@ -66,7 +68,10 @@ const NotificationDropdown = () => {
     setIsOpen(false);
   };
 
-  const handleReadAll = () => {};
+  const handleReadAll = async () => {
+    await allReadNotification();
+    setIsOpen(false);
+  };
 
   return (
     <Wrapper ref={wrapperRef}>
@@ -110,7 +115,6 @@ const NotificationDropdown = () => {
 export default NotificationDropdown;
 
 const Wrapper = styled.div`
-  position: relative;
   display: inline-block;
 `;
 
