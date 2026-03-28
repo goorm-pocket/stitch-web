@@ -2,13 +2,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import NotificationIcon from "@/assets/settings/notification-icon.svg";
 import NotificationItem from "./components/NotificationItem";
-import type { Notification } from "@/shared/types/notification.type";
 import { notificationMock } from "./mock/notificationMock";
+import { useGetNotificationsInfiniteQuery } from "@/shared/hooks/useNotification";
 
 const NotificationDropdown = () => {
+  // ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // state
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(notificationMock.items);
+
+  // data
+  const { data: notificationsPages } = useGetNotificationsInfiniteQuery();
+
+  const notifications = useMemo(() => {
+    return notificationsPages?.pages.flatMap((page) => page.items) ?? [];
+  }, [notificationsPages]);
+
+  console.log(notifications);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((item) => !item.readAt).length;
@@ -32,30 +43,9 @@ const NotificationDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleClickNotification = (clickedNotification: Notification) => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.notificationId === clickedNotification.notificationId
-          ? {
-              ...item,
-              readAt: item.readAt ?? new Date().toISOString(),
-            }
-          : item,
-      ),
-    );
+  const handleClickNotification = () => {};
 
-    // 여기에서 나중에 type / targetId 기준으로 navigate 붙이면 됨
-    console.log("clicked notification:", clickedNotification);
-  };
-
-  const handleReadAll = () => {
-    setNotifications((prev) =>
-      prev.map((item) => ({
-        ...item,
-        readAt: item.readAt ?? new Date().toISOString(),
-      })),
-    );
-  };
+  const handleReadAll = () => {};
 
   return (
     <Wrapper ref={wrapperRef}>
