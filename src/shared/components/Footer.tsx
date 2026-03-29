@@ -13,13 +13,20 @@ const Footer = () => {
 export default Footer;
 
 const FooterContainer = styled.footer`
-  height: 80px;
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 24px;
   border-top: 1px solid ${({ theme }) => theme.colors.border};
   background-color: white;
+  padding: 16px 20px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 const NavItem = styled.div`

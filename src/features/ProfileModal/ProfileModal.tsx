@@ -1,9 +1,9 @@
 import styled from "styled-components";
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
 import {
-  useGetProfileQuery,
+  useSuspenseGetProfileQuery, // Suspense 기반 프로필 조회 훅
   usePatchProfileMutation,
   useSetupProfileMutation,
   usePatchPrivateProfileMutation,
@@ -21,76 +21,70 @@ interface FormData {
   profileEmoji: string | null;
 }
 
-const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?: boolean }) => {
+// 서버 응답 폼
+const mapProfileToUI = (data: {
+  nickname?: string | null;
+  realName?: string | null;
+  birth?: string | null;
+  profileImageUrl?: string | null;
+  profileEmoji?: string | null;
+}) => {
+  const key = data.profileImageUrl || "";
+  const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
+
+  return {
+    formData: {
+      nickname: data.nickname || "",
+      realName: data.realName || "",
+      birth: data.birth || "",
+      profileImageUrl: key,
+      profileEmoji: data.profileEmoji || "",
+    },
+    profileImageKey: key,
+    profileImg: profileFullUrl,
+    emojiContent: data.profileEmoji || null,
+  };
+};
+
+const ProfileModalContent = ({
+  onClose,
+  isInitial,
+  isPage,
+}: {
+  onClose: () => void;
+  isInitial?: boolean;
+  isPage?: boolean;
+}) => {
   //API
-  const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery();
+  const { data: profileData } = useSuspenseGetProfileQuery();
   const { mutateAsync: setupProfileMutate } = useSetupProfileMutation();
   const { mutateAsync: patchProfileMutate } = usePatchProfileMutation();
   const { mutateAsync: patchPrivateProfileMutate } = usePatchPrivateProfileMutation();
-  type ProfileData = NonNullable<typeof profileData>;
+  const initialUI = mapProfileToUI(profileData); // 조회 데이터를 초기 UI 상태로 변환
 
   //조회, 수정 모드
   const [isEditing, setIsEditing] = useState(isInitial);
   //복구 데이터
-  const [initialData, setInitialData] = useState<FormData | null>(null);
-  const [formData, setFormData] = useState<FormData>(() => ({
-    nickname: profileData?.nickname || "",
-    realName: profileData?.realName || "",
-    birth: profileData?.birth || "",
-    profileImageUrl: profileData?.profileImageUrl || "",
-    profileEmoji: profileData?.profileEmoji || "",
-  }));
+  const [initialData] = useState<FormData>(initialUI.formData);
+  const [formData, setFormData] = useState<FormData>(initialUI.formData);
 
   //화면 표시용
-  const [profileImg, setProfileImg] = useState<string | null>(null);
+  const [profileImg, setProfileImg] = useState<string | null>(initialUI.profileImg);
   //S3 key
-  const [profileImageKey, setProfileImageKey] = useState<string>("");
+  const [profileImageKey, setProfileImageKey] = useState<string>(initialUI.profileImageKey);
   //실제 파일
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
-  const [emojiContent, setEmojiContent] = useState<string | null>(null);
+  const [emojiContent, setEmojiContent] = useState<string | null>(initialUI.emojiContent);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const isInitialized = useRef(false);
 
   //날짜&필수값
   const today = new Date().toISOString().split("T")[0];
   const isFormValid =
     formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
-
-  const updateUIWithData = (data: ProfileData) => {
-    const key = data.profileImageUrl || "";
-    const profileFullUrl = key && !key.startsWith("http") ? `${S3_BASE_URL}${key}` : key;
-
-    return {
-      formData: {
-        nickname: data.nickname || "",
-        realName: data.realName || "",
-        birth: data.birth || "",
-        profileImageUrl: key,
-        profileEmoji: data.profileEmoji || "",
-      },
-      profileImageKey: key,
-      profileImg: profileFullUrl,
-      emojiContent: data.profileEmoji || null,
-    };
-  };
-
-  //정보 조회
-  useEffect(() => {
-    if (!profileData || isInitialized.current) return;
-
-    const mapped = updateUIWithData(profileData);
-
-    setFormData(mapped.formData);
-    setInitialData(mapped.formData);
-    setProfileImageKey(mapped.profileImageKey);
-    setProfileImg(mapped.profileImg);
-    setEmojiContent(mapped.emojiContent);
-    isInitialized.current = true;
-  }, [profileData]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -141,7 +135,6 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
 
     try {
       if (!userId) {
-        alert("로그인 정보가 없습니다.");
         return;
       }
 
@@ -182,28 +175,22 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
       };
 
       if (isInitial) {
-        const response = await setupProfileMutate({
+        await setupProfileMutate({
           profile: { ...publicPayload, ...privatePayload },
         });
 
         await patchPrivateProfileMutate({ profile: privatePayload });
-
-        updateUIWithData(response);
-        alert("프로필이 생성되었습니다!");
       } else {
         await Promise.all([
           patchProfileMutate({ profile: publicPayload }),
           patchPrivateProfileMutate({ profile: privatePayload }),
         ]);
-
-        alert("프로필이 수정되었습니다!");
       }
 
       setIsEditing(false);
       onClose();
     } catch (err) {
       console.error("Save Error:", err);
-      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -224,16 +211,16 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
     setShowEmojiPicker(false);
   };
 
-  if (isProfileLoading) return null;
-
   return (
-    <ModalOverlay>
-      <ModalContainer>
-        <CloseBtn onClick={onClose}>&times;</CloseBtn>
+    <ModalOverlay $isPage={isPage}>
+      <ModalContainer $isPage={isPage}>
+        {!isPage && <CloseBtn onClick={onClose}>&times;</CloseBtn>}
 
         <TitleContainer>
           <Title>Profile Settings</Title>
-          <Description> </Description>
+          <Description>
+            {isPage ? "필수 프로필 정보를 입력한 뒤 STITCH를 이용할 수 있어요." : " "}
+          </Description>
         </TitleContainer>
 
         <Box>
@@ -360,29 +347,60 @@ const ProfileModal = ({ onClose, isInitial }: { onClose: () => void; isInitial?:
   );
 };
 
+const ProfileModal = ({
+  onClose,
+  isInitial,
+  isPage,
+}: {
+  onClose: () => void;
+  isInitial?: boolean;
+  isPage?: boolean;
+}) => {
+  return (
+    <Suspense fallback={<ProfileModalFallback isPage={isPage} />}>
+      <ProfileModalContent onClose={onClose} isInitial={isInitial} isPage={isPage} />
+    </Suspense>
+  );
+};
+
 export default ProfileModal;
 
-const ModalOverlay = styled.div`
-  position: fixed;
+const ProfileModalFallback = ({ isPage }: { isPage?: boolean }) => {
+  return (
+    <ModalOverlay $isPage={isPage}>
+      <LoadingModalContainer $isPage={isPage}>
+        <TitleContainer>
+          <Title>Profile Settings</Title>
+          <Description>프로필 정보를 불러오는 중입니다.</Description>
+        </TitleContainer>
+      </LoadingModalContainer>
+    </ModalOverlay>
+  );
+};
+
+const ModalOverlay = styled.div<{ $isPage?: boolean }>`
+  position: ${(props) => (props.$isPage ? "static" : "fixed")};
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  min-height: ${(props) => (props.$isPage ? "auto" : "100vh")};
+  background: ${(props) => (props.$isPage ? "transparent" : "rgba(0, 0, 0, 0.5)")};
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
+  padding: ${(props) => (props.$isPage ? "0" : "16px")};
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<{ $isPage?: boolean }>`
   background: white;
-  width: 580px;
-  max-height: 90vh;
-  padding: 40px;
+  width: ${(props) => (props.$isPage ? "min(720px, 100%)" : "580px")};
+  max-height: ${(props) => (props.$isPage ? "none" : "90vh")};
+  padding: ${(props) => (props.$isPage ? "28px" : "32px")};
   border-radius: 16px;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: ${(props) =>
+    props.$isPage ? "0 10px 25px -5px rgba(0, 0, 0, 0.08)" : "0 20px 40px rgba(0, 0, 0, 0.2)"};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -390,31 +408,48 @@ const ModalContainer = styled.div`
   &::-webkit-scrollbar {
     width: 8px;
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-height: ${(props) => (props.$isPage ? "none" : "calc(100vh - 24px)")};
+    padding: 24px 20px;
+    border-radius: 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 16px;
+  }
+`;
+
+const LoadingModalContainer = styled(ModalContainer)`
+  min-height: 220px;
+  justify-content: center;
 `;
 
 const TitleContainer = styled.div`
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 `;
 
 const Title = styled.h1`
-  font-size: 26px;
+  font-size: clamp(22px, 6vw, 26px);
   font-weight: 800;
   color: #212529;
+  margin: 0;
 `;
 
 const Description = styled.p`
-  font-size: 14px;
+  font-size: 13px;
   color: #868e96;
   margin-top: 4px;
 `;
 
 const CloseBtn = styled.button`
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 14px;
+  right: 14px;
   background: none;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   color: #ccc;
   cursor: pointer;
   &:hover {
@@ -428,12 +463,12 @@ const Box = styled.div`
 
 const SectionTitle = styled.div`
   background: ${({ theme }) => theme.colors.border};
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.text_primary};
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
 `;
@@ -441,20 +476,25 @@ const SectionTitle = styled.div`
 const AppearanceBox = styled.div`
   display: flex;
   justify-content: center;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   position: relative;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
-  padding: 20px;
-  width: 220px;
+  padding: 16px;
+  width: min(100%, 190px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
   transition: all 0.2s ease;
 
@@ -463,11 +503,15 @@ const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   &:hover {
     background: ${(props) => (props.$isEditing ? "#e9ecef" : "#f8f9fa")};
   }
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const PickerCircle = styled.div<{ $shape?: "round" | "rect"; $isError?: boolean }>`
-  width: 130px;
-  height: 130px;
+  width: 104px;
+  height: 104px;
 
   border-radius: ${(props) => (props.$shape === "rect" ? "0" : "50%")};
 
@@ -487,18 +531,18 @@ const PreviewImg = styled.img`
 `;
 
 const PlusIcon = styled.span`
-  font-size: 28px;
+  font-size: 24px;
   color: #adb5bd;
   font-weight: 300;
 `;
 
 const EmojiDisplay = styled.span`
-  font-size: 44px;
+  font-size: 36px;
   line-height: 1;
 `;
 
 const LabelText = styled.span`
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   color: #adb5bd;
   text-align: center;
@@ -507,7 +551,11 @@ const LabelText = styled.span`
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const InputWrapper = styled.div`
@@ -515,17 +563,17 @@ const InputWrapper = styled.div`
   flex-direction: column;
   gap: 8px;
   label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: ${({ theme }) => theme.colors.text_secondary};
   }
 `;
 
 const StyledInput = styled.input<{ $isError?: boolean }>`
-  padding: 14px;
+  padding: 12px 13px;
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "#dee2e6")};
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   background: ${(props) => (props.disabled ? "#f8f9fa" : "white")};
   transition: all 0.2s;
 
@@ -540,27 +588,33 @@ const ButtonWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 16px;
-  margin-top: 40px;
+  gap: 12px;
+  margin-top: 28px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+  }
 `;
 
 const EditBtn = styled.button`
-  padding: 12px 28px;
+  padding: 10px 20px;
   background: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
   border-radius: 10px;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
 `;
 
 const SaveBtn = styled.button`
-  padding: 12px 28px;
+  padding: 10px 20px;
   background: ${(props) => (props.disabled ? "#e9ecef" : props.theme.colors.primary)};
   color: ${(props) => (props.disabled ? "#adb5bd" : "white")};
   border: none;
   border-radius: 10px;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 13px;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
@@ -569,6 +623,7 @@ const CancelBtn = styled.button`
   border: none;
   color: #868e96;
   font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
   &:hover {
     color: #495057;
@@ -582,8 +637,8 @@ const Buttons = styled.div`
 `;
 
 const MiniBtn = styled.button`
-  padding: 6px 12px;
-  font-size: 11px;
+  padding: 6px 10px;
+  font-size: 10px;
   font-weight: 700;
   background: white;
   border: 1px solid #dee2e6;
@@ -604,8 +659,8 @@ const MiniBtn = styled.button`
 
 const PickerWrapper = styled.div`
   position: fixed;
-  top: 70%;
-  left: 40%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
 
   z-index: 10000;
@@ -613,4 +668,9 @@ const PickerWrapper = styled.div`
   background: white;
   border-radius: 8px;
   line-height: 0;
+
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 24px);
+    overflow: hidden;
+  }
 `;

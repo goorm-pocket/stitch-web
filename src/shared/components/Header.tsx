@@ -64,13 +64,19 @@ export default Header;
 const HeaderContainer = styled.header`
   position: relative;
   width: 100%;
-  height: 55px;
+  min-height: 55px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid ${({ theme }) => theme.colors.sub};
   padding: 0 24px;
   background-color: white;
+
+  @media (max-width: 480px) {
+    padding: 10px 14px;
+    gap: 12px;
+    align-items: flex-start;
+  }
 `;
 
 const Left = styled.div`
@@ -81,6 +87,7 @@ const Left = styled.div`
   justify-content: center;
   gap: 8px;
   cursor: pointer;
+  flex-shrink: 0;
 `;
 
 const LogoText = styled.span`
@@ -100,6 +107,13 @@ const NavBar = styled.nav`
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+  }
 `;
 
 const NavItem = styled(NavLink)`
@@ -108,6 +122,8 @@ const NavItem = styled(NavLink)`
   text-decoration: none;
   color: ${({ theme }) => theme.colors.icon};
   gap: 2px;
+  min-width: 0;
+  white-space: nowrap;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
@@ -135,6 +151,10 @@ const AvatorBox = styled.div`
   padding-left: 15px;
   margin-left: 15px;
   border-left: 1px solid ${({ theme }) => theme.colors.border};
+
+  @media (max-width: 480px) {
+    padding-left: 10px;
+  }
 `;
 
 const Avator = styled.img`
@@ -143,6 +163,7 @@ const Avator = styled.img`
   border-radius: 50%;
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
+  background: ${({ theme }) => theme.colors.hover};
 `;
 
 const AvatorButton = styled.button`
@@ -167,6 +188,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;

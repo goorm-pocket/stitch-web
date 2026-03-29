@@ -28,17 +28,32 @@ const FriendItem = ({ friend, state, handleClick }: FriendItemProps) => {
       </Left>
       <Right>
         {(state == "SENT" || state == "ACCEPTED") && (
-          <RemoveButton onClick={() => deleteFriendRequest({ friendId: friend.friendId })}>
+          <RemoveButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              deleteFriendRequest({ friendId: friend.friendId });
+            }}
+          >
             REMOVE
           </RemoveButton>
         )}
         {state == "RECEIVED" && (
-          <AcceptButton onClick={() => acceptFriendRequest({ friendId: friend.friendId })}>
+          <AcceptButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              acceptFriendRequest({ friendId: friend.friendId });
+            }}
+          >
             ACCEPT
           </AcceptButton>
         )}
         {state == "RECEIVED" && (
-          <RejectButton onClick={() => deleteFriendRequest({ friendId: friend.friendId })}>
+          <RejectButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              deleteFriendRequest({ friendId: friend.friendId });
+            }}
+          >
             REJECT
           </RejectButton>
         )}

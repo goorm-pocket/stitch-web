@@ -1,44 +1,14 @@
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useFetchMeQuery } from "../../shared/hooks/useAuth";
-import ProfileModal from "@/features/ProfileModal/ProfileModal";
-import { useGetProfileQuery } from "@/shared/hooks/useUser";
 import { useGetBoardQuery } from "@/shared/hooks/useBoard";
 
 const PocketPage = () => {
   const navigate = useNavigate();
-
-  // state
-  const [profileModal, setProfileModal] = useState(false);
-
-  // query
-
-  const { data: me, isLoading: isMeLoading } = useFetchMeQuery();
-  const { data: profile, isLoading: isProfileLoading } = useGetProfileQuery();
   const { data: board } = useGetBoardQuery("WEB");
-
-  useEffect(() => {
-    // 로딩 중에는 판단을 보류합니다.
-    if (isMeLoading || isProfileLoading) return;
-
-    if (me) {
-      // 필수 정보(닉네임, 실명, 이모지 등)가 하나라도 없는 경우 '설정 미완료'로 간주
-      const isProfileIncomplete =
-        !profile?.nickname || !profile?.realName || !profile?.profileEmoji;
-
-      if (isProfileIncomplete) {
-        setProfileModal(true);
-      }
-    }
-  }, [me, profile, isMeLoading, isProfileLoading]);
 
   return (
     <Container>
-      {profileModal && (
-        <ProfileModal onClose={() => setProfileModal(false)} isInitial={!me?.isAgreed} />
-      )}
       <TitleContainer>
         <Title>Your Pocket</Title>
         <Subtitle>Discover what&apos;s tucked away in your space today.</Subtitle>
@@ -59,38 +29,46 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 900px;
-  padding: 16px 32px;
-  gap: 24px;
+  width: min(100%, 900px);
+  padding: 12px 24px 24px;
+  gap: 18px;
+
+  @media (max-width: 768px) {
+    padding: 10px 10px 24px;
+    gap: 14px;
+  }
 `;
 
 const TitleContainer = styled.div`
-  margin-top: 10px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 6px;
 `;
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 52px;
+  font-size: clamp(28px, 7vw, 40px);
   font-weight: 800;
   line-height: 1.1;
   color: #1e293b;
+  text-align: center;
 `;
 
 const Subtitle = styled.p`
-  font-size: 16px;
+  font-size: 14px;
   color: #64748b;
   margin-bottom: 0;
+  text-align: center;
 `;
 
 const PluseButton = styled.button`
   position: fixed;
-  bottom: 120px;
-  right: 60px;
-  width: 65px;
-  height: 65px;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  right: 18px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.sub};
   color: white;
@@ -112,10 +90,17 @@ const PluseButton = styled.button`
   &:active {
     transform: scale(0.95);
   }
+
+  @media (max-width: 480px) {
+    width: 52px;
+    height: 52px;
+    right: 14px;
+    bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 const PlusIcon = styled.span`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 400;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 `;

@@ -1,9 +1,13 @@
 import { useEffect } from "react";
 import { useOauthLoginMutation } from "../../shared/hooks/useAuth";
 import { useNavigate } from "react-router";
+import { fetchMe } from "@/shared/api/auth";
+import { getProfile } from "@/shared/api/user";
+import { useQueryClient } from "@tanstack/react-query";
 
 const CallbackPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { mutateAsync: oauthLogin } = useOauthLoginMutation();
 
   useEffect(() => {
@@ -19,7 +23,22 @@ const CallbackPage = () => {
         }
 
         await oauthLogin({ provider, code });
-        navigate("/pocket");
+
+        //프로필 초기 세팅 페이지로 이동
+        const me = await fetchMe();
+        queryClient.setQueryData(["me"], me);
+
+        const profile = await getProfile();
+        queryClient.setQueryData(["user-profile"], profile);
+
+        const isProfileIncomplete = !profile.nickname || !profile.realName || !profile.profileEmoji;
+
+        if (me.status === "PRE_REGISTRED" || isProfileIncomplete) {
+          navigate("/profilesetting", { replace: true });
+          return;
+        }
+
+        navigate("/pocket", { replace: true });
       } catch (err) {
         console.error("OAuth login failed:", err);
         navigate("/");
@@ -27,7 +46,7 @@ const CallbackPage = () => {
     };
 
     run();
-  }, [oauthLogin, navigate]);
+  }, [oauthLogin, navigate, queryClient]);
   return <div>로딩 스피너</div>;
 };
 

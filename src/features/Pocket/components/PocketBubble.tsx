@@ -11,13 +11,23 @@ type PocketBubbleProps = {
   onMouseUp: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
-const PocketBubble = ({ item, size, x, y, angle, onMouseDown, onMouseUp }: PocketBubbleProps) => {
+const PocketBubble = ({
+  item,
+  size,
+  x,
+  y,
+  angle,
+  onMouseDown,
+  onMouseUp,
+}: PocketBubbleProps) => {
   const { postId, representative, read, ownerType } = item;
+  const hasImage = representative.type === "IMAGE";
 
   return (
     <Container
       $read={read}
       $ownerType={ownerType}
+      $hasImage={hasImage}
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -40,25 +50,29 @@ export default PocketBubble;
 const Container = styled.div<{
   $read: boolean;
   $ownerType: "ME" | "FRIEND";
+  $hasImage: boolean;
 }>`
   position: absolute;
   left: 0;
   top: 0;
-  border-radius: 50%;
-  overflow: hidden;
-  background: white;
+  border-radius: ${({ $hasImage }) => ($hasImage ? "0" : "50%")};
+  overflow: ${({ $hasImage }) => ($hasImage ? "visible" : "hidden")};
+  background: ${({ $hasImage }) => ($hasImage ? "transparent" : "white")};
   user-select: none;
   cursor: grab;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid
-    ${({ theme, $read, $ownerType }) => {
-      if (!$read) return theme.colors.primary;
-      if ($ownerType === "ME") return theme.colors.sub;
-      return theme.colors.border;
-    }};
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border: ${({ $hasImage, theme, $read, $ownerType }) => {
+    if ($hasImage) return "none";
+    const color = !$read
+      ? theme.colors.primary
+      : $ownerType === "ME"
+        ? theme.colors.sub
+        : theme.colors.border;
+    return `2px solid ${color}`;
+  }};
+  box-shadow: ${({ $hasImage }) => ($hasImage ? "none" : "0 4px 12px rgba(0, 0, 0, 0.12)")};
 
   &:active {
     cursor: grabbing;
@@ -71,6 +85,7 @@ const BubbleImage = styled.img`
   object-fit: cover;
   pointer-events: none;
   user-select: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 `;
 
 const Emoji = styled.div`
@@ -79,8 +94,7 @@ const Emoji = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(20px, 3vw, 32px);
-  line-height: 1;
+  font-size: clamp(20px, 7vw, 50px);
   pointer-events: none;
   user-select: none;
 `;

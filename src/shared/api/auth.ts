@@ -31,6 +31,7 @@ interface fetchMeRes {
   nickname: string;
   systemRole: "USER" | "ADMIN" | "GUEST";
   profileUrl: string;
+  status: "PRE_REGISTRED" | "REGISTERED" | "DEACTIVATED";
   isAgreed: boolean;
 }
 

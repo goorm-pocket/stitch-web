@@ -40,6 +40,6 @@ export type NotificationKey =
 
 export type NotificationSettings = Record<NotificationKey, boolean>;
 
-export type PrivacyKey = "isPublic" | "namePublic" | "birthPublic" | "agePublic";
+export type PrivacyKey = "publicEnable" | "namePublic" | "birthPublic" | "agePublic";
 
 export type PrivacySettings = Record<PrivacyKey, boolean>;

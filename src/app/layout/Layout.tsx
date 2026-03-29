@@ -21,10 +21,18 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 `;
 
 const Main = styled.main`
   flex: 1;
   display: flex;
   justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: 0 16px;
+
+  @media (max-width: 480px) {
+    padding: 0 12px;
+  }
 `;
