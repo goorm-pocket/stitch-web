@@ -56,7 +56,7 @@ export default function CreatePocketPost() {
     }
   }, [profileData]);
   //디폴트 이모지
-  const [selectedEmoji, setSelectedEmoji] = useState(profileData.profileEmoji);
+  const [selectedEmoji, setSelectedEmoji] = useState(profileData?.profileEmoji ?? "");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +72,11 @@ export default function CreatePocketPost() {
   };
 
   const handleSubmit = async () => {
+    if (!profileData?.userId) {
+      setFormMessage("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
     if (story.length > MAX_LENGTH) {
       setFormMessage(`글자 수는 ${MAX_LENGTH}자를 초과할 수 없습니다.`);
       return;
@@ -465,17 +470,16 @@ const MarkPreview = styled.div<{ $isRound: boolean }>`
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  transition: border-radius ${({ theme }) => theme.motion.base}
-    ${({ theme }) => theme.motion.easing};
+  transition: border-radius ${({ theme }) => `${theme.motion.base} ${theme.motion.easing}`};
+
+  .emoji-display {
+    font-size: 50px;
+  }
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  .emoji-display {
-    font-size: 50px;
   }
 `;
 
