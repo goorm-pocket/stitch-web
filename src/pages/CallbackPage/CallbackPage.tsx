@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { fetchMe } from "@/shared/api/auth";
 import { getProfile } from "@/shared/api/user";
 import { useQueryClient } from "@tanstack/react-query";
+import { sendToApp } from "@/shared/webview/webview";
 
 const CallbackPage = () => {
   const navigate = useNavigate();
@@ -27,6 +28,16 @@ const CallbackPage = () => {
         //프로필 초기 세팅 페이지로 이동
         const me = await fetchMe();
         queryClient.setQueryData(["me"], me);
+
+        //앱에 로그인 성공 메시지 전송
+        sendToApp({
+          type: "LOGIN_SUCCESS",
+          payload: {
+            userId: me.userId,
+            status: me.status,
+            isAgreed: me.isAgreed,
+          },
+        });
 
         const profile = await getProfile();
         queryClient.setQueryData(["user-profile"], profile);
