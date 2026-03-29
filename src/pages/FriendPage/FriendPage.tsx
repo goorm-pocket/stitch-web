@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   useGetFriendsQuery,
   useGetReceivedRequestsQuery,
@@ -12,6 +12,7 @@ import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 import type { Friend } from "@/shared/types/friend.type";
 import { useNavigate } from "react-router";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 const FriendPage = () => {
   const navigate = useNavigate();
@@ -32,6 +33,14 @@ const FriendPage = () => {
   // mutate
   const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
 
+  // 커스텀 훅
+  // 밖에 클릭하면 친구 요청 리스트 닫는거
+  useClickOutside({
+    ref: searchInputRef,
+    onClickOutside: () => setShowSearchList(false),
+    enabled: showSearchList,
+  });
+
   const searchUserList = searchUserListRes?.pages[0].items ?? [];
 
   // 리스트 추출
@@ -43,20 +52,6 @@ const FriendPage = () => {
     sendFriendRequest({ userId: id });
     setSearchName("");
   };
-
-  // 밖에 클릭하면 친구 요청 리스트 닫는거
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchInputRef.current && !searchInputRef.current.contains(e.target as Node)) {
-        setShowSearchList(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   return (
     <Container>
@@ -150,9 +145,9 @@ export default FriendPage;
 const Container = styled.main`
   display: flex;
   flex-direction: column;
-  width: 900px;
-  padding: 16px 32px;
-  gap: 32px;
+  width: min(${({ theme }) => theme.layout.contentWidth}, 100%);
+  padding: ${({ theme }) => theme.space.lg} 0 ${({ theme }) => theme.space.xxxl};
+  gap: ${({ theme }) => theme.space.xxxl};
 `;
 
 const TitleContainer = styled.section`
@@ -162,13 +157,13 @@ const TitleContainer = styled.section`
 `;
 
 const Title = styled.div`
-  font-size: 30px;
+  font-size: clamp(26px, 5vw, 30px);
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
 const Description = styled.div`
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
@@ -176,14 +171,14 @@ const RequestInputContainer = styled(StitchedBox)`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 20px;
-  gap: 12px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: ${({ theme }) => theme.space.xl};
+  gap: ${({ theme }) => theme.space.md};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
   overflow: visible;
 `;
 
 const RequestText = styled.div`
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 700;
   color: white;
 `;
@@ -197,11 +192,11 @@ const SearchInput = styled.input`
   width: 100%;
   height: 43px;
   background: rgba(255, 255, 255, 0.12);
-  border: none;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: ${({ theme }) => theme.radii.xs};
   color: white;
   padding: 0 12px;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.65);
@@ -209,8 +204,8 @@ const SearchInput = styled.input`
 
   &:focus {
     outline: none;
-    border: none;
     background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.45);
   }
 `;
 
@@ -222,10 +217,10 @@ const SearchUserList = styled.div`
   max-height: 280px;
   overflow-y: auto;
   padding: 8px;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  background: white;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-bottom-left-radius: ${({ theme }) => theme.radii.md};
+  border-bottom-right-radius: ${({ theme }) => theme.radii.md};
+  background: ${({ theme }) => theme.colors.surface};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
   border: 1px solid ${({ theme }) => theme.colors.border};
   z-index: 20;
 
@@ -239,23 +234,24 @@ const EmptyText = styled.div`
   justify-content: center;
   align-items: center;
   min-height: 72px;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: start;
-  height: 56px;
+  min-height: 56px;
 `;
 
 const ButtonBox = styled.div`
   display: flex;
   align-items: center;
   background-color: ${({ theme }) => theme.colors.sub};
-  gap: 4px;
+  gap: ${({ theme }) => theme.space.xs};
   padding: 6px;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
+  flex-wrap: wrap;
 `;
 
 interface SelectButtonProps {

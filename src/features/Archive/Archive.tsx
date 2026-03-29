@@ -132,7 +132,7 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: ${({ theme }) => theme.space.xl};
   gap: 10px;
 `;
 
@@ -140,15 +140,15 @@ const ArrowButton = styled.button`
   width: 36px;
   height: 36px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 999px;
-  background: white;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.icon};
   font-size: 24px;
+  line-height: 1;
   cursor: pointer;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 
   display: flex;
-  align-items: center;
   justify-content: center;
 
   transition:
@@ -168,18 +168,26 @@ const ArrowButton = styled.button`
 
 const MonthTitle = styled.h2`
   margin: 0;
+  font-size: ${({ theme }) => theme.fontSize.xxl};
+  color: ${({ theme }) => theme.colors.text_primary};
 `;
 
 const WeekRow = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 12px;
+  margin-bottom: ${({ theme }) => theme.space.md};
   text-align: center;
   font-weight: 700;
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: ${({ theme }) => theme.fontSize.xs};
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 12px;
+  gap: ${({ theme }) => theme.space.md};
+
+  @media (max-width: 640px) {
+    gap: ${({ theme }) => theme.space.sm};
+  }
 `;

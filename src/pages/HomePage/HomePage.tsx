@@ -38,9 +38,9 @@ const Container = styled.main`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 900px;
+  max-width: ${({ theme }) => theme.layout.contentWidth};
   min-height: 80vh;
-  padding: 60px 32px;
+  padding: clamp(36px, 8vw, 60px) 0;
   margin: 0 auto;
 `;
 
@@ -48,9 +48,8 @@ const TitleContainer = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 40px;
-  margin-top: 40px;
+  gap: ${({ theme }) => theme.space.md};
+  margin: 40px 0;
   text-align: center;
 `;
 
@@ -63,7 +62,7 @@ const Title = styled.h1`
 `;
 
 const Description = styled.p`
-  font-size: 20px;
+  font-size: clamp(16px, 3vw, 20px);
   line-height: 1.5;
   color: ${({ theme }) => theme.colors.text_secondary};
   opacity: 0.8;
@@ -86,7 +85,7 @@ const ButtonContainer = styled.section`
   align-items: center;
   width: 100%;
   height: 56px;
-  margin-bottom: 60px;
+  margin-bottom: clamp(36px, 8vw, 60px);
 `;
 
 const LoginButton = styled(StitchedBox)`
@@ -100,17 +99,17 @@ const LoginButton = styled(StitchedBox)`
   justify-content: center;
 
   border: none;
-  border-radius: 16px;
+  border-radius: ${({ theme }) => theme.radii.lg};
 
   color: white;
-  font-size: 20px;
+  font-size: ${({ theme }) => theme.fontSize.xl};
   font-weight: bold;
 
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: ${({ theme }) => theme.shadows.sm};
   cursor: pointer;
 
   &:hover {
-    transform: scale(1.05);
+    transform: translateY(-2px);
     filter: brightness(1.05);
   }
 `;

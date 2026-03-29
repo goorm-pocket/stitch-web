@@ -47,7 +47,7 @@ const BubbleItem = styled.div<{ $index: number }>`
   border-radius: 50%;
   background: white;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 
   display: flex;
   align-items: center;

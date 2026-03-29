@@ -69,7 +69,25 @@ const Container = styled(StitchedBox)`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: ${({ theme }) => theme.space.md};
   padding: 14px 18px;
+  cursor: pointer;
+  transform: translateY(0);
+  transition:
+    transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    box-shadow ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    filter ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadows.sm};
+    filter: saturate(1.02);
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const Left = styled.div`
@@ -81,10 +99,14 @@ const Left = styled.div`
 const Avator = styled.img`
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
   flex-shrink: 0;
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+  transition:
+    border-color ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    box-shadow ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 `;
 
 const NameBox = styled.div`
@@ -96,13 +118,13 @@ const NameBox = styled.div`
 
 const NickName = styled.div`
   color: white;
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: 700;
   line-height: 1.2;
 `;
 
 const Name = styled.div`
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text_secondary};
   line-height: 1.2;
 `;
@@ -112,6 +134,11 @@ const Right = styled.div`
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: flex-end;
+  }
 `;
 
 const Button = styled.button`
@@ -121,7 +148,7 @@ const Button = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: ${({ theme }) => theme.fontSize.xs};
   font-weight: 700;
   border: none;
   border-radius: 6px;

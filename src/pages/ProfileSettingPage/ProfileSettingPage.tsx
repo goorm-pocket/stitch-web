@@ -17,6 +17,6 @@ export default ProfileSettingPage;
 const Container = styled.main`
   width: 100%;
   min-height: calc(100vh - 120px);
-  padding: 40px 20px 80px;
+  padding: clamp(24px, 5vw, 40px) 0 80px;
   box-sizing: border-box;
 `;

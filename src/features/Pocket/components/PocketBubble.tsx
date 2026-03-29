@@ -88,8 +88,7 @@ const Container = styled.div<{
         : theme.colors.border;
     return `2px solid ${color}`;
   }};
-  box-shadow: ${({ $hasImage }) => ($hasImage ? "none" : "0 4px 12px rgba(0, 0, 0, 0.12)")};
-
+  box-shadow: ${({ $hasImage, theme }) => ($hasImage ? "none" : theme.shadows.sm)};
   &:active {
     cursor: grabbing;
   }

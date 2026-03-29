@@ -29,12 +29,11 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(100%, 900px);
-  padding: 12px 24px 24px;
+  width: min(100%, ${({ theme }) => theme.layout.contentWidth});
+  padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxl};
   gap: 18px;
 
   @media (max-width: 768px) {
-    padding: 10px 10px 24px;
     gap: 14px;
   }
 `;
@@ -44,7 +43,12 @@ const TitleContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: ${({ theme }) => theme.space.sm};
+  text-align: center;
+
+  @media (max-width: 768px) {
+    gap: 14px;
+  }
 `;
 
 const Title = styled.h1`
@@ -69,7 +73,7 @@ const PluseButton = styled.button`
   right: 18px;
   width: 58px;
   height: 58px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   background-color: ${({ theme }) => theme.colors.sub};
   color: white;
   border: none;
@@ -77,14 +81,14 @@ const PluseButton = styled.button`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  transition: all 0.2s ease-in-out;
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
   z-index: 1000;
 
   &:hover {
-    transform: scale(1.1);
+    transform: translateY(-2px);
     background-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: ${({ theme }) => theme.shadows.lg};
   }
 
   &:active {
