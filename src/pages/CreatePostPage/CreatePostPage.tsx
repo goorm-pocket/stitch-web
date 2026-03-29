@@ -56,7 +56,7 @@ export default function CreatePocketPost() {
     }
   }, [profileData]);
   //디폴트 이모지
-  const [selectedEmoji, setSelectedEmoji] = useState<string>(profileData.profileEmoji);
+  const [selectedEmoji, setSelectedEmoji] = useState(profileData.profileEmoji);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
@@ -465,7 +465,8 @@ const MarkPreview = styled.div<{ $isRound: boolean }>`
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  transition: border-radius ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
+  transition: border-radius ${({ theme }) => theme.motion.base}
+    ${({ theme }) => theme.motion.easing};
 
   img {
     width: 100%;
@@ -497,7 +498,8 @@ const MarkBtn = styled.button<{ $active: boolean }>`
 
   padding: 12px;
   border-radius: ${({ theme }) => theme.radii.md};
-  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
+  border: 1px solid
+    ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
   cursor: pointer;
 
   font-size: ${({ theme }) => theme.fontSize.md};
@@ -617,7 +619,8 @@ const ShapeBtn = styled.button<{ $active: boolean }>`
   font-weight: 700;
   background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
   color: ${(props) => (props.$active ? "white" : props.theme.colors.text_primary)};
-  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
+  border: 1px solid
+    ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
   border-radius: ${({ theme }) => theme.radii.xl};
   cursor: pointer;
   transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
