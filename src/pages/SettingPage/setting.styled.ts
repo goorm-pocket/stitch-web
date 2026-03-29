@@ -19,7 +19,9 @@ export const SectionHeader = styled.header`
   color: ${({ theme }) => theme.colors.text_primary};
 
   @media (max-width: 640px) {
-    padding: ${({ theme }) => theme.space.lg};
+    font-size: ${({ theme }) => theme.fontSize.lg};
+    padding: 14px 16px;
+    gap: ${({ theme }) => theme.space.sm};
     flex-wrap: wrap;
   }
 `;
@@ -40,8 +42,8 @@ export const SectionItem = styled.div`
   padding: ${({ theme }) => theme.space.lg} ${({ theme }) => theme.space.xl};
 
   @media (max-width: 640px) {
-    padding: ${({ theme }) => theme.space.lg};
-    gap: ${({ theme }) => theme.space.md};
+    padding: 13px 16px;
+    gap: ${({ theme }) => theme.space.sm};
   }
 `;
 
@@ -52,6 +54,11 @@ export const SectionLeft = styled.div`
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
   gap: ${({ theme }) => theme.space.md};
+
+  @media (max-width: 640px) {
+    font-size: ${({ theme }) => theme.fontSize.md};
+    gap: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 export const SectionToggle = styled.input.attrs({ type: "checkbox" })`
@@ -91,5 +98,21 @@ export const SectionToggle = styled.input.attrs({ type: "checkbox" })`
 
   &:disabled {
     cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    width: 40px;
+    height: 22px;
+
+    &::after {
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:checked::after {
+      transform: translateX(18px);
+    }
   }
 `;

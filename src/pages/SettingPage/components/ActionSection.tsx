@@ -43,6 +43,11 @@ const Container = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.space.md};
   margin-top: ${({ theme }) => theme.space.md};
+
+  @media (max-width: 640px) {
+    gap: ${({ theme }) => theme.space.sm};
+    margin-top: ${({ theme }) => theme.space.sm};
+  }
 `;
 
 const LogoutButton = styled.button`
@@ -60,6 +65,11 @@ const LogoutButton = styled.button`
     background: ${({ theme }) => theme.colors.hover};
     box-shadow: ${({ theme }) => theme.shadows.xs};
   }
+
+  @media (max-width: 640px) {
+    padding: 9px 16px;
+    font-size: ${({ theme }) => theme.fontSize.sm};
+  }
 `;
 
 const DeleteButton = styled.button`
@@ -76,5 +86,10 @@ const DeleteButton = styled.button`
   &:hover {
     background: #fecaca;
     box-shadow: ${({ theme }) => theme.shadows.xs};
+  }
+
+  @media (max-width: 640px) {
+    padding: 9px 16px;
+    font-size: ${({ theme }) => theme.fontSize.sm};
   }
 `;
