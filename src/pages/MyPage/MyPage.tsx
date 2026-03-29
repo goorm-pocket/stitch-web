@@ -147,6 +147,7 @@ const ProfileTextBox = styled.div`
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  align-items: flex-start;
 `;
 
 const ProfileName = styled.div`
@@ -189,6 +190,16 @@ const StatItem = styled.div`
   align-items: baseline;
   gap: 4px;
   white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+
+  @media (max-width: 768px) {
+    padding: 3px 7px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.32);
+  }
 `;
 
 const StatNumber = styled.span`
@@ -209,6 +220,10 @@ const StatDivider = styled.span`
   color: ${({ theme }) => theme.colors.text_secondary};
   font-size: ${({ theme }) => theme.fontSize.sm};
   line-height: 1;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const SettingButton = styled.button`
@@ -238,9 +253,9 @@ const SettingButton = styled.button`
   @media (max-width: 768px) {
     top: 14px;
     right: 14px;
-    padding: ${({ theme }) => theme.space.xs};
-    font-size: 0;
-    width: 32px;
+    padding: 6px 9px;
+    font-size: 11px;
+    width: auto;
     height: 32px;
   }
 `;
@@ -250,6 +265,6 @@ const SettingIcon = styled.svg`
   margin-right: 5px;
 
   @media (max-width: 768px) {
-    margin-right: 0;
+    margin-right: 4px;
   }
 `;
