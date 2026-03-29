@@ -20,12 +20,12 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   width: min(${({ theme }) => theme.layout.contentWidth}, 100%);
-  padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxxl};
+  padding: ${({ theme }) => theme.space.xl} 0 ${({ theme }) => theme.space.xxxl};
   gap: ${({ theme }) => theme.space.xxl};
 
   @media (max-width: 640px) {
     width: calc(100% - 8px);
-    padding: 6px 0 ${({ theme }) => theme.space.xl};
+    padding: 12px 0 ${({ theme }) => theme.space.xl};
     gap: ${({ theme }) => theme.space.lg};
   }
 `;

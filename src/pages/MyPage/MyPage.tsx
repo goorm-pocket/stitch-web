@@ -187,18 +187,19 @@ const StatsRow = styled.div`
 
 const StatItem = styled.div`
   display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   white-space: nowrap;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.38);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(74, 88, 255, 0.12);
+  border: 1px solid rgba(74, 88, 255, 0.18);
 
   @media (max-width: 768px) {
-    padding: 3px 7px;
+    padding: 5px 9px;
     border-radius: 7px;
-    background: rgba(255, 255, 255, 0.32);
+    background: rgba(74, 88, 255, 0.1);
   }
 `;
 
