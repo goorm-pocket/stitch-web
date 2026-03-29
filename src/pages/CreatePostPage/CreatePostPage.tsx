@@ -56,7 +56,7 @@ export default function CreatePocketPost() {
     }
   }, [profileData]);
   //디폴트 이모지
-  const [selectedEmoji, setSelectedEmoji] = useState(profileData.profileEmoji);
+  const [selectedEmoji, setSelectedEmoji] = useState(profileData?.profileEmoji ?? "");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +72,11 @@ export default function CreatePocketPost() {
   };
 
   const handleSubmit = async () => {
+    if (!profileData?.userId) {
+      setFormMessage("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
     if (story.length > MAX_LENGTH) {
       setFormMessage(`글자 수는 ${MAX_LENGTH}자를 초과할 수 없습니다.`);
       return;
@@ -385,23 +390,22 @@ export default function CreatePocketPost() {
 const Container = styled.div`
   width: min(100%, 1000px);
   margin: 0 auto;
-  padding: 10px 0 32px;
+  padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxxl};
 `;
 
 const Box = styled.section`
   width: 100%;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.surface};
   border: 2px dashed ${({ theme }) => theme.colors.border3};
-  border-radius: 16px;
-  padding: 20px 25px 25px 25px;
+  border-radius: ${({ theme }) => theme.radii.lg};
+  padding: clamp(18px, 3vw, 25px);
   margin-bottom: 40px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.sm};
   box-sizing: border-box;
 `;
 
 const HeaderSection = styled.div`
-  margin-bottom: 50px;
-  padding-left: 10px;
+  margin-bottom: clamp(32px, 6vw, 50px);
   text-align: left;
 
   @media (max-width: 768px) {
@@ -413,11 +417,11 @@ const HeaderSection = styled.div`
 const FormMessage = styled.div`
   margin: 0 0 20px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: ${({ theme }) => theme.radii.md};
   border: 1px solid rgba(255, 107, 107, 0.35);
   background: #fff5f5;
   color: #e03131;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 600;
 `;
 
@@ -430,7 +434,7 @@ const Title = styled.h1`
 
 const SubTitle = styled.p`
   color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
 `;
 
 //Bubble Icon
@@ -439,15 +443,13 @@ const MarkContainer = styled.div``;
 const MarkSettings = styled.div`
   display: flex;
   align-items: center;
-  background: #f9fafb;
-  border-radius: 16px;
-  border: 2px dashed #d1d5db;
-  margin-top: 25px;
-  gap: 30px;
-  position: relative;
   background: ${({ theme }) => theme.colors.background};
-  padding: 20px;
-  border-radius: 12px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 2px dashed ${({ theme }) => theme.colors.border};
+  margin-top: 25px;
+  gap: clamp(16px, 4vw, 30px);
+  position: relative;
+  padding: ${({ theme }) => theme.space.xl};
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -459,27 +461,25 @@ const MarkSettings = styled.div`
 const MarkPreview = styled.div<{ $isRound: boolean }>`
   width: 100px;
   height: 100px;
-
-  border-radius: ${(props) => (props.$isRound ? "50%" : "0")};
-
-  background: white;
-  border: 3px solid white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: ${(props) => (props.$isRound ? props.theme.radii.round : "0")};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 3px solid ${({ theme }) => theme.colors.surface};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  transition: border-radius 0.3s ease;
+  transition: border-radius ${({ theme }) => `${theme.motion.base} ${theme.motion.easing}`};
+
+  .emoji-display {
+    font-size: 50px;
+  }
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  .emoji-display {
-    font-size: 50px;
   }
 `;
 
@@ -501,19 +501,20 @@ const MarkBtn = styled.button<{ $active: boolean }>`
   justify-content: center;
 
   padding: 12px;
-  border-radius: 12px;
-  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid
+    ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
   cursor: pointer;
 
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 500;
   line-height: 1;
-  transition: all 0.2s;
-  background: ${(props) => (props.$active ? "#f0f7ff" : props.theme.colors.background)};
+  transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
+  background: ${(props) => (props.$active ? "#f0f7ff" : props.theme.colors.surface)};
   color: ${(props) => (props.$active ? "#6f95b5" : "#4b5563")};
 
   &:hover {
-    background: #f9fafb;
+    background: ${({ theme }) => theme.colors.hover};
   }
 
   @media (max-width: 480px) {
@@ -534,6 +535,9 @@ const EmojiPickerWrapper = styled.div`
   top: 60px;
   left: 130px;
   z-index: 100;
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  border-radius: ${({ theme }) => theme.radii.md};
+  overflow: hidden;
 
   @media (max-width: 768px) {
     left: 0;
@@ -556,7 +560,7 @@ const CropModal = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${({ theme }) => theme.colors.overlay};
   z-index: 3000;
   display: flex;
   align-items: center;
@@ -565,14 +569,14 @@ const CropModal = styled.div`
 `;
 
 const CropContainer = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.surface};
   width: 580px;
   max-width: 100%;
   max-height: 90vh;
   padding: 30px;
-  border-radius: 16px;
+  border-radius: ${({ theme }) => theme.radii.lg};
   position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: ${({ theme }) => theme.shadows.lg};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -583,7 +587,7 @@ const CropView = styled.div`
   width: 100%;
   height: 400px;
   background: #333;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
   overflow: hidden;
   flex-shrink: 0;
 
@@ -595,11 +599,11 @@ const CropView = styled.div`
 const ControlBottom = styled.div`
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 10px;
+  gap: ${({ theme }) => theme.space.md};
+  margin-top: ${({ theme }) => theme.space.xl};
+  padding: ${({ theme }) => theme.space.md};
   background: #f1f3f5;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -619,10 +623,11 @@ const ShapeBtn = styled.button<{ $active: boolean }>`
   font-weight: 700;
   background: ${(props) => (props.$active ? props.theme.colors.primary : "white")};
   color: ${(props) => (props.$active ? "white" : props.theme.colors.text_primary)};
-  border: 1px solid ${(props) => (props.$active ? props.theme.colors.primary : "#dee2e6")};
-  border-radius: 20px;
+  border: 1px solid
+    ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
+  border-radius: ${({ theme }) => theme.radii.xl};
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
   &:hover {
     border-color: ${(props) => props.theme.colors.primary};
   }
@@ -645,7 +650,7 @@ const CancelBtn = styled.button`
   background: #adb5bd;
   color: white;
   padding: 10px 24px;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
   border: none;
   font-weight: 600;
   cursor: pointer;
@@ -658,7 +663,7 @@ const SaveBtn = styled.button`
   background: ${({ theme }) => theme.colors.primary};
   color: white;
   padding: 10px 24px;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
   border: none;
   font-weight: bold;
   cursor: pointer;
@@ -685,20 +690,20 @@ const VisibilityToggle = styled.div`
 `;
 
 const ToggleLabel = styled.span<{ $active: boolean }>`
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   font-weight: 700;
   color: ${(props) => (props.$active ? props.theme.colors.text_primary : "#adb5bd")};
-  transition: color 0.3s ease;
+  transition: color ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
 `;
 
 const ToggleSwitch = styled.div<{ $active: boolean }>`
   width: 50px;
   height: 26px;
   background-color: ${(props) => (props.$active ? props.theme.colors.primary : "#e5e7eb")};
-  border-radius: 20px;
+  border-radius: ${({ theme }) => theme.radii.xl};
   padding: 3px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
   position: relative;
   display: flex;
   align-items: center;
@@ -708,18 +713,18 @@ const ToggleHandle = styled.div<{ $active: boolean }>`
   width: 20px;
   height: 20px;
   background-color: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: ${({ theme }) => theme.radii.round};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+  transition: all ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
   transform: ${(props) => (props.$active ? "translateX(24px)" : "translateX(0)")};
 `;
 
 const UploadBoxContainer = styled.div`
   width: 100%;
   height: 400px;
-  background: #f9fafb;
-  border-radius: 16px;
-  border: 2px dashed #d1d5db;
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  border: 2px dashed ${({ theme }) => theme.colors.border};
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -738,8 +743,9 @@ const UploadBox = styled.div<{ $hasImage: boolean }>`
   align-items: center;
   justify-content: center;
   cursor: pointer;
+
   &:hover {
-    background: #f3f4f6;
+    background: ${({ theme }) => theme.colors.hover};
   }
 `;
 
@@ -747,8 +753,8 @@ const PreviewGrid = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: ${({ theme }) => theme.space.xl};
+  padding: ${({ theme }) => theme.space.xl};
   overflow-x: auto; /* 가로 스크롤 가능하게 */
   align-items: center;
 
@@ -767,9 +773,9 @@ const PreviewItem = styled.div`
   flex: 0 0 350px;
   height: 300px;
   background: #eee;
-  border-radius: 12px;
+  border-radius: ${({ theme }) => theme.radii.md};
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: ${({ theme }) => theme.shadows.sm};
 
   @media (max-width: 480px) {
     flex-basis: 240px;
@@ -782,7 +788,7 @@ const PreviewImage = styled.img`
   height: 100%;
   padding: 7px;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: ${({ theme }) => theme.radii.md};
   border: 1px dashed ${({ theme }) => theme.colors.border3};
 `;
 
@@ -793,7 +799,7 @@ const DeleteBtn = styled.button`
   background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   width: 24px;
   height: 24px;
   cursor: pointer;
@@ -809,8 +815,8 @@ const DeleteBtn = styled.button`
 const AddMoreBtn = styled.div`
   flex: 0 0 200px;
   height: 300px;
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
+  border: 2px dashed ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.md};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -818,9 +824,9 @@ const AddMoreBtn = styled.div`
   gap: 10px;
   color: #adb5bd;
   cursor: pointer;
-  background: white;
+  background: ${({ theme }) => theme.colors.surface};
   &:hover {
-    background: #f3f4f6;
+    background: ${({ theme }) => theme.colors.hover};
   }
 
   @media (max-width: 480px) {
@@ -834,21 +840,21 @@ const UploadIcon = styled.div`
 `;
 
 const UploadText = styled.div`
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: 600;
   color: #374151;
   margin-top: 12px;
 `;
 
 const UploadSub = styled.div`
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   color: #9ca3af;
   margin-top: 4px;
 `;
 
 //Pocket Story
 const LengthCount = styled.span<{ $isMax: boolean }>`
-  font-size: 12px;
+  font-size: ${({ theme }) => theme.fontSize.xs};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -860,7 +866,7 @@ const StoryBox = styled.textarea<{ $hasError?: boolean }>`
   width: 100%;
   height: 300px;
   background: ${({ theme }) => theme.colors.background};
-  border-radius: 12px;
+  border-radius: ${({ theme }) => theme.radii.md};
   border: 1px solid ${(props) => (props.$hasError ? "#ff6b6b" : props.theme.colors.border)};
   padding: 20px;
   margin-top: 5px;
@@ -871,6 +877,8 @@ const StoryBox = styled.textarea<{ $hasError?: boolean }>`
   box-sizing: border-box;
   &:focus {
     border-color: ${(props) => (props.$hasError ? "#ff6b6b" : props.theme.colors.border3)};
+    box-shadow: ${(props) =>
+      props.$hasError ? "0 0 0 3px rgba(255, 107, 107, 0.1)" : props.theme.shadows.xs};
   }
 
   @media (max-width: 480px) {
@@ -885,6 +893,7 @@ const SectionTitle = styled.h3`
   letter-spacing: 1px;
   color: ${({ theme }) => theme.colors.text_primary};
   text-transform: uppercase;
+  margin: 0 0 ${({ theme }) => theme.space.sm};
 `;
 
 const PublishBtn = styled(StitchedBox)`
@@ -893,20 +902,20 @@ const PublishBtn = styled(StitchedBox)`
   margin: 20px 0;
 
   color: white;
-  font-size: 18px;
+  font-size: ${({ theme }) => theme.fontSize.xl};
   font-weight: bold;
 
-  border-radius: 16px;
+  border-radius: ${({ theme }) => theme.radii.lg};
 
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: ${({ theme }) => theme.shadows.sm};
 
   &:active {
-    transform: scale(0.9);
+    transform: scale(0.98);
   }
   &:disabled {
     background: #d1d5db;

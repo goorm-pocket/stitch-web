@@ -88,7 +88,7 @@ const Overlay = styled.div`
   justify-content: center;
 
   padding: 24px;
-  background: rgba(71, 85, 105, 0.35);
+  background: ${({ theme }) => theme.colors.overlay};
   backdrop-filter: blur(6px);
 `;
 
@@ -96,12 +96,13 @@ const Panel = styled.section`
   width: min(1100px, 100%);
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 28px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: ${({ theme }) => theme.radii.xxl};
+  box-shadow: ${({ theme }) => theme.shadows.md};
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: modalIn ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
 `;
 
 const Header = styled.header`
@@ -113,12 +114,12 @@ const Header = styled.header`
 
   padding: 20px 24px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  background: white;
+  background: ${({ theme }) => theme.colors.surface};
 `;
 
 const Title = styled.h2`
   margin: 0;
-  font-size: 22px;
+  font-size: ${({ theme }) => theme.fontSize.xxl};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
@@ -139,12 +140,12 @@ const ArrowButton = styled.button`
   width: 36px;
   height: 36px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 999px;
-  background: white;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.icon};
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 
   display: flex;
   align-items: center;
@@ -170,7 +171,7 @@ const CloseButton = styled.button`
   height: 36px;
 
   border: none;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
 
   background: ${({ theme }) => theme.colors.hover};
   color: ${({ theme }) => theme.colors.icon};
@@ -206,8 +207,8 @@ const PostCard = styled.div`
   flex-direction: column;
 
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 24px;
-  background: white;
+  border-radius: ${({ theme }) => theme.radii.xxl};
+  background: ${({ theme }) => theme.colors.surface};
 
   overflow: hidden;
   cursor: pointer;
@@ -217,7 +218,7 @@ const PostCard = styled.div`
     box-shadow 0.2s ease;
 
   &:hover {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    box-shadow: ${({ theme }) => theme.shadows.sm};
   }
 
   &:active {
@@ -226,7 +227,7 @@ const PostCard = styled.div`
 
   @media (max-width: 768px) {
     width: 100%;
-    border-radius: 16px;
+    border-radius: ${({ theme }) => theme.radii.lg};
   }
 `;
 
@@ -242,7 +243,7 @@ const EmptyBox = styled.div`
 
 const EmptyTitle = styled.h3`
   margin: 0;
-  font-size: 20px;
+  font-size: ${({ theme }) => theme.fontSize.xl};
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 

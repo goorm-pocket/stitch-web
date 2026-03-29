@@ -7,6 +7,7 @@ import ProfileModal from "../../features/ProfileModal/ProfileModal";
 import { NavLink, useNavigate } from "react-router";
 import { useState } from "react";
 import { useGetProfileQuery } from "../hooks/useUser";
+import Notification from "@/features/Notification/NotificationDropdown";
 
 const Header = () => {
   const { data: profile } = useGetProfileQuery();
@@ -22,7 +23,7 @@ const Header = () => {
         <Logo />
         <LogoText>Stitch</LogoText>
       </Left>
-      <Right>
+      <Mid>
         <NavBar>
           <NavItem to="/pocket">
             <NavIcon as={BoardIcon} />
@@ -39,6 +40,9 @@ const Header = () => {
             <NavText>My Page</NavText>
           </NavItem>
         </NavBar>
+      </Mid>
+      <Right>
+        <Notification />
         <AvatorBox>
           <AvatorButton onClick={openModal}>
             <Avator src={profile?.profileImageUrl} />
@@ -59,18 +63,20 @@ export default Header;
 
 const HeaderContainer = styled.header`
   width: 100%;
-  min-height: 55px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid ${({ theme }) => theme.colors.sub};
-  padding: 0 24px;
-  background-color: white;
+  padding: 12px ${({ theme }) => theme.layout.pagePadding};
+  background-color: ${({ theme }) => theme.colors.surface};
+  gap: ${({ theme }) => theme.space.lg};
 
-  @media (max-width: 480px) {
-    min-height: 52px;
-    padding: 10px 12px;
-    gap: 10px;
+  @media (max-width: 768px) {
+    min-height: auto;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    padding-bottom: 14px;
   }
 `;
 
@@ -78,38 +84,39 @@ const Left = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: ${({ theme }) => theme.space.sm};
   cursor: pointer;
   flex-shrink: 0;
 `;
 
 const LogoText = styled.span`
-  font-size: 18px;
+  font-size: clamp(18px, 2vw, 20px);
   font-weight: bold;
 
   @media (max-width: 480px) {
-    font-size: 16px;
+    display: none;
   }
 `;
 
-const Right = styled.div`
+const Mid = styled.div`
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  flex: 1;
   min-width: 0;
-  align-items: center;
 `;
 
 const NavBar = styled.nav`
   display: flex;
   align-items: center;
-  gap: 8px;
   min-width: 0;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  width: min(350px, 100%);
 
-  @media (max-width: 480px) {
-    gap: 4px;
-  }
+  justify-content: space-evenly;
+  padding: 4px;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const NavItem = styled(NavLink)`
@@ -117,27 +124,22 @@ const NavItem = styled(NavLink)`
   align-items: center;
   text-decoration: none;
   color: ${({ theme }) => theme.colors.icon};
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   white-space: nowrap;
-  padding: 8px 10px;
-  border-radius: 999px;
+  padding: 10px;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  font-weight: 700;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
-    background: ${({ theme }) => theme.colors.hover};
+    background: ${({ theme }) => theme.colors.surface};
   }
 
   &.active {
     color: ${({ theme }) => theme.colors.primary};
-    background: ${({ theme }) => theme.colors.hover};
-  }
-
-  @media (max-width: 480px) {
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
+    background: ${({ theme }) => theme.colors.surface};
+    box-shadow: ${({ theme }) => theme.shadows.xs};
   }
 `;
 
@@ -147,27 +149,29 @@ const NavIcon = styled.svg`
 `;
 
 const NavText = styled.span`
-  font-size: 13px;
-  font-weight: bold;
+  font-size: ${({ theme }) => theme.fontSize.md};
+  font-weight: 700;
 
-  @media (max-width: 640px) {
+  @media (max-width: 767px) {
     display: none;
   }
 `;
 
 const AvatorBox = styled.div`
-  padding-left: 12px;
+  padding-left: ${({ theme }) => theme.space.md};
+  margin-left: ${({ theme }) => theme.space.md};
   border-left: 1px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: 480px) {
-    padding-left: 8px;
+    padding-left: ${({ theme }) => theme.space.sm};
+    margin-left: ${({ theme }) => theme.space.sm};
   }
 `;
 
 const Avator = styled.img`
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  border-radius: ${({ theme }) => theme.radii.round};
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
   background: ${({ theme }) => theme.colors.hover};
@@ -180,6 +184,17 @@ const AvatorButton = styled.button`
   cursor: pointer;
   display: flex;
   align-items: center;
+
+  &:hover ${Avator} {
+    border-color: ${({ theme }) => theme.colors.border3};
+    box-shadow: ${({ theme }) => theme.shadows.xs};
+  }
+`;
+
+const Right = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 `;
 
 const ModalOverlay = styled.div`
@@ -189,7 +204,7 @@ const ModalOverlay = styled.div`
   width: 100vw;
   height: 100vh;
   height: 100dvh;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${({ theme }) => theme.colors.overlay};
   display: flex;
   justify-content: center;
   align-items: center;

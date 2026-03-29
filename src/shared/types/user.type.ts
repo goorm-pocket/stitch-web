@@ -8,6 +8,8 @@ export interface Profile {
   age?: number;
   isPublic: boolean;
   isMine: boolean;
+  friendCount: number;
+  postCount: number;
 }
 
 export interface SearchUser {
@@ -40,6 +42,6 @@ export type NotificationKey =
 
 export type NotificationSettings = Record<NotificationKey, boolean>;
 
-export type PrivacyKey = "isPublic" | "namePublic" | "birthPublic" | "agePublic";
+export type PrivacyKey = "publicEnable" | "namePublic" | "birthPublic" | "agePublic";
 
 export type PrivacySettings = Record<PrivacyKey, boolean>;

@@ -20,11 +20,11 @@ const UserProfilePage = () => {
             <ProfileDescription>{profile?.realName}</ProfileDescription>
             <BadgeContainer>
               <Badge>
-                <BadgeNumber>1.2k</BadgeNumber>
+                <BadgeNumber>{profile?.friendCount}</BadgeNumber>
                 <span>FRIENDS</span>
               </Badge>
               <Badge>
-                <BadgeNumber>48</BadgeNumber>
+                <BadgeNumber>{profile?.postCount}</BadgeNumber>
                 <span>POCKET</span>
               </Badge>
             </BadgeContainer>
@@ -41,9 +41,9 @@ export default UserProfilePage;
 const Container = styled.main`
   display: flex;
   flex-direction: column;
-  width: 900px;
-  padding: 12px 28px;
-  gap: 24px;
+  width: min(${({ theme }) => theme.layout.contentWidth}, 100%);
+  padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxxl};
+  gap: ${({ theme }) => theme.space.xxl};
 `;
 
 const ProfileContainer = styled(ProfileStitchedBox)`
@@ -54,22 +54,32 @@ const ProfileContainer = styled(ProfileStitchedBox)`
   justify-content: flex-start;
 
   width: 100%;
-  height: 200px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 30px;
-  margin-bottom: 32px;
+  min-height: 200px;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  padding: clamp(20px, 4vw, 30px);
+  margin-bottom: ${({ theme }) => theme.space.xxxl};
+
+  @media (max-width: 768px) {
+    min-height: auto;
+  }
 `;
 
 const Left = styled.div`
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: ${({ theme }) => theme.space.xxxl};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${({ theme }) => theme.space.lg};
+  }
 `;
 
 const Avator = styled.img`
   width: 120px;
   height: 120px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   border: 4px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
 `;
@@ -81,13 +91,13 @@ const ProfileTextBox = styled.div`
 `;
 
 const ProfileName = styled.div`
-  font-size: 28px;
+  font-size: clamp(24px, 5vw, 28px);
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
 const ProfileDescription = styled.p`
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
   color: ${({ theme }) => theme.colors.text_secondary};
   margin: 0;
   margin-bottom: 10px;
@@ -97,15 +107,23 @@ const BadgeContainer = styled.div`
   margin-top: 8px;
   display: flex;
   gap: 10px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
 `;
 
 const Badge = styled.div`
   background: ${({ theme }) => theme.colors.sub};
   padding: 6px 12px;
-  border-radius: 9999px;
-  font-size: 13px;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text_secondary};
   font-weight: bold;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const BadgeNumber = styled.span`

@@ -237,6 +237,18 @@ const Container = styled.section`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  animation: pocketIn ${({ theme }) => theme.motion.slow} ${({ theme }) => theme.motion.easing};
+
+  @keyframes pocketIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
   @media (max-width: 768px) {
     padding: 24px 16px 40px;
@@ -255,6 +267,7 @@ const PocketArea = styled.div`
   border-top: 6px solid ${({ theme }) => theme.colors.sub};
   border-bottom-left-radius: 56px;
   border-bottom-right-radius: 56px;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
 
   @media (max-width: 768px) {
     border-bottom-left-radius: 46px;

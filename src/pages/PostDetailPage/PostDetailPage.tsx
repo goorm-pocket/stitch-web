@@ -4,10 +4,15 @@ import CommentItem from "./components/CommentItem";
 import { useParams } from "react-router";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
 import { useCreateCommentMutation, useGetCommentsQuery } from "@/shared/hooks/useComment";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useInfiniteScroll } from "@/shared/hooks/useInfiniteScroll";
 
 const PostDetailPage = () => {
   const { id } = useParams();
+  // ref
+  const commentListRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
   // state
   const [commentInput, setCommentInput] = useState<string>("");
   const [replyTargetId, setReplyTargetId] = useState<string>("");
@@ -15,7 +20,12 @@ const PostDetailPage = () => {
 
   // query
   const { data: post } = useGetPostByIdQuery({ postId: id! });
-  const { data: commentsPages } = useGetCommentsQuery({ postId: id! });
+  const {
+    data: commentsPages,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useGetCommentsQuery({ postId: id! });
 
   // mutate
   const { mutateAsync: createCommnet } = useCreateCommentMutation({
@@ -23,6 +33,16 @@ const PostDetailPage = () => {
   });
 
   const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];
+
+  // 커스텀 훅
+  useInfiniteScroll({
+    enabled: true,
+    hasNextPage,
+    isFetchingNextPage,
+    // rootRef: commentListRef,
+    targetRef: loadMoreRef,
+    onIntersect: fetchNextPage,
+  });
 
   // handle function
   const handleCreateComment = async () => {
@@ -76,10 +96,13 @@ const PostDetailPage = () => {
             </CommentEditorRow>
           </CommentInputBox>
 
-          <CommentList>
+          <CommentList ref={commentListRef}>
             {comments.map((comment) => (
               <CommentItem key={comment.commentId} comment={comment} onReply={handleReply} />
             ))}
+            <LoadMoreTrigger ref={loadMoreRef} />
+
+            {isFetchingNextPage && <LoadMoreText>Loading...</LoadMoreText>}
           </CommentList>
         </CommentSection>
       </ContentSection>
@@ -93,7 +116,7 @@ const Container = styled.main`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 24px 20px 48px;
+  padding: clamp(20px, 4vw, 32px) 0 56px;
   background: ${({ theme }) => theme.colors.background};
 `;
 
@@ -101,26 +124,26 @@ const ContentSection = styled.div`
   width: min(900px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: ${({ theme }) => theme.space.xxl};
 `;
 
 const PostCard = styled.section`
-  background: white;
+  background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 28px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: ${({ theme }) => theme.radii.xxl};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
   overflow: hidden;
 `;
 
 const CommentSection = styled.section`
-  background: white;
+  background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 28px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  padding: 20px;
+  border-radius: ${({ theme }) => theme.radii.xxl};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+  padding: clamp(18px, 3vw, 24px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: ${({ theme }) => theme.space.xl};
 `;
 
 const CommentHeader = styled.div`
@@ -131,7 +154,7 @@ const CommentHeader = styled.div`
 
 const CommentTitle = styled.h2`
   margin: 0;
-  font-size: 18px;
+  font-size: ${({ theme }) => theme.fontSize.xxl};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
@@ -139,11 +162,11 @@ const CommentTitle = styled.h2`
 const CommentInputBox = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  gap: ${({ theme }) => theme.space.md};
+  padding: 14px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 16px;
-  background: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.radii.xl};
+  background: ${({ theme }) => theme.colors.surface};
 `;
 
 const ReplyTargetIdBox = styled.div`
@@ -151,14 +174,14 @@ const ReplyTargetIdBox = styled.div`
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  padding: 6px 10px;
-  border-radius: 999px;
+  padding: 8px 12px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   background: ${({ theme }) => theme.colors.hover};
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const ReplyMention = styled.span`
-  font-size: 12px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
 `;
@@ -167,7 +190,7 @@ const ReplyRemoveButton = styled.button`
   width: 18px;
   height: 18px;
   border: none;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   background: transparent;
   color: ${({ theme }) => theme.colors.text_secondary};
   font-size: 12px;
@@ -184,20 +207,18 @@ const ReplyRemoveButton = styled.button`
 
 const CommentEditorRow = styled.div`
   display: flex;
-  gap: 10px;
-  align-items: flex-end;
+  gap: ${({ theme }) => theme.space.md};
 
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
     flex-direction: column;
-    align-items: stretch;
   }
 `;
 
 const CommentTextarea = styled.textarea`
   flex: 1;
-  min-height: 64px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  min-height: 88px;
+  padding: 14px 16px;
+  border-radius: ${({ theme }) => theme.radii.lg};
   resize: none;
   border: 1px solid ${({ theme }) => theme.colors.border};
   background: white;
@@ -218,18 +239,17 @@ const CommentTextarea = styled.textarea`
 
 const CommentSubmitButton = styled.button`
   border: none;
-  border-radius: 12px;
+  border-radius: ${({ theme }) => theme.radii.md};
   background: ${({ theme }) => theme.colors.primary};
   color: white;
-  padding: 0 16px;
-  height: 42px;
-  font-size: 13px;
+  padding: 0 18px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 
-  @media (max-width: 480px) {
-    width: 100%;
+  @media (max-width: 640px) {
+    min-height: 44px;
   }
 
   &:hover {
@@ -237,11 +257,23 @@ const CommentSubmitButton = styled.button`
   }
 `;
 
-const CommentList = styled.ul`
+const CommentList = styled.div`
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
+`;
+
+const LoadMoreTrigger = styled.div`
+  width: 100%;
+  height: 1px;
+`;
+
+const LoadMoreText = styled.div`
+  padding: 8px 0;
+  text-align: center;
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;

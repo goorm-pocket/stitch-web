@@ -31,12 +31,18 @@ const Container = styled.button<{ $empty?: boolean; $variant?: boolean }>`
   aspect-ratio: 1 / 1;
   border: none;
   border-radius: 0 0 18px 18px;
-  cursor: pointer;
+  cursor: ${({ $empty, $variant }) => ($empty ? "default" : $variant ? "pointer" : "default")};
   background: ${({ $empty, $variant, theme }) => {
     if ($empty) return "transparent";
     if ($variant) return theme.colors.primary;
     return "#E9EEF3";
   }};
+  box-shadow: ${({ $variant, theme }) => ($variant ? theme.shadows.xs : "none")};
+  transform: translateY(0);
+  transition:
+    transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    background-color ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    box-shadow ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
   &::before {
     content: "";
@@ -47,6 +53,19 @@ const Container = styled.button<{ $empty?: boolean; $variant?: boolean }>`
       return `1px dashed ${theme.colors.sub};`;
     }};
     border-radius: 0 0 16px 16px;
+    transition:
+      inset ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+      border-color ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
+  }
+
+  &:hover {
+    ${({ $empty, $variant, theme }) =>
+      !$empty &&
+      `
+        transform: translateY(-2px);
+        box-shadow: ${$variant ? theme.shadows.sm : theme.shadows.xs};
+        background: ${$variant ? theme.colors.primary : theme.colors.hover};
+      `}
   }
 `;
 
@@ -59,4 +78,7 @@ const DateNumber = styled.span`
   font-size: 12px;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text_primary};
+  transition:
+    color ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 `;
