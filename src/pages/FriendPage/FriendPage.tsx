@@ -251,7 +251,14 @@ const ButtonBox = styled.div`
   gap: ${({ theme }) => theme.space.xs};
   padding: 6px;
   border-radius: ${({ theme }) => theme.radii.xs};
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: min(100%, 520px);
+
+  @media (max-width: 640px) {
+    width: 100%;
+    gap: 4px;
+    padding: 4px;
+  }
 `;
 
 interface SelectButtonProps {
@@ -267,6 +274,15 @@ const SelectButton = styled.button<SelectButtonProps>`
   padding: 0 10px;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
+  flex: 1 1 0;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    height: 38px;
+    padding: 0 8px;
+    font-size: ${({ theme }) => theme.fontSize.xs};
+  }
 `;
 
 const FriendListContainer = styled.div`
