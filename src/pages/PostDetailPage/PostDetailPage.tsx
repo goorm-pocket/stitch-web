@@ -4,10 +4,15 @@ import CommentItem from "./components/CommentItem";
 import { useParams } from "react-router";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
 import { useCreateCommentMutation, useGetCommentsQuery } from "@/shared/hooks/useComment";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useInfiniteScroll } from "@/shared/hooks/useInfiniteScroll";
 
 const PostDetailPage = () => {
   const { id } = useParams();
+  // ref
+  const commentListRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
   // state
   const [commentInput, setCommentInput] = useState<string>("");
   const [replyTargetId, setReplyTargetId] = useState<string>("");
@@ -15,7 +20,12 @@ const PostDetailPage = () => {
 
   // query
   const { data: post } = useGetPostByIdQuery({ postId: id! });
-  const { data: commentsPages } = useGetCommentsQuery({ postId: id! });
+  const {
+    data: commentsPages,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useGetCommentsQuery({ postId: id! });
 
   // mutate
   const { mutateAsync: createCommnet } = useCreateCommentMutation({
@@ -23,6 +33,16 @@ const PostDetailPage = () => {
   });
 
   const comments = commentsPages?.pages.flatMap((page) => page.comments) ?? [];
+
+  // 커스텀 훅
+  useInfiniteScroll({
+    enabled: true,
+    hasNextPage,
+    isFetchingNextPage,
+    // rootRef: commentListRef,
+    targetRef: loadMoreRef,
+    onIntersect: fetchNextPage,
+  });
 
   // handle function
   const handleCreateComment = async () => {
@@ -76,10 +96,13 @@ const PostDetailPage = () => {
             </CommentEditorRow>
           </CommentInputBox>
 
-          <CommentList>
+          <CommentList ref={commentListRef}>
             {comments.map((comment) => (
               <CommentItem key={comment.commentId} comment={comment} onReply={handleReply} />
             ))}
+            <LoadMoreTrigger ref={loadMoreRef} />
+
+            {isFetchingNextPage && <LoadMoreText>Loading...</LoadMoreText>}
           </CommentList>
         </CommentSection>
       </ContentSection>
@@ -234,11 +257,23 @@ const CommentSubmitButton = styled.button`
   }
 `;
 
-const CommentList = styled.ul`
+const CommentList = styled.div`
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
+`;
+
+const LoadMoreTrigger = styled.div`
+  width: 100%;
+  height: 1px;
+`;
+
+const LoadMoreText = styled.div`
+  padding: 8px 0;
+  text-align: center;
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;
