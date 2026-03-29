@@ -22,4 +22,9 @@ const Container = styled.main`
   width: min(${({ theme }) => theme.layout.contentWidth}, 100%);
   padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxxl};
   gap: ${({ theme }) => theme.space.xxl};
+
+  @media (max-width: 640px) {
+    padding: ${({ theme }) => theme.space.sm} 0 ${({ theme }) => theme.space.xxl};
+    gap: ${({ theme }) => theme.space.xl};
+  }
 `;

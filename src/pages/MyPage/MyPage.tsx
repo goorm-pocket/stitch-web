@@ -18,16 +18,17 @@ const MyPage = () => {
           <ProfileTextBox>
             <ProfileName>{profile?.nickname}</ProfileName>
             <ProfileDescription>{profile?.realName}</ProfileDescription>
-            <BadgeContainer>
-              <Badge>
-                <BadgeNumber>{profile?.friendCount}</BadgeNumber>
-                <span>FRIENDS</span>
-              </Badge>
-              <Badge>
-                <BadgeNumber>{profile?.postCount}</BadgeNumber>
-                <span>POCKET</span>
-              </Badge>
-            </BadgeContainer>
+            <StatsRow>
+              <StatItem>
+                <StatNumber>{profile?.friendCount}</StatNumber>
+                <StatLabel>FRIENDS</StatLabel>
+              </StatItem>
+              <StatDivider>·</StatDivider>
+              <StatItem>
+                <StatNumber>{profile?.postCount}</StatNumber>
+                <StatLabel>POCKET</StatLabel>
+              </StatItem>
+            </StatsRow>
           </ProfileTextBox>
         </Left>
 
@@ -69,10 +70,13 @@ const ProfileContainer = styled(ProfileStitchedBox)`
   margin-bottom: ${({ theme }) => theme.space.xxxl};
 
   @media (max-width: 768px) {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: ${({ theme }) => theme.space.xl};
+    justify-content: space-between;
+    gap: ${({ theme }) => theme.space.md};
     min-height: auto;
+    margin-bottom: ${({ theme }) => theme.space.xl};
+    padding: 18px 16px;
   }
 `;
 
@@ -115,9 +119,11 @@ const Left = styled.div`
   gap: ${({ theme }) => theme.space.xxxl};
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: ${({ theme }) => theme.space.lg};
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: ${({ theme }) => theme.space.md};
+    min-width: 0;
   }
 `;
 
@@ -127,56 +133,82 @@ const Avator = styled.img`
   border-radius: ${({ theme }) => theme.radii.round};
   border: 4px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
+
+  @media (max-width: 768px) {
+    width: 84px;
+    height: 84px;
+    border-width: 3px;
+    flex-shrink: 0;
+  }
 `;
 
 const ProfileTextBox = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
 `;
 
 const ProfileName = styled.div`
   font-size: clamp(24px, 5vw, 28px);
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
+
+  @media (max-width: 768px) {
+    font-size: 22px;
+    line-height: 1.15;
+  }
 `;
 
 const ProfileDescription = styled.p`
   font-size: ${({ theme }) => theme.fontSize.lg};
   color: ${({ theme }) => theme.colors.text_secondary};
   margin: 0;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
+
+  @media (max-width: 768px) {
+    font-size: ${({ theme }) => theme.fontSize.md};
+    margin-bottom: 2px;
+  }
 `;
 
-const BadgeContainer = styled.div`
-  margin-top: 8px;
+const StatsRow = styled.div`
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 20px;
 
   @media (max-width: 480px) {
-    flex-direction: column;
+    gap: 6px;
   }
 `;
 
-const Badge = styled.div`
-  background: ${({ theme }) => theme.colors.sub};
-  padding: 6px 12px;
-  border-radius: ${({ theme }) => theme.radii.pill};
-  line-height: 20px;
+const StatItem = styled.div`
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: ${({ theme }) => theme.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text_secondary};
-  font-weight: bold;
 `;
 
-const BadgeNumber = styled.span`
+const StatNumber = styled.span`
   color: ${({ theme }) => theme.colors.primary};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: 700;
+  line-height: 1;
+`;
 
-  &::after {
-    content: " ";
-  }
+const StatLabel = styled.span`
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: ${({ theme }) => theme.fontSize.xs};
+  font-weight: 700;
+  letter-spacing: 0.04em;
+`;
+
+const StatDivider = styled.span`
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  line-height: 1;
 `;
 
 const SettingButton = styled.button`
@@ -202,9 +234,22 @@ const SettingButton = styled.button`
   &:hover {
     background: ${({ theme }) => theme.colors.primary};
   }
+
+  @media (max-width: 768px) {
+    top: 14px;
+    right: 14px;
+    padding: ${({ theme }) => theme.space.xs};
+    font-size: 0;
+    width: 32px;
+    height: 32px;
+  }
 `;
 
 const SettingIcon = styled.svg`
   color: currentColor;
   margin-right: 5px;
+
+  @media (max-width: 768px) {
+    margin-right: 0;
+  }
 `;

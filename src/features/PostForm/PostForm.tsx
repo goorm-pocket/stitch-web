@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styled from "styled-components";
 import type { Post } from "../../shared/types/post.type";
 import { useCreatePostLikeMutation, useDeletePostLikeMutation } from "@/shared/hooks/usePost";
@@ -20,6 +20,8 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
   const shouldShowSlider = isDetailMode && images.length > 1;
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const swipeStartXRef = useRef<number | null>(null);
+  const swipeStartYRef = useRef<number | null>(null);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -36,6 +38,30 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    swipeStartXRef.current = e.clientX;
+    swipeStartYRef.current = e.clientY;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (swipeStartXRef.current === null || swipeStartYRef.current === null) return;
+
+    const deltaX = e.clientX - swipeStartXRef.current;
+    const deltaY = e.clientY - swipeStartYRef.current;
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+
+    if (isHorizontalSwipe && Math.abs(deltaX) > 40) {
+      if (deltaX < 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+
+    swipeStartXRef.current = null;
+    swipeStartYRef.current = null;
   };
 
   return (
@@ -72,7 +98,7 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
         )}
 
         {shouldShowSlider ? (
-          <SliderWrapper>
+          <SliderWrapper onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
             <PostImage src={images[currentIndex].imageUrl} alt={`post-${currentIndex + 1}`} />
 
             <NavButton $left onClick={handlePrev} type="button">
@@ -220,6 +246,7 @@ const MarkerImage = styled.img`
 const SliderWrapper = styled.div`
   position: relative;
   width: 100%;
+  touch-action: pan-y;
 `;
 
 const PostImage = styled.img`
