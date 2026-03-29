@@ -17,10 +17,10 @@ const FooterContainer = styled.footer`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: ${({ theme }) => theme.space.xxl};
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  background-color: white;
-  padding: 16px 20px;
+  background-color: ${({ theme }) => theme.colors.surface};
+  padding: ${({ theme }) => theme.space.lg} ${({ theme }) => theme.space.xl};
 
   @media (max-width: 480px) {
     flex-wrap: wrap;
@@ -31,5 +31,5 @@ const FooterContainer = styled.footer`
 
 const NavItem = styled.div`
   color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
 `;

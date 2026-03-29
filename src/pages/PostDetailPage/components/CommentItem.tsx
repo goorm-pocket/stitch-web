@@ -112,17 +112,21 @@ export default CommentItem;
 const Container = styled.li<{ $isReply: boolean }>`
   display: flex;
   gap: 14px;
-  padding: 16px;
+  padding: ${({ theme }) => theme.space.lg};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 20px;
-  background: white;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: ${({ theme }) => theme.radii.xl};
+  background: ${({ theme }) => theme.colors.surface};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+
+  @media (max-width: 640px) {
+    gap: ${({ theme }) => theme.space.md};
+  }
 `;
 
 const Avatar = styled.img`
   width: 46px;
   height: 46px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   object-fit: cover;
   flex-shrink: 0;
 `;
@@ -139,6 +143,11 @@ const TopRow = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const MetaRow = styled.div`
@@ -164,7 +173,7 @@ const Nickname = styled.span`
 `;
 
 const DateText = styled.span`
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
@@ -180,8 +189,8 @@ const ReplyButton = styled.button`
   background: transparent;
   color: ${({ theme }) => theme.colors.text_secondary};
   padding: 6px 8px;
-  border-radius: 999px;
-  font-size: 13px;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  font-size: ${({ theme }) => theme.fontSize.sm};
   font-weight: 600;
   cursor: pointer;
 
@@ -198,7 +207,7 @@ const Content = styled.p`
 `;
 
 const ReplyMention = styled.span`
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
 `;
@@ -213,10 +222,10 @@ const ToggleRepliesButton = styled.button`
   border: none;
   background: transparent;
   color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   font-weight: 600;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
   transition:
     color 0.2s ease,
     background-color 0.2s ease;
