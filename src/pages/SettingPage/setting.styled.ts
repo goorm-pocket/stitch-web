@@ -7,6 +7,10 @@ export const SettingsSection = styled.section`
   border-radius: ${({ theme }) => theme.radii.lg};
   box-shadow: ${({ theme }) => theme.shadows.xs};
   overflow: hidden;
+
+  @media (max-width: 640px) {
+    border-radius: ${({ theme }) => theme.radii.md};
+  }
 `;
 
 export const SectionHeader = styled.header`
@@ -20,7 +24,7 @@ export const SectionHeader = styled.header`
 
   @media (max-width: 640px) {
     font-size: ${({ theme }) => theme.fontSize.lg};
-    padding: 14px 16px;
+    padding: 12px 14px;
     gap: ${({ theme }) => theme.space.sm};
     flex-wrap: wrap;
   }
@@ -42,8 +46,8 @@ export const SectionItem = styled.div`
   padding: ${({ theme }) => theme.space.lg} ${({ theme }) => theme.space.xl};
 
   @media (max-width: 640px) {
-    padding: 13px 16px;
-    gap: ${({ theme }) => theme.space.sm};
+    padding: 11px 14px;
+    gap: 10px;
   }
 `;
 
@@ -56,8 +60,8 @@ export const SectionLeft = styled.div`
   gap: ${({ theme }) => theme.space.md};
 
   @media (max-width: 640px) {
-    font-size: ${({ theme }) => theme.fontSize.md};
-    gap: ${({ theme }) => theme.space.sm};
+    font-size: ${({ theme }) => theme.fontSize.sm};
+    gap: 10px;
   }
 `;
 
@@ -101,18 +105,18 @@ export const SectionToggle = styled.input.attrs({ type: "checkbox" })`
   }
 
   @media (max-width: 640px) {
-    width: 40px;
-    height: 22px;
+    width: 38px;
+    height: 21px;
 
     &::after {
       top: 2px;
       left: 2px;
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
     }
 
     &:checked::after {
-      transform: translateX(18px);
+      transform: translateX(17px);
     }
   }
 `;

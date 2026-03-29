@@ -24,7 +24,8 @@ const Container = styled.main`
   gap: ${({ theme }) => theme.space.xxl};
 
   @media (max-width: 640px) {
-    padding: ${({ theme }) => theme.space.sm} 0 ${({ theme }) => theme.space.xxl};
-    gap: ${({ theme }) => theme.space.xl};
+    width: calc(100% - 8px);
+    padding: 6px 0 ${({ theme }) => theme.space.xl};
+    gap: ${({ theme }) => theme.space.lg};
   }
 `;

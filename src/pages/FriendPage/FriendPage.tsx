@@ -277,11 +277,16 @@ const SelectButton = styled.button<SelectButtonProps>`
   white-space: nowrap;
   flex: 1 1 0;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
 
   @media (max-width: 640px) {
-    height: 38px;
-    padding: 0 8px;
-    font-size: ${({ theme }) => theme.fontSize.xs};
+    height: 34px;
+    padding: 0 6px;
+    font-size: 11px;
   }
 `;
 
