@@ -156,7 +156,7 @@ const ProfileName = styled.div`
   color: ${({ theme }) => theme.colors.text_primary};
 
   @media (max-width: 768px) {
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1.15;
   }
 `;
@@ -165,11 +165,11 @@ const ProfileDescription = styled.p`
   font-size: ${({ theme }) => theme.fontSize.lg};
   color: ${({ theme }) => theme.colors.text_secondary};
   margin: 0;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
 
   @media (max-width: 768px) {
-    font-size: ${({ theme }) => theme.fontSize.md};
-    margin-bottom: 2px;
+    font-size: ${({ theme }) => theme.fontSize.xs};
+    margin-bottom: 6px;
   }
 `;
 
@@ -189,12 +189,10 @@ const StatItem = styled.div`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
   white-space: nowrap;
   padding: 6px 10px;
   border-radius: 8px;
-  background: rgba(74, 88, 255, 0.12);
-  border: 1px solid rgba(74, 88, 255, 0.18);
+  background: ${({ theme }) => theme.colors.sub};
 
   @media (max-width: 768px) {
     padding: 5px 9px;
@@ -215,6 +213,10 @@ const StatLabel = styled.span`
   font-size: ${({ theme }) => theme.fontSize.xs};
   font-weight: 700;
   letter-spacing: 0.04em;
+
+  @media (max-width: 768px) {
+    font-size: 10px;
+  }
 `;
 
 const StatDivider = styled.span`
