@@ -85,8 +85,10 @@ const Container = styled(StitchedBox)`
   }
 
   @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: flex-start;
+    min-height: 78px;
+    padding: 12px 14px;
+    flex-direction: row;
+    align-items: center;
   }
 `;
 
@@ -94,6 +96,11 @@ const Left = styled.div`
   display: flex;
   align-items: center;
   gap: 14px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    min-width: 0;
+  }
 `;
 
 const Avator = styled.img`
@@ -107,6 +114,11 @@ const Avator = styled.img`
   transition:
     border-color ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
     box-shadow ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
+
+  @media (max-width: 480px) {
+    width: 48px;
+    height: 48px;
+  }
 `;
 
 const NameBox = styled.div`
@@ -114,6 +126,7 @@ const NameBox = styled.div`
   flex-direction: column;
   justify-content: center;
   gap: 3px;
+  min-width: 0;
 `;
 
 const NickName = styled.div`
@@ -121,12 +134,20 @@ const NickName = styled.div`
   font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: 700;
   line-height: 1.2;
+
+  @media (max-width: 480px) {
+    font-size: ${({ theme }) => theme.fontSize.md};
+  }
 `;
 
 const Name = styled.div`
   font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text_secondary};
   line-height: 1.2;
+
+  @media (max-width: 480px) {
+    font-size: ${({ theme }) => theme.fontSize.xs};
+  }
 `;
 
 const Right = styled.div`
@@ -136,8 +157,7 @@ const Right = styled.div`
   flex-shrink: 0;
 
   @media (max-width: 480px) {
-    width: 100%;
-    justify-content: flex-end;
+    gap: 4px;
   }
 `;
 
@@ -155,6 +175,13 @@ const Button = styled.button`
   padding: 0 12px;
   cursor: pointer;
   white-space: nowrap;
+
+  @media (max-width: 480px) {
+    min-width: 60px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
 `;
 
 const RemoveButton = styled(Button)`
