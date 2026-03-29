@@ -19,7 +19,7 @@ export default SettingPage;
 const Container = styled.main`
   display: flex;
   flex-direction: column;
-  width: 900px;
-  padding: 12px 28px;
-  gap: 24px;
+  width: min(${({ theme }) => theme.layout.contentWidth}, 100%);
+  padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxxl};
+  gap: ${({ theme }) => theme.space.xxl};
 `;

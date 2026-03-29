@@ -62,58 +62,61 @@ const Header = () => {
 export default Header;
 
 const HeaderContainer = styled.header`
-  position: relative;
   width: 100%;
-  min-height: 55px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid ${({ theme }) => theme.colors.sub};
-  padding: 0 24px;
-  background-color: white;
+  padding: 12px ${({ theme }) => theme.layout.pagePadding};
+  background-color: ${({ theme }) => theme.colors.surface};
+  gap: ${({ theme }) => theme.space.lg};
 
-  @media (max-width: 480px) {
-    padding: 10px 14px;
-    gap: 12px;
-    align-items: flex-start;
+  @media (max-width: 768px) {
+    min-height: auto;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    padding-bottom: 14px;
   }
 `;
 
 const Left = styled.div`
-  position: absolute;
-  left: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: ${({ theme }) => theme.space.sm};
   cursor: pointer;
   flex-shrink: 0;
 `;
 
 const LogoText = styled.span`
-  font-size: 20px;
+  font-size: clamp(18px, 2vw, 20px);
   font-weight: bold;
+
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const Mid = styled.div`
-  position: absolute;
   display: flex;
-  gap: 15px;
-  left: 50%;
-  transform: translateX(-50%);
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
 `;
 
 const NavBar = styled.nav`
   display: flex;
   align-items: center;
-  gap: 14px;
   min-width: 0;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  width: min(350px, 100%);
 
-  @media (max-width: 480px) {
-    gap: 10px;
-  }
+  justify-content: space-evenly;
+  padding: 4px;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const NavItem = styled(NavLink)`
@@ -121,16 +124,22 @@ const NavItem = styled(NavLink)`
   align-items: center;
   text-decoration: none;
   color: ${({ theme }) => theme.colors.icon};
-  gap: 2px;
+  gap: 6px;
   min-width: 0;
   white-space: nowrap;
+  padding: 10px 0;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  font-weight: 700;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.surface};
   }
 
   &.active {
     color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.surface};
+    box-shadow: ${({ theme }) => theme.shadows.xs};
   }
 `;
 
@@ -139,8 +148,8 @@ const NavIcon = styled.svg`
 `;
 
 const NavText = styled.span`
-  font-size: 14px;
-  font-weight: bold;
+  font-size: ${({ theme }) => theme.fontSize.md};
+  font-weight: 700;
 
   @media (max-width: 767px) {
     display: none;
@@ -148,19 +157,20 @@ const NavText = styled.span`
 `;
 
 const AvatorBox = styled.div`
-  padding-left: 15px;
-  margin-left: 15px;
+  padding-left: ${({ theme }) => theme.space.md};
+  margin-left: ${({ theme }) => theme.space.md};
   border-left: 1px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: 480px) {
-    padding-left: 10px;
+    padding-left: ${({ theme }) => theme.space.sm};
+    margin-left: ${({ theme }) => theme.space.sm};
   }
 `;
 
 const Avator = styled.img`
   width: 45px;
   height: 45px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   border: 2px solid ${({ theme }) => theme.colors.border};
   object-fit: cover;
   background: ${({ theme }) => theme.colors.hover};
@@ -173,13 +183,17 @@ const AvatorButton = styled.button`
   cursor: pointer;
   display: flex;
   align-items: center;
+
+  &:hover ${Avator} {
+    border-color: ${({ theme }) => theme.colors.border3};
+    box-shadow: ${({ theme }) => theme.shadows.xs};
+  }
 `;
 
 const Right = styled.div`
-  position: absolute;
-  right: 24px;
   display: flex;
   align-items: center;
+  margin-left: auto;
 `;
 
 const ModalOverlay = styled.div`
@@ -189,7 +203,7 @@ const ModalOverlay = styled.div`
   width: 100vw;
   height: 100vh;
   height: 100dvh;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${({ theme }) => theme.colors.overlay};
   display: flex;
   justify-content: center;
   align-items: center;

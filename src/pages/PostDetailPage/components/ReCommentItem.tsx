@@ -63,13 +63,13 @@ const Container = styled.li`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 18px;
   background: ${({ theme }) => theme.colors.background};
-  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 `;
 
 const Avatar = styled.img`
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: ${({ theme }) => theme.radii.round};
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -115,7 +115,7 @@ const ReplyButton = styled.button`
   background: transparent;
   color: ${({ theme }) => theme.colors.text_secondary};
   padding: 6px 8px;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;

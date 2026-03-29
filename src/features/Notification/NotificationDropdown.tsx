@@ -155,8 +155,8 @@ const IconButton = styled.button`
   width: 44px;
   height: 44px;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 50%;
-  background: #fff;
+  border-radius: ${({ theme }) => theme.radii.round};
+  background: ${({ theme }) => theme.colors.surface};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,6 +170,7 @@ const IconButton = styled.button`
   &:hover {
     background: ${({ theme }) => theme.colors.hover};
     border-color: ${({ theme }) => theme.colors.border3};
+    box-shadow: ${({ theme }) => theme.shadows.xs};
   }
 
   &:active {
@@ -205,21 +206,34 @@ const Badge = styled.span`
 
 const Dropdown = styled.div`
   position: absolute;
-  top: calc(100% + 10px);
+  top: 65px;
   right: 0;
-  width: 360px;
+  width: min(360px, calc(100vw - 24px));
   max-height: 460px;
   overflow: hidden;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 20px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  border-radius: ${({ theme }) => theme.radii.xl};
+  box-shadow: ${({ theme }) => theme.shadows.md};
   z-index: 1000;
+  transform-origin: top right;
+  animation: dropdownIn ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
+
+  @keyframes dropdownIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 `;
 
 const Header = styled.div`
   height: 56px;
-  padding: 0 16px;
+  padding: 0 ${({ theme }) => theme.space.lg};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   display: flex;
   align-items: center;
@@ -228,7 +242,7 @@ const Header = styled.div`
 
 const HeaderTitle = styled.h3`
   margin: 0;
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
@@ -236,14 +250,14 @@ const HeaderTitle = styled.h3`
 const ReadAllButton = styled.button`
   border: none;
   background: transparent;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   font-weight: 600;
   color: ${({ theme }) => theme.colors.primary};
   cursor: pointer;
   padding: 4px 0;
 
   &:hover {
-    opacity: 0.8;
+    opacity: 0.82;
   }
 `;
 
@@ -255,14 +269,14 @@ const List = styled.div`
 const EmptyState = styled.div`
   padding: 48px 16px;
   text-align: center;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const FooterText = styled.div`
   padding: 12px 16px;
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  font-size: 12px;
+  font-size: ${({ theme }) => theme.fontSize.xs};
   text-align: center;
   color: ${({ theme }) => theme.colors.text_disable};
 `;

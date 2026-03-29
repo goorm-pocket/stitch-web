@@ -106,9 +106,9 @@ export default PostForm;
 
 const Container = styled.article`
   width: 100%;
-  border-radius: 24px;
+  border-radius: ${({ theme }) => theme.radii.xxl};
   overflow: hidden;
-  padding: 16px;
+  padding: ${({ theme }) => theme.space.lg};
 `;
 
 const Header = styled.div`
@@ -121,15 +121,15 @@ const Header = styled.div`
 const AuthorRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: ${({ theme }) => theme.space.md};
 `;
 
 const Avatar = styled.img`
   width: 42px;
   height: 42px;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   object-fit: cover;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
   flex-shrink: 0;
 `;
 
@@ -140,14 +140,14 @@ const AuthorInfo = styled.div`
 `;
 
 const Nickname = styled.div`
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
   line-height: 1.2;
 `;
 
 const DateText = styled.div`
-  font-size: 12px;
+  font-size: ${({ theme }) => theme.fontSize.xs};
   color: ${({ theme }) => theme.colors.text_secondary};
   line-height: 1.2;
 `;
@@ -158,11 +158,11 @@ const LikeButton = styled.button<{ $liked: boolean }>`
   gap: 6px;
   border: 1px solid ${({ theme }) => theme.colors.border};
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   background: ${({ $liked }) => ($liked ? "rgba(255, 77, 79, 0.08)" : "rgba(255, 255, 255, 0.72)")};
   backdrop-filter: blur(8px);
   cursor: pointer;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   font-weight: 600;
   color: ${({ $liked }) => ($liked ? "#ff4d4f" : "#6b7280")};
   transition: all 0.2s ease;
@@ -174,7 +174,7 @@ const LikeButton = styled.button<{ $liked: boolean }>`
 `;
 
 const HeartIcon = styled.span<{ $liked: boolean }>`
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   line-height: 1;
   filter: ${({ $liked }) => ($liked ? "drop-shadow(0 2px 4px rgba(255, 77, 79, 0.25))" : "none")};
 `;
@@ -182,7 +182,7 @@ const HeartIcon = styled.span<{ $liked: boolean }>`
 const ImageSection = styled.div`
   position: relative;
   width: 100%;
-  border-radius: 18px;
+  border-radius: ${({ theme }) => theme.radii.lg};
   overflow: hidden;
 `;
 
@@ -192,12 +192,12 @@ const MarkerBadge = styled.div`
   left: 14px;
   width: 52px;
   height: 52px;
-  border-radius: 999px;
-  background: white;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.surface};
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadows.xs};
   z-index: 3;
 `;
 
@@ -212,7 +212,7 @@ const Marker = styled.div`
 const MarkerImage = styled.img`
   width: 40px;
   height: 40px;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   object-fit: cover;
   display: block;
 `;
@@ -237,7 +237,7 @@ const NavButton = styled.button<{ $left?: boolean }>`
   width: 34px;
   height: 34px;
   border: none;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(6px);
   display: flex;
@@ -281,14 +281,14 @@ const ImageFallback = styled.div`
 `;
 
 const FallbackText = styled.span`
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
 const Content = styled.p`
   margin: 16px 2px 4px;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   line-height: 1.75;
   color: ${({ theme }) => theme.colors.text_primary};
   word-break: keep-all;

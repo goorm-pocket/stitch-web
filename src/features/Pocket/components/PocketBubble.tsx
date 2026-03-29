@@ -55,7 +55,7 @@ const Container = styled.div<{
   position: absolute;
   left: 0;
   top: 0;
-  border-radius: ${({ $hasImage }) => ($hasImage ? "0" : "50%")};
+  border-radius: ${({ $hasImage, theme }) => ($hasImage ? "0" : theme.radii.round)};
   overflow: ${({ $hasImage }) => ($hasImage ? "visible" : "hidden")};
   background: ${({ $hasImage }) => ($hasImage ? "transparent" : "white")};
   user-select: none;
@@ -72,7 +72,10 @@ const Container = styled.div<{
         : theme.colors.border;
     return `2px solid ${color}`;
   }};
-  box-shadow: ${({ $hasImage }) => ($hasImage ? "none" : "0 4px 12px rgba(0, 0, 0, 0.12)")};
+  box-shadow: ${({ $hasImage, theme }) => ($hasImage ? "none" : theme.shadows.sm)};
+  transition:
+    box-shadow ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
   &:active {
     cursor: grabbing;

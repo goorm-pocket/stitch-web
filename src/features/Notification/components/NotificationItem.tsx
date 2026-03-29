@@ -61,10 +61,10 @@ const Container = styled.button<{ $isUnread: boolean }>`
   width: 100%;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: ${({ theme }) => theme.space.md};
+  padding: 14px ${({ theme }) => theme.space.lg};
   border: none;
-  background: ${({ theme, $isUnread }) => ($isUnread ? theme.colors.background : "#FFFFFF")};
+  background: ${({ theme, $isUnread }) => ($isUnread ? theme.colors.background : theme.colors.surface)};
   cursor: pointer;
   text-align: left;
   position: relative;
@@ -72,6 +72,10 @@ const Container = styled.button<{ $isUnread: boolean }>`
 
   &:hover {
     background: ${({ theme }) => theme.colors.hover};
+  }
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.colors.border};
   }
 `;
 
@@ -89,20 +93,20 @@ const TopRow = styled.div`
 
 const Title = styled.p`
   margin: 0;
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text_primary};
 `;
 
 const TimeText = styled.span`
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: ${({ theme }) => theme.fontSize.xs};
   color: ${({ theme }) => theme.colors.text_disable};
 `;
 
 const Description = styled.p`
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   line-height: 1.45;
   color: ${({ theme }) => theme.colors.text_secondary};
 `;

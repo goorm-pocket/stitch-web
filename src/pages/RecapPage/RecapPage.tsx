@@ -24,9 +24,9 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 900px;
-  padding: 16px 32px;
-  gap: 24px;
+  width: min(${({ theme }) => theme.layout.contentWidth}, 100%);
+  padding: ${({ theme }) => theme.space.lg} 0 ${({ theme }) => theme.space.xxxl};
+  gap: ${({ theme }) => theme.space.xxl};
 `;
 
 const TitleContainer = styled.div`
@@ -34,18 +34,19 @@ const TitleContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
 `;
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 52px;
+  font-size: clamp(36px, 8vw, 52px);
   font-weight: 800;
   line-height: 1.1;
-  color: #1e293b;
+  color: ${({ theme }) => theme.colors.text_primary};
 `;
 
 const Subtitle = styled.p`
-  font-size: 16px;
-  color: #64748b;
+  font-size: ${({ theme }) => theme.fontSize.lg};
+  color: ${({ theme }) => theme.colors.text_secondary};
   margin-bottom: 0;
 `;

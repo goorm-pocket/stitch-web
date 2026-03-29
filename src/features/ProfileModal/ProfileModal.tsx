@@ -384,36 +384,48 @@ const ModalOverlay = styled.div<{ $isPage?: boolean }>`
   left: 0;
   width: 100%;
   min-height: ${(props) => (props.$isPage ? "auto" : "100vh")};
-  background: ${(props) => (props.$isPage ? "transparent" : "rgba(0, 0, 0, 0.5)")};
+  background: ${(props) => (props.$isPage ? "transparent" : props.theme.colors.overlay)};
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
-  padding: ${(props) => (props.$isPage ? "0" : "16px")};
+  padding: ${(props) => (props.$isPage ? "0" : props.theme.space.lg)};
 `;
 
 const ModalContainer = styled.div<{ $isPage?: boolean }>`
-  background: white;
+  background: ${({ theme }) => theme.colors.surface};
   width: ${(props) => (props.$isPage ? "min(720px, 100%)" : "580px")};
   max-height: ${(props) => (props.$isPage ? "none" : "90vh")};
-  padding: ${(props) => (props.$isPage ? "28px" : "32px")};
-  border-radius: 16px;
+  padding: ${(props) => (props.$isPage ? props.theme.space.xxxl : "clamp(24px, 4vw, 32px)")};
+  border-radius: ${({ theme }) => theme.radii.lg};
   position: relative;
   box-shadow: ${(props) =>
-    props.$isPage ? "0 10px 25px -5px rgba(0, 0, 0, 0.08)" : "0 20px 40px rgba(0, 0, 0, 0.2)"};
+    props.$isPage ? props.theme.shadows.sm : props.theme.shadows.lg};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  animation: modalIn ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing};
 
   &::-webkit-scrollbar {
     width: 8px;
+  }
+
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @media (max-width: 768px) {
     width: 100%;
     max-height: ${(props) => (props.$isPage ? "none" : "calc(100vh - 24px)")};
     padding: 24px 20px;
-    border-radius: 14px;
+    border-radius: ${({ theme }) => theme.radii.lg};
   }
 
   @media (max-width: 480px) {
@@ -427,19 +439,19 @@ const LoadingModalContainer = styled(ModalContainer)`
 `;
 
 const TitleContainer = styled.div`
-  margin-bottom: 24px;
+  margin-bottom: ${({ theme }) => theme.space.xxl};
 `;
 
 const Title = styled.h1`
   font-size: clamp(22px, 6vw, 26px);
   font-weight: 800;
-  color: #212529;
+  color: ${({ theme }) => theme.colors.text_primary};
   margin: 0;
 `;
 
 const Description = styled.p`
-  font-size: 13px;
-  color: #868e96;
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text_secondary};
   margin-top: 4px;
 `;
 
@@ -450,10 +462,10 @@ const CloseBtn = styled.button`
   background: none;
   border: none;
   font-size: 24px;
-  color: #ccc;
+  color: ${({ theme }) => theme.colors.text_disable};
   cursor: pointer;
   &:hover {
-    color: #333;
+    color: ${({ theme }) => theme.colors.text_primary};
   }
 `;
 
@@ -463,12 +475,12 @@ const Box = styled.div`
 
 const SectionTitle = styled.div`
   background: ${({ theme }) => theme.colors.border};
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: ${({ theme }) => theme.space.sm} ${({ theme }) => theme.space.md};
+  border-radius: ${({ theme }) => theme.radii.xs};
   font-size: 11px;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.text_primary};
-  margin-bottom: 16px;
+  margin-bottom: ${({ theme }) => theme.space.lg};
   display: flex;
   align-items: center;
 `;
@@ -476,8 +488,8 @@ const SectionTitle = styled.div`
 const AppearanceBox = styled.div`
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: ${({ theme }) => theme.space.lg};
+  margin-bottom: ${({ theme }) => theme.space.xxl};
 
   @media (max-width: 640px) {
     flex-direction: column;
@@ -488,20 +500,21 @@ const AppearanceBox = styled.div`
 const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   position: relative;
   background: ${({ theme }) => theme.colors.background};
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  padding: ${({ theme }) => theme.space.lg};
   width: min(100%, 190px);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
-  transition: all 0.2s ease;
+  transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "transparent")};
 
   &:hover {
-    background: ${(props) => (props.$isEditing ? "#e9ecef" : "#f8f9fa")};
+    background: ${(props) =>
+      props.$isEditing ? props.theme.colors.hover : props.theme.colors.background};
   }
 
   @media (max-width: 640px) {
@@ -513,15 +526,16 @@ const PickerCircle = styled.div<{ $shape?: "round" | "rect"; $isError?: boolean 
   width: 104px;
   height: 104px;
 
-  border-radius: ${(props) => (props.$shape === "rect" ? "0" : "50%")};
-
-  border: 2px dashed "#dee2e6";
-  background: white;
+  border-radius: ${(props) => (props.$shape === "rect" ? "0" : props.theme.radii.round)};
+  border: 2px dashed ${({ theme, $isError }) => ($isError ? "#ff6b6b" : theme.colors.border)};
+  background: ${({ theme }) => theme.colors.surface};
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  transition: border-radius 0.3s ease;
+  transition:
+    border-radius ${({ theme }) => theme.motion.base} ${({ theme }) => theme.motion.easing},
+    border-color ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 `;
 
 const PreviewImg = styled.img`
@@ -532,7 +546,7 @@ const PreviewImg = styled.img`
 
 const PlusIcon = styled.span`
   font-size: 24px;
-  color: #adb5bd;
+  color: ${({ theme }) => theme.colors.text_disable};
   font-weight: 300;
 `;
 
@@ -544,7 +558,7 @@ const EmojiDisplay = styled.span`
 const LabelText = styled.span`
   font-size: 11px;
   font-weight: 800;
-  color: #adb5bd;
+  color: ${({ theme }) => theme.colors.text_disable};
   text-align: center;
 `;
 
@@ -563,7 +577,7 @@ const InputWrapper = styled.div`
   flex-direction: column;
   gap: 8px;
   label {
-    font-size: 12px;
+    font-size: ${({ theme }) => theme.fontSize.xs};
     font-weight: 700;
     color: ${({ theme }) => theme.colors.text_secondary};
   }
@@ -571,11 +585,11 @@ const InputWrapper = styled.div`
 
 const StyledInput = styled.input<{ $isError?: boolean }>`
   padding: 12px 13px;
-  border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : "#dee2e6")};
-  border-radius: 10px;
-  font-size: 13px;
-  background: ${(props) => (props.disabled ? "#f8f9fa" : "white")};
-  transition: all 0.2s;
+  border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : props.theme.colors.border)};
+  border-radius: ${({ theme }) => theme.radii.sm};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  background: ${(props) => (props.disabled ? props.theme.colors.surface_alt : props.theme.colors.surface)};
+  transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
   &:focus {
     outline: none;
@@ -588,7 +602,7 @@ const ButtonWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 12px;
+  gap: ${({ theme }) => theme.space.md};
   margin-top: 28px;
 
   @media (max-width: 480px) {
@@ -601,10 +615,11 @@ const EditBtn = styled.button`
   background: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: ${({ theme }) => theme.radii.sm};
   font-weight: 700;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   cursor: pointer;
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 `;
 
 const SaveBtn = styled.button`
@@ -612,21 +627,22 @@ const SaveBtn = styled.button`
   background: ${(props) => (props.disabled ? "#e9ecef" : props.theme.colors.primary)};
   color: ${(props) => (props.disabled ? "#adb5bd" : "white")};
   border: none;
-  border-radius: 10px;
+  border-radius: ${({ theme }) => theme.radii.sm};
   font-weight: 700;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 `;
 
 const CancelBtn = styled.button`
   background: none;
   border: none;
-  color: #868e96;
+  color: ${({ theme }) => theme.colors.text_secondary};
   font-weight: 700;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   cursor: pointer;
   &:hover {
-    color: #495057;
+    color: ${({ theme }) => theme.colors.text_primary};
   }
 `;
 
@@ -640,13 +656,13 @@ const MiniBtn = styled.button`
   padding: 6px 10px;
   font-size: 10px;
   font-weight: 700;
-  background: white;
-  border: 1px solid #dee2e6;
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 6px;
-  color: #495057;
+  color: ${({ theme }) => theme.colors.text_primary};
   cursor: pointer;
   &:hover {
-    background: #f1f3f5;
+    background: ${({ theme }) => theme.colors.hover};
   }
 
   &:disabled {
@@ -664,9 +680,9 @@ const PickerWrapper = styled.div`
   transform: translate(-50%, -50%);
 
   z-index: 10000;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  background: white;
-  border-radius: 8px;
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  background: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }) => theme.radii.xs};
   line-height: 0;
 
   @media (max-width: 480px) {

@@ -4,44 +4,54 @@ export const SettingsSection = styled.section`
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.colors.sub};
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: ${({ theme }) => theme.radii.lg};
+  box-shadow: ${({ theme }) => theme.shadows.xs};
   overflow: hidden;
 `;
 
 export const SectionHeader = styled.header`
   display: flex;
   align-items: center;
-  font-size: 20px;
+  font-size: ${({ theme }) => theme.fontSize.xl};
   font-weight: bold;
-  padding: 18px;
-  gap: 12px;
+  padding: ${({ theme }) => theme.space.xl};
+  gap: ${({ theme }) => theme.space.md};
   color: ${({ theme }) => theme.colors.text_primary};
+
+  @media (max-width: 640px) {
+    padding: ${({ theme }) => theme.space.lg};
+    flex-wrap: wrap;
+  }
 `;
 
 export const SectionList = styled.div<{ $active: boolean }>`
   opacity: ${({ $active }) => ($active ? 1 : 0.45)};
   pointer-events: ${({ $active }) => ($active ? "auto" : "none")};
   transition:
-    opacity 0.2s ease,
-    filter 0.2s ease;
+    opacity ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
+    filter ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 `;
 
 export const SectionItem = styled.div`
   display: flex;
   align-items: center;
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  background: white;
-  padding: 16px 18px 16px 30px;
+  background: ${({ theme }) => theme.colors.surface};
+  padding: ${({ theme }) => theme.space.lg} ${({ theme }) => theme.space.xl};
+
+  @media (max-width: 640px) {
+    padding: ${({ theme }) => theme.space.lg};
+    gap: ${({ theme }) => theme.space.md};
+  }
 `;
 
 export const SectionLeft = styled.div`
   display: flex;
   align-items: center;
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: bold;
   color: ${({ theme }) => theme.colors.text_primary};
-  gap: 12px;
+  gap: ${({ theme }) => theme.space.md};
 `;
 
 export const SectionToggle = styled.input.attrs({ type: "checkbox" })`
@@ -51,12 +61,12 @@ export const SectionToggle = styled.input.attrs({ type: "checkbox" })`
   -webkit-appearance: none;
   width: 44px;
   height: 24px;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   border: none;
   outline: none;
   background: ${({ theme }) => theme.colors.border};
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
   &:checked {
     background: ${({ theme }) => theme.colors.primary};
@@ -69,9 +79,9 @@ export const SectionToggle = styled.input.attrs({ type: "checkbox" })`
     left: 3px;
     width: 18px;
     height: 18px;
-    border-radius: 50%;
+    border-radius: ${({ theme }) => theme.radii.round};
     background: white;
-    transition: transform 0.2s ease;
+    transition: transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
     transform: translateX(0);
   }
 

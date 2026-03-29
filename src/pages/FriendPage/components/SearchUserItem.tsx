@@ -43,7 +43,8 @@ const Container = styled.div`
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  cursor: pointer;
 
   &:hover {
     background: ${({ theme }) => theme.colors.hover};
@@ -60,7 +61,7 @@ const UserInfo = styled.div`
 const ProfileImage = styled.img`
   width: 44px;
   height: 44px;
-  border-radius: 9999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   object-fit: cover;
   flex-shrink: 0;
 `;
@@ -68,7 +69,7 @@ const ProfileImage = styled.img`
 const ProfileEmojiBox = styled.div`
   width: 44px;
   height: 44px;
-  border-radius: 9999px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   background: ${({ theme }) => theme.colors.sub};
   display: flex;
   align-items: center;
@@ -104,7 +105,7 @@ const SubInfoRow = styled.div`
 `;
 
 const RealName = styled.div`
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text_secondary};
 `;
 
@@ -113,13 +114,14 @@ const AddButton = styled.button`
   height: 36px;
   min-width: 88px;
   padding: 0 14px;
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.radii.xs};
   background: ${({ theme }) => theme.colors.primary};
   color: white;
-  font-size: 13px;
+  font-size: ${({ theme }) => theme.fontSize.sm};
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: ${({ theme }) => theme.shadows.xs};
 
   &:disabled {
     background: ${({ theme }) => theme.colors.sub};
