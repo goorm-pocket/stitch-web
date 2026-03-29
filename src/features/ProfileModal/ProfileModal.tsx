@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { Theme, type EmojiClickData } from "emoji-picker-react";
 import {
@@ -9,6 +9,7 @@ import {
   usePatchPrivateProfileMutation,
 } from "@/shared/hooks/useUser";
 import { SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 const S3_BASE_URL = "https://pocket-stitch-media-dev.s3.ap-northeast-2.amazonaws.com/"; //나중에 분리
 
@@ -81,24 +82,17 @@ const ProfileModalContent = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
+  // 커스텀 훅
+  useClickOutside({
+    ref: emojiPickerRef,
+    onClickOutside: () => setShowEmojiPicker(false),
+    enabled: showEmojiPicker,
+  });
+
   //날짜&필수값
   const today = new Date().toISOString().split("T")[0];
   const isFormValid =
     formData.nickname.trim() !== "" && formData.realName.trim() !== "" && emojiContent !== null;
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        showEmojiPicker &&
-        emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(e.target as Node)
-      ) {
-        setShowEmojiPicker(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showEmojiPicker]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -399,8 +393,7 @@ const ModalContainer = styled.div<{ $isPage?: boolean }>`
   padding: ${(props) => (props.$isPage ? props.theme.space.xxxl : "clamp(24px, 4vw, 32px)")};
   border-radius: ${({ theme }) => theme.radii.lg};
   position: relative;
-  box-shadow: ${(props) =>
-    props.$isPage ? props.theme.shadows.sm : props.theme.shadows.lg};
+  box-shadow: ${(props) => (props.$isPage ? props.theme.shadows.sm : props.theme.shadows.lg)};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -588,7 +581,8 @@ const StyledInput = styled.input<{ $isError?: boolean }>`
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : props.theme.colors.border)};
   border-radius: ${({ theme }) => theme.radii.sm};
   font-size: ${({ theme }) => theme.fontSize.sm};
-  background: ${(props) => (props.disabled ? props.theme.colors.surface_alt : props.theme.colors.surface)};
+  background: ${(props) =>
+    props.disabled ? props.theme.colors.surface_alt : props.theme.colors.surface};
   transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
   &:focus {
