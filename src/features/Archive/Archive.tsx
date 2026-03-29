@@ -144,11 +144,11 @@ const ArrowButton = styled.button`
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.icon};
   font-size: 24px;
+  line-height: 1;
   cursor: pointer;
   box-shadow: ${({ theme }) => theme.shadows.xs};
 
   display: flex;
-  align-items: center;
   justify-content: center;
 
   transition:
