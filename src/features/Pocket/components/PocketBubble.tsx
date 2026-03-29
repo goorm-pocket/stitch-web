@@ -11,15 +11,7 @@ type PocketBubbleProps = {
   onMouseUp: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
-const PocketBubble = ({
-  item,
-  size,
-  x,
-  y,
-  angle,
-  onMouseDown,
-  onMouseUp,
-}: PocketBubbleProps) => {
+const PocketBubble = ({ item, size, x, y, angle, onMouseDown, onMouseUp }: PocketBubbleProps) => {
   const { postId, representative, read, ownerType } = item;
   const hasImage = representative.type === "IMAGE";
 
@@ -55,7 +47,7 @@ const Container = styled.div<{
   position: absolute;
   left: 0;
   top: 0;
-  border-radius: ${({ $hasImage, theme }) => ($hasImage ? "0" : theme.radii.round)};
+  border-radius: ${({ $hasImage }) => ($hasImage ? "0" : "50%")};
   overflow: ${({ $hasImage }) => ($hasImage ? "visible" : "hidden")};
   background: ${({ $hasImage }) => ($hasImage ? "transparent" : "white")};
   user-select: none;
@@ -73,10 +65,6 @@ const Container = styled.div<{
     return `2px solid ${color}`;
   }};
   box-shadow: ${({ $hasImage, theme }) => ($hasImage ? "none" : theme.shadows.sm)};
-  transition:
-    box-shadow ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing},
-    transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
-
   &:active {
     cursor: grabbing;
   }
