@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import FriendItem from "./components/FriendItem";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   useGetFriendsQuery,
   useGetReceivedRequestsQuery,
@@ -12,6 +12,7 @@ import SearchUserItem from "./components/SearchUserItem";
 import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 import type { Friend } from "@/shared/types/friend.type";
 import { useNavigate } from "react-router";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 const FriendPage = () => {
   const navigate = useNavigate();
@@ -32,6 +33,14 @@ const FriendPage = () => {
   // mutate
   const { mutate: sendFriendRequest } = useSendFriendRequestMutation();
 
+  // 커스텀 훅
+  // 밖에 클릭하면 친구 요청 리스트 닫는거
+  useClickOutside({
+    ref: searchInputRef,
+    onClickOutside: () => setShowSearchList(false),
+    enabled: showSearchList,
+  });
+
   const searchUserList = searchUserListRes?.pages[0].items ?? [];
 
   // 리스트 추출
@@ -43,20 +52,6 @@ const FriendPage = () => {
     sendFriendRequest({ userId: id });
     setSearchName("");
   };
-
-  // 밖에 클릭하면 친구 요청 리스트 닫는거
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchInputRef.current && !searchInputRef.current.contains(e.target as Node)) {
-        setShowSearchList(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   return (
     <Container>
