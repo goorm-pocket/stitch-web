@@ -23,6 +23,7 @@ export const GlobalStyle = createGlobalStyle`
     background-color: ${({ theme }) => theme.colors.background};
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -32,6 +33,7 @@ export const GlobalStyle = createGlobalStyle`
     min-height: 100dvh;
     background-color: ${({ theme }) => theme.colors.background};
     overflow-x: hidden;
+    overflow-y: auto;
     color: ${({ theme }) => theme.colors.text_primary};
     font-family:
       Inter,
@@ -40,6 +42,33 @@ export const GlobalStyle = createGlobalStyle`
       "Segoe UI",
       sans-serif;
     line-height: 1.5;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: ${({ theme }) => theme.colors.border3} transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.colors.border3};
+    border: 2px solid transparent;
+    border-radius: ${({ theme }) => theme.radii.pill};
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: ${({ theme }) => theme.colors.text_disable};
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   body.app-webview {
