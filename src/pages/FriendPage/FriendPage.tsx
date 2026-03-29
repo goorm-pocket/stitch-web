@@ -207,6 +207,10 @@ const SearchInput = styled.input`
     background: rgba(255, 255, 255, 0.16);
     border-color: rgba(255, 255, 255, 0.45);
   }
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
 `;
 
 const SearchUserList = styled.div`
