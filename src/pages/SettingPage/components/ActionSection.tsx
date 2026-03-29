@@ -46,7 +46,7 @@ const Container = styled.div`
 
   @media (max-width: 640px) {
     gap: ${({ theme }) => theme.space.sm};
-    margin-top: ${({ theme }) => theme.space.sm};
+    margin-top: 6px;
   }
 `;
 
@@ -67,7 +67,7 @@ const LogoutButton = styled.button`
   }
 
   @media (max-width: 640px) {
-    padding: 9px 16px;
+    padding: 8px 14px;
     font-size: ${({ theme }) => theme.fontSize.sm};
   }
 `;
@@ -89,7 +89,7 @@ const DeleteButton = styled.button`
   }
 
   @media (max-width: 640px) {
-    padding: 9px 16px;
+    padding: 8px 14px;
     font-size: ${({ theme }) => theme.fontSize.sm};
   }
 `;
