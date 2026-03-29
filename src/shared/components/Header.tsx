@@ -127,7 +127,7 @@ const NavItem = styled(NavLink)`
   gap: 6px;
   min-width: 0;
   white-space: nowrap;
-  padding: 10px 0;
+  padding: 10px;
   border-radius: ${({ theme }) => theme.radii.pill};
   font-weight: 700;
 

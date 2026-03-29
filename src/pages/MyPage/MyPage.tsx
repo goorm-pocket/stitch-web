@@ -31,12 +31,10 @@ const MyPage = () => {
           </ProfileTextBox>
         </Left>
 
-        <Right>
-          <SettingButton onClick={() => navigate("/setting")}>
-            <SettingIcon as={SettingsIcon} />
-            Settings
-          </SettingButton>
-        </Right>
+        <SettingButton onClick={() => navigate("/setting")}>
+          <SettingIcon as={SettingsIcon} />
+          Settings
+        </SettingButton>
       </ProfileContainer>
       <RecapButton onClick={() => navigate("/recap")}>
         <RecapTitle>My Recap</RecapTitle>
@@ -123,11 +121,6 @@ const Left = styled.div`
   }
 `;
 
-const Right = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
 const Avator = styled.img`
   width: 120px;
   height: 120px;
@@ -208,11 +201,6 @@ const SettingButton = styled.button`
 
   &:hover {
     background: ${({ theme }) => theme.colors.primary};
-  }
-
-  @media (max-width: 768px) {
-    position: static;
-    margin-left: auto;
   }
 `;
 
