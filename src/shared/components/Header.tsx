@@ -7,6 +7,7 @@ import ProfileModal from "../../features/ProfileModal/ProfileModal";
 import { NavLink, useNavigate } from "react-router";
 import { useState } from "react";
 import { useGetProfileQuery } from "../hooks/useUser";
+import Notification from "@/features/Notification/NotificationDropdown";
 
 const Header = () => {
   const { data: profile } = useGetProfileQuery();
@@ -22,7 +23,7 @@ const Header = () => {
         <Logo />
         <LogoText>Stitch</LogoText>
       </Left>
-      <Right>
+      <Mid>
         <NavBar>
           <NavItem to="/pocket">
             <NavIcon as={BoardIcon} />
@@ -39,6 +40,9 @@ const Header = () => {
             <NavText>My Page</NavText>
           </NavItem>
         </NavBar>
+      </Mid>
+      <Right>
+        <Notification />
         <AvatorBox>
           <AvatorButton onClick={openModal}>
             <Avator src={profile?.profileImageUrl} />
@@ -58,6 +62,7 @@ const Header = () => {
 export default Header;
 
 const HeaderContainer = styled.header`
+  position: relative;
   width: 100%;
   min-height: 55px;
   display: flex;
@@ -75,6 +80,8 @@ const HeaderContainer = styled.header`
 `;
 
 const Left = styled.div`
+  position: absolute;
+  left: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,11 +95,12 @@ const LogoText = styled.span`
   font-weight: bold;
 `;
 
-const Right = styled.div`
+const Mid = styled.div`
+  position: absolute;
   display: flex;
   gap: 15px;
-  min-width: 0;
-  align-items: center;
+  left: 50%;
+  transform: translateX(-50%);
 `;
 
 const NavBar = styled.nav`
@@ -134,13 +142,14 @@ const NavText = styled.span`
   font-size: 14px;
   font-weight: bold;
 
-  @media (max-width: 390px) {
+  @media (max-width: 767px) {
     display: none;
   }
 `;
 
 const AvatorBox = styled.div`
   padding-left: 15px;
+  margin-left: 15px;
   border-left: 1px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: 480px) {
@@ -162,6 +171,13 @@ const AvatorButton = styled.button`
   border: none;
   padding: 0;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+`;
+
+const Right = styled.div`
+  position: absolute;
+  right: 24px;
   display: flex;
   align-items: center;
 `;
