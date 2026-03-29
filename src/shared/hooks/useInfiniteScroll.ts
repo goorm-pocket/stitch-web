@@ -4,7 +4,7 @@ interface UseInfiniteScrollParams {
   enabled: boolean;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
-  rootRef: RefObject<HTMLElement | null>;
+  rootRef?: RefObject<HTMLElement | null>;
   targetRef: RefObject<HTMLElement | null>;
   onIntersect: () => void;
   rootMargin?: string;
@@ -22,7 +22,7 @@ export function useInfiniteScroll({
   useEffect(() => {
     if (!enabled) return;
     if (!hasNextPage) return;
-    if (!rootRef.current) return;
+
     if (!targetRef.current) return;
 
     const observer = new IntersectionObserver(
@@ -34,7 +34,7 @@ export function useInfiniteScroll({
         }
       },
       {
-        root: rootRef.current,
+        root: rootRef?.current ?? null,
       },
     );
 
