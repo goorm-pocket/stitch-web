@@ -481,25 +481,24 @@ const SectionTitle = styled.div`
 const AppearanceBox = styled.div`
   display: flex;
   justify-content: center;
-  gap: ${({ theme }) => theme.space.lg};
+  align-items: stretch;
+  gap: ${({ theme }) => theme.space.md};
   margin-bottom: ${({ theme }) => theme.space.xxl};
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  flex-wrap: nowrap;
 `;
 
 const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   position: relative;
   background: ${({ theme }) => theme.colors.background};
   border-radius: ${({ theme }) => theme.radii.md};
-  padding: ${({ theme }) => theme.space.lg};
-  width: min(100%, 190px);
+  padding: 16px 14px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   cursor: ${(props) => (props.$isEditing ? "pointer" : "default")};
   transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
 
@@ -511,13 +510,14 @@ const CustomBox = styled.div<{ $isEditing?: boolean; $isError?: boolean }>`
   }
 
   @media (max-width: 640px) {
-    width: 100%;
+    padding: 14px 12px;
+    max-width: none;
   }
 `;
 
 const PickerCircle = styled.div<{ $shape?: "round" | "rect"; $isError?: boolean }>`
-  width: 104px;
-  height: 104px;
+  width: 92px;
+  height: 92px;
 
   border-radius: ${(props) => (props.$shape === "rect" ? "0" : props.theme.radii.round)};
   border: 2px dashed ${({ theme, $isError }) => ($isError ? "#ff6b6b" : theme.colors.border)};
@@ -538,13 +538,13 @@ const PreviewImg = styled.img`
 `;
 
 const PlusIcon = styled.span`
-  font-size: 24px;
+  font-size: 22px;
   color: ${({ theme }) => theme.colors.text_disable};
   font-weight: 300;
 `;
 
 const EmojiDisplay = styled.span`
-  font-size: 36px;
+  font-size: 34px;
   line-height: 1;
 `;
 
@@ -558,9 +558,9 @@ const LabelText = styled.span`
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 
-  @media (max-width: 640px) {
+  @media (max-width: 520px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -568,7 +568,7 @@ const InputGrid = styled.div`
 const InputWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   label {
     font-size: ${({ theme }) => theme.fontSize.xs};
     font-weight: 700;
@@ -577,7 +577,7 @@ const InputWrapper = styled.div`
 `;
 
 const StyledInput = styled.input<{ $isError?: boolean }>`
-  padding: 12px 13px;
+  padding: 11px 12px;
   border: 1px solid ${(props) => (props.$isError ? "#ff6b6b" : props.theme.colors.border)};
   border-radius: ${({ theme }) => theme.radii.sm};
   font-size: ${({ theme }) => theme.fontSize.sm};
