@@ -7,13 +7,35 @@ type PocketBubbleProps = {
   x: number;
   y: number;
   angle: number;
-  onMouseDown: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
-  onMouseUp: (id: string, e: React.MouseEvent<HTMLDivElement>) => void;
+  onPointerDown: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
 };
 
-const PocketBubble = ({ item, size, x, y, angle, onMouseDown, onMouseUp }: PocketBubbleProps) => {
+const TWEMOJI_BASE_URL = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg";
+
+const toEmojiCode = (value: string) =>
+  Array.from(value.trim())
+    .map((char) => char.codePointAt(0)?.toString(16))
+    .filter(Boolean)
+    .join("-");
+
+const getEmojiImageUrl = (value: string) => {
+  const code = toEmojiCode(value);
+  return code ? `${TWEMOJI_BASE_URL}/${code}.svg` : null;
+};
+
+const PocketBubble = ({
+  item,
+  size,
+  x,
+  y,
+  angle,
+  onPointerDown,
+  onPointerUp,
+}: PocketBubbleProps) => {
   const { postId, representative, read, ownerType } = item;
   const hasImage = representative.type === "IMAGE";
+  const emojiImageUrl = !hasImage ? getEmojiImageUrl(representative.value) : null;
 
   return (
     <Container
@@ -25,11 +47,13 @@ const PocketBubble = ({ item, size, x, y, angle, onMouseDown, onMouseUp }: Pocke
         height: `${size}px`,
         transform: `translate(${x - size / 2}px, ${y - size / 2}px) rotate(${angle}rad)`,
       }}
-      onMouseDown={(e) => onMouseDown(postId, e)}
-      onMouseUp={(e) => onMouseUp(postId, e)}
+      onPointerDown={(e) => onPointerDown(postId, e)}
+      onPointerUp={(e) => onPointerUp(postId, e)}
     >
       {representative.type === "IMAGE" ? (
         <BubbleImage src={representative.value} alt={`bubble-${postId}`} draggable={false} />
+      ) : emojiImageUrl ? (
+        <EmojiImage src={emojiImageUrl} alt={representative.value} draggable={false} />
       ) : (
         <Emoji>{representative.value}</Emoji>
       )}
@@ -77,6 +101,14 @@ const BubbleImage = styled.img`
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+`;
+
+const EmojiImage = styled.img`
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 `;
 
 const Emoji = styled.div`

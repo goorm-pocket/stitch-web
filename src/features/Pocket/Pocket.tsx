@@ -163,7 +163,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
     setIsModalOpen(true);
   };
 
-  const handleMouseDown = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (id: string, e: React.PointerEvent<HTMLDivElement>) => {
     clickStartRef.current = {
       id,
       x: e.clientX,
@@ -171,7 +171,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
     };
   };
 
-  const handleMouseUp = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerUp = (id: string, e: React.PointerEvent<HTMLDivElement>) => {
     const start = clickStartRef.current;
     if (start.id !== id) return;
 
@@ -211,8 +211,8 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
                 x={pos.x}
                 y={pos.y}
                 angle={pos.angle}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
               />
             );
           })}

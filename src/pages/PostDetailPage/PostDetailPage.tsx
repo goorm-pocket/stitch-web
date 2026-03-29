@@ -149,7 +149,7 @@ const CommentInputBox = styled.div`
 const ReplyTargetIdBox = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   align-self: flex-start;
   padding: 8px 12px;
   border-radius: ${({ theme }) => theme.radii.pill};
@@ -164,13 +164,13 @@ const ReplyMention = styled.span`
 `;
 
 const ReplyRemoveButton = styled.button`
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: none;
   border-radius: ${({ theme }) => theme.radii.pill};
   background: transparent;
   color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
@@ -198,10 +198,10 @@ const CommentTextarea = styled.textarea`
   border-radius: ${({ theme }) => theme.radii.lg};
   resize: none;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.background};
+  background: white;
   color: ${({ theme }) => theme.colors.text_primary};
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
 
   &::placeholder {
     color: ${({ theme }) => theme.colors.text_secondary};

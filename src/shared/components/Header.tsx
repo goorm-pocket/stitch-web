@@ -145,6 +145,7 @@ const NavItem = styled(NavLink)`
 
 const NavIcon = styled.svg`
   color: currentColor;
+  flex-shrink: 0;
 `;
 
 const NavText = styled.span`
