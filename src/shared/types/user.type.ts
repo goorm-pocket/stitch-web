@@ -8,6 +8,8 @@ export interface Profile {
   age?: number;
   isPublic: boolean;
   isMine: boolean;
+  friendCount: number;
+  postCount: number;
 }
 
 export interface SearchUser {
