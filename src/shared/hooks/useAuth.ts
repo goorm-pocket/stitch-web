@@ -13,6 +13,7 @@ export function useLogoutMutation() {
     mutationFn: logout,
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
 }
