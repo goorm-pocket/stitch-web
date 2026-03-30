@@ -80,7 +80,6 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
 
         <LikeButton $liked={post.likedByMe} onClick={handleLike}>
           <HeartIcon $liked={post.likedByMe}>❤</HeartIcon>
-          <span>{post.likeCount}</span>
         </LikeButton>
       </Header>
 
