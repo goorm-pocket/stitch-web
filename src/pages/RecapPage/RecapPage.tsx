@@ -10,7 +10,7 @@ const RecapPage = () => {
     <Container>
       <TitleContainer>
         <Title>Recap</Title>
-        <Subtitle>Look back on what you’ve collected.</Subtitle>
+        <Subtitle>{board?.summary}</Subtitle>
       </TitleContainer>
 
       <Pocket board={board} mode="RECAP" />
