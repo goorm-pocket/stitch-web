@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { registerPushToken } from "./shared/api/token";
 
 const queryClient = new QueryClient();
+const OBSOLETE_STORAGE_KEYS = ["stitch.create-post.draft"];
 
 const isAppWebView = Boolean(window.ReactNativeWebView) || /stitch-app/i.test(navigator.userAgent);
 
@@ -86,6 +87,10 @@ document.addEventListener("message", handleBridgeMessage as EventListener);
 window.addEventListener("stitch:app-context", ((event: Event) => {
   applyAppContext((event as CustomEvent).detail);
 }) as EventListener);
+
+OBSOLETE_STORAGE_KEYS.forEach((key) => {
+  localStorage.removeItem(key);
+});
 
 applyAppContext(window.__STITCH_APP_CONTEXT__);
 void syncPushToken(window.__STITCH_PUSH_TOKEN__);
