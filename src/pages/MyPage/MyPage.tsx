@@ -196,7 +196,6 @@ const StatItem = styled.div`
   @media (max-width: 768px) {
     padding: 5px 9px;
     border-radius: 7px;
-    background: rgba(74, 88, 255, 0.1);
   }
 `;
 

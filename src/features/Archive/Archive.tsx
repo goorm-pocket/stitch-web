@@ -5,6 +5,8 @@ import DayCell from "./components/DayCell";
 import ArchivePostSlider from "../../features/ArchivePostSlider/ArchivePostSlider";
 import { useNavigate } from "react-router";
 import { useArchiveCalendar } from "./hooks/useArchive";
+import { getApiErrorMessage } from "@/shared/utils/error";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 interface ArchiveProps {
   userId?: string;
@@ -20,7 +22,15 @@ const Archive = ({ userId }: ArchiveProps) => {
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
   const [isSliderOpen, setIsSliderOpen] = useState(false);
 
-  const { data: calendarData } = useArchiveCalendar({ year, month, userId });
+  const {
+    data: calendarData,
+    error,
+    isError,
+    isLoading,
+  } = useArchiveCalendar({ year, month, userId });
+
+  const shouldLockCalendar = isError;
+  const lockMessage = getApiErrorMessage(error);
 
   const cells = useMemo(() => {
     const startOfMonth = visibleDate.startOf("month");
@@ -53,6 +63,7 @@ const Archive = ({ userId }: ArchiveProps) => {
   };
 
   const handleDayClick = (date: dayjs.Dayjs | null) => {
+    if (shouldLockCalendar || isLoading) return;
     if (!date) return;
 
     const formattedDate = date.format("YYYY-MM-DD");
@@ -61,7 +72,6 @@ const Archive = ({ userId }: ArchiveProps) => {
     if (!dayData?.hasPost) return;
 
     const postIds = dayData.markers.map((marker) => marker.postId);
-    console.log(postIds);
     setSelectedDate(formattedDate);
     setSelectedPostIds(postIds);
     setIsSliderOpen(true);
@@ -95,22 +105,37 @@ const Archive = ({ userId }: ArchiveProps) => {
         <span>SAT</span>
       </WeekRow>
 
-      <Grid>
-        {cells.map((cell, idx) => {
-          const dayData = getDayData(cell.date);
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        <CalendarBody>
+          <Grid $locked={shouldLockCalendar || isLoading}>
+            {cells.map((cell, idx) => {
+              const dayData = getDayData(cell.date);
 
-          return (
-            <DayCell
-              key={idx}
-              cell={cell}
-              dayData={dayData}
-              onClick={() => handleDayClick(cell.date)}
-            />
-          );
-        })}
-      </Grid>
+              return (
+                <DayCell
+                  key={idx}
+                  cell={cell}
+                  dayData={dayData}
+                  onClick={() => handleDayClick(cell.date)}
+                />
+              );
+            })}
+          </Grid>
 
-      {isSliderOpen && (
+          {shouldLockCalendar && !isLoading && (
+            <Overlay>
+              <OverlayCard>
+                <OverlayTitle>캘린더를 볼 수 없어요</OverlayTitle>
+                <OverlayText>{lockMessage}</OverlayText>
+              </OverlayCard>
+            </Overlay>
+          )}
+        </CalendarBody>
+      )}
+
+      {isSliderOpen && !shouldLockCalendar && (
         <ArchivePostSlider
           selectedDate={selectedDate}
           postIds={selectedPostIds}
@@ -182,12 +207,56 @@ const WeekRow = styled.div`
   font-size: ${({ theme }) => theme.fontSize.xs};
 `;
 
-const Grid = styled.div`
+const CalendarBody = styled.div`
+  position: relative;
+`;
+
+const Grid = styled.div<{ $locked?: boolean }>`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: ${({ theme }) => theme.space.md};
+  filter: ${({ $locked }) => ($locked ? "grayscale(0.2) blur(1.5px)" : "none")};
+  opacity: ${({ $locked }) => ($locked ? 0.45 : 1)};
+  pointer-events: ${({ $locked }) => ($locked ? "none" : "auto")};
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
 
   @media (max-width: 640px) {
     gap: ${({ theme }) => theme.space.sm};
   }
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 250, 252, 0.58);
+  border-radius: 20px;
+`;
+
+const OverlayCard = styled.div`
+  width: min(320px, calc(100% - 32px));
+  padding: 20px 18px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 18px;
+  background: ${({ theme }) => theme.colors.surface};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  text-align: center;
+`;
+
+const OverlayTitle = styled.h3`
+  margin: 0 0 8px;
+  font-size: ${({ theme }) => theme.fontSize.lg};
+  color: ${({ theme }) => theme.colors.text_primary};
+`;
+
+const OverlayText = styled.p`
+  margin: 0;
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;

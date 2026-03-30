@@ -21,6 +21,11 @@ export async function createPost(body: CreatePostReq): Promise<CreatePostRes> {
   return res.data.data;
 }
 
+export async function deletePost({ postId }: { postId: string }) {
+  const res = await apiClient.delete(`/api/v1/posts/${postId}`);
+  return res.data.data;
+}
+
 export async function getPostById({ postId }: { postId: string }): Promise<Post> {
   const res = await apiClient.get<ApiResponse<Post>>(`/api/v1/posts/${postId}`);
   return res.data.data;

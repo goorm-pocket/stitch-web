@@ -23,6 +23,9 @@ interface GetRecapBoardProps {
 
 interface GetRecapBoardRes {
   items: PocketBubbleType[];
+  summary: string;
+  weekEndDate: string;
+  weekStartDate: string;
 }
 
 export async function getRecapBoard({
