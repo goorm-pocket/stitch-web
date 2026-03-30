@@ -63,3 +63,8 @@ export async function getReplyComments({
   );
   return res.data.data;
 }
+
+export async function deleteComment({ commentId }: { commentId: string }) {
+  const res = await apiClient.delete(`/api/v1/comments/${commentId}`);
+  return res.data.data;
+}
