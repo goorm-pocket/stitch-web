@@ -3,6 +3,7 @@ import styled from "styled-components";
 import type { Comment } from "../../../shared/types/comment.type";
 import { useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
 import ReCommentItem from "./ReCommentItem";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 interface CommentItemProps {
   comment: Comment;
@@ -80,7 +81,9 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
         {showReplies && comment.hasChild && (
           <ReplySection>
             {isLoading ? (
-              <ReplyInfoText>Loading...</ReplyInfoText>
+              <ReplySpinnerContainer>
+                <LoadingSpinner size="sm" message="답글을 불러오는 중..." />
+              </ReplySpinnerContainer>
             ) : (
               <>
                 <ReplyList>
@@ -95,8 +98,13 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
                     onClick={() => fetchNextPage()}
                     disabled={isFetchingNextPage}
                   >
-                    {isFetchingNextPage ? "Loading..." : "More replies"}
+                    {isFetchingNextPage ? "불러오는 중..." : "More replies"}
                   </MoreButton>
+                )}
+                {isFetchingNextPage && (
+                  <ReplySpinnerContainer>
+                    <LoadingSpinner size="sm" />
+                  </ReplySpinnerContainer>
                 )}
               </>
             )}
@@ -273,9 +281,9 @@ const ReplyList = styled.ul`
   list-style: none;
 `;
 
-const ReplyInfoText = styled.span`
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.text_secondary};
+const ReplySpinnerContainer = styled.div`
+  width: 100%;
+  min-height: 56px;
 `;
 
 const MoreButton = styled.button`

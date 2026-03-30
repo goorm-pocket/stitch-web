@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import PostForm from "../PostForm/PostForm";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 interface PostModalProps {
   postId: string;
@@ -9,7 +10,7 @@ interface PostModalProps {
 }
 
 const PostModal = ({ onClose, postId, onPostClick }: PostModalProps) => {
-  const { data: post } = useGetPostByIdQuery({ postId });
+  const { data: post, isLoading } = useGetPostByIdQuery({ postId });
 
   return (
     <Overlay onClick={onClose}>
@@ -19,7 +20,15 @@ const PostModal = ({ onClose, postId, onPostClick }: PostModalProps) => {
         </Header>
 
         <Content>
-          <PostCard onClick={onPostClick}>{post && <PostForm post={post} />}</PostCard>
+          <PostCard onClick={onPostClick}>
+            {isLoading ? (
+              <LoadingSpinner size="md" message="게시글 불러오는 중..." />
+            ) : post ? (
+              <PostForm post={post} />
+            ) : (
+              <EmptyText>게시글을 불러오지 못했습니다.</EmptyText>
+            )}
+          </PostCard>
         </Content>
       </ModalContainer>
     </Overlay>
@@ -143,4 +152,12 @@ const PostCard = styled.div`
     width: 100%;
     border-radius: ${({ theme }) => theme.radii.lg};
   }
+`;
+
+const EmptyText = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.space.xl} 0;
+  text-align: center;
+  font-size: ${({ theme }) => theme.fontSize.md};
+  color: ${({ theme }) => theme.colors.text_secondary};
 `;

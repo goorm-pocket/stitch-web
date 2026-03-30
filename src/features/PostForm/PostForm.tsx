@@ -260,23 +260,32 @@ const NavButton = styled.button<{ $left?: boolean }>`
   position: absolute;
   top: 50%;
   ${({ $left }) => ($left ? "left: 12px;" : "right: 12px;")}
-  transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
-  border: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.pill};
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.icon};
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
-  z-index: 2;
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+
+  display: flex;
+  justify-content: center;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.92);
+    background: ${({ theme }) => theme.colors.hover};
+    border-color: ${({ theme }) => theme.colors.sub};
+  }
+
+  &:active {
+    transform: scale(0.96);
   }
 `;
 
