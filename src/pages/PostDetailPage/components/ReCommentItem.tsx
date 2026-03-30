@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import styled from "styled-components";
 import type { Comment } from "../../../shared/types/comment.type";
 import { useDeleteCommentMutation } from "@/shared/hooks/useComment";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 interface CommentItemProps {
   comment: Comment;
@@ -20,11 +21,19 @@ const formatCommentTime = (dateString: string) => {
 };
 
 const ReCommentItem = ({ comment, onReply }: CommentItemProps) => {
-  const [showMenu, setShowMenu] = useState(false);
+  // ref
   const menuRef = useRef<HTMLDivElement | null>(null);
 
+  // state
+  const [showMenu, setShowMenu] = useState(false);
+
+  // mutetion
   const { mutate: deleteComments, isPending: isDeleting } = useDeleteCommentMutation();
 
+  // 커스텀 훅
+  useClickOutside({ ref: menuRef, onClickOutside: () => setShowMenu(false) });
+
+  // handler
   const handleDeleteComment = () => {
     deleteComments(
       { commentId: comment.commentId },
@@ -35,23 +44,6 @@ const ReCommentItem = ({ comment, onReply }: CommentItemProps) => {
       },
     );
   };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
 
   return (
     <Container>

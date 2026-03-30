@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import styled from "styled-components";
 import type { Post } from "../../shared/types/post.type";
 import {
@@ -7,6 +7,7 @@ import {
   useDeletePostMutation,
 } from "@/shared/hooks/usePost";
 import { useNavigate } from "react-router";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 interface PostFormProps {
   post: Post;
@@ -15,10 +16,22 @@ interface PostFormProps {
 
 const PostForm = ({ post, mode = "default" }: PostFormProps) => {
   const navigate = useNavigate();
-  // mutate
+  // ref
+  const swipeStartXRef = useRef<number | null>(null);
+  const swipeStartYRef = useRef<number | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // state
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
+
+  // mutation
   const { mutate: createPostLike } = useCreatePostLikeMutation({ postId: post.postId });
   const { mutate: deletePostLike } = useDeletePostLikeMutation({ postId: post.postId });
   const { mutateAsync: deletePost, isPending: isDeleting } = useDeletePostMutation();
+
+  // 커스텀 훅
+  useClickOutside({ ref: menuRef, onClickOutside: () => setShowMenu(false) });
 
   const images = post.images ?? [];
   const representativeImage = images[0]?.imageUrl;
@@ -32,13 +45,7 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
     (post.markerType === "EMOJI" && Boolean(post.markerEmoji)) ||
     (post.markerType === "IMAGE" && Boolean(post.markerImageUrl));
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showMenu, setShowMenu] = useState(false);
-
-  const swipeStartXRef = useRef<number | null>(null);
-  const swipeStartYRef = useRef<number | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
+  // handler
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -92,23 +99,6 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
     swipeStartXRef.current = null;
     swipeStartYRef.current = null;
   };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
 
   return (
     <Container>

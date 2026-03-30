@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import type { Comment } from "../../../shared/types/comment.type";
 import { useDeleteCommentMutation, useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
 import ReCommentItem from "./ReCommentItem";
 import LoadingSpinner from "@/shared/components/LoadingSpinner";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 interface CommentItemProps {
   comment: Comment;
@@ -22,22 +23,31 @@ const formatCommentTime = (dateString: string) => {
 };
 
 const CommentItem = ({ comment, onReply }: CommentItemProps) => {
-  const isReply = comment.depth > 1;
-  const [showReplies, setShowReplies] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
+  // ref
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const { mutate: deleteComments, isPending: isDeleting } = useDeleteCommentMutation();
+  // state
+  const [showReplies, setShowReplies] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
+  // query
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useGetReplyCommentsQuery({
       commentId: comment.commentId,
     });
 
+  // mutation
+  const { mutate: deleteComments, isPending: isDeleting } = useDeleteCommentMutation();
+
+  // 커스텀 훅
+  useClickOutside({ ref: menuRef, onClickOutside: () => setShowMenu(false) });
+
+  const isReply = comment.depth > 1;
   const replies = useMemo(() => {
     return data?.pages.flatMap((page) => page.comments) ?? [];
   }, [data]);
 
+  // handler
   const handleToggleReplies = () => {
     setShowReplies((prev) => !prev);
   };
@@ -52,23 +62,6 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
       },
     );
   };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
 
   return (
     <Container $isReply={isReply}>
