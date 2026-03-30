@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import type { Comment } from "../../../shared/types/comment.type";
-import { useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
+import { useDeleteCommentMutation, useGetReplyCommentsQuery } from "@/shared/hooks/useComment";
 import ReCommentItem from "./ReCommentItem";
 import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
@@ -24,6 +24,10 @@ const formatCommentTime = (dateString: string) => {
 const CommentItem = ({ comment, onReply }: CommentItemProps) => {
   const isReply = comment.depth > 1;
   const [showReplies, setShowReplies] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const { mutate: deleteComments, isPending: isDeleting } = useDeleteCommentMutation();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useGetReplyCommentsQuery({
@@ -37,6 +41,34 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
   const handleToggleReplies = () => {
     setShowReplies((prev) => !prev);
   };
+
+  const handleDeleteComment = () => {
+    deleteComments(
+      { commentId: comment.commentId },
+      {
+        onSuccess: () => {
+          setShowMenu(false);
+        },
+      },
+    );
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
 
   return (
     <Container $isReply={isReply}>
@@ -58,6 +90,20 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
             >
               Reply
             </ReplyButton>
+
+            <MenuWrapper ref={menuRef}>
+              <MenuButton type="button" onClick={() => setShowMenu((prev) => !prev)}>
+                ⋯
+              </MenuButton>
+
+              {showMenu && (
+                <MenuDropdown>
+                  <DeleteButton type="button" onClick={handleDeleteComment} disabled={isDeleting}>
+                    {isDeleting ? "삭제 중..." : "삭제"}
+                  </DeleteButton>
+                </MenuDropdown>
+              )}
+            </MenuWrapper>
           </ActionRow>
         </TopRow>
 
@@ -65,11 +111,12 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
           {comment?.mentionNickname && <ReplyMention>@{comment.mentionNickname}</ReplyMention>}{" "}
           {comment.content}
         </Content>
+
         <MetaRow>
           <DateText>{formatCommentTime(comment.createdAt)}</DateText>
 
           {comment.hasChild && (
-            <ToggleRepliesButton onClick={handleToggleReplies}>
+            <ToggleRepliesButton type="button" onClick={handleToggleReplies}>
               <ChevronIcon $open={showReplies} viewBox="0 0 24 24">
                 <path d="M7 10L12 15L17 10" />
               </ChevronIcon>
@@ -101,6 +148,7 @@ const CommentItem = ({ comment, onReply }: CommentItemProps) => {
                     {isFetchingNextPage ? "불러오는 중..." : "More replies"}
                   </MoreButton>
                 )}
+
                 {isFetchingNextPage && (
                   <ReplySpinnerContainer>
                     <LoadingSpinner size="sm" />
@@ -204,6 +252,65 @@ const ReplyButton = styled.button`
 
   &:hover {
     background: ${({ theme }) => theme.colors.hover};
+  }
+`;
+
+const MenuWrapper = styled.div`
+  position: relative;
+`;
+
+const MenuButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.text_secondary};
+  border-radius: ${({ theme }) => theme.radii.round};
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+  }
+`;
+
+const MenuDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 90px;
+  padding: 6px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  background: ${({ theme }) => theme.colors.surface};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  z-index: 10;
+`;
+
+const DeleteButton = styled.button`
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  text-align: left;
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
   }
 `;
 
