@@ -13,6 +13,7 @@ import { useGetProfileByNameQuery } from "@/shared/hooks/useUser";
 import type { Friend } from "@/shared/types/friend.type";
 import { useNavigate } from "react-router";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 const FriendPage = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const FriendPage = () => {
   const [searchName, setSearchName] = useState<string>("");
 
   // query
-  const { data: searchUserListRes } = useGetProfileByNameQuery({ query: searchName });
+  const { data: searchUserListRes, isLoading } = useGetProfileByNameQuery({ query: searchName });
 
   const { data: friendsPages } = useGetFriendsQuery();
   const { data: sentRequestsRes } = useGetSentRequestsQuery();
@@ -71,8 +72,10 @@ const FriendPage = () => {
 
           {showSearchList && (
             <SearchUserList>
-              {searchUserList?.length > 0 ? (
-                searchUserList?.map((item) => (
+              {isLoading ? (
+                <LoadingSpinner size="sm" message="검색 중..." />
+              ) : searchUserList.length > 0 ? (
+                searchUserList.map((item) => (
                   <SearchUserItem
                     key={item.userId}
                     user={item}
