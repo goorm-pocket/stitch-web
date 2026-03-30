@@ -1,7 +1,9 @@
 import { useFetchMeQuery } from "@/shared/hooks/useAuth";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 import { sendToApp } from "@/shared/webview/webview";
 import { useEffect, useRef } from "react";
 import { Navigate, Outlet } from "react-router";
+import styled from "styled-components";
 
 const ProtectedRouter = () => {
   const { data, isPending, isError } = useFetchMeQuery();
@@ -23,7 +25,13 @@ const ProtectedRouter = () => {
     hasSentLoginSuccessRef.current = true;
   }, [data]);
 
-  if (isPending) return <div>로딩 중...</div>;
+  if (isPending) {
+    return (
+      <FullscreenSpinner>
+        <LoadingSpinner size="lg" message="사용자 정보를 불러오는 중..." />
+      </FullscreenSpinner>
+    );
+  }
 
   if (isError || !data) {
     return <Navigate to="/" replace />;
@@ -32,3 +40,8 @@ const ProtectedRouter = () => {
 };
 
 export default ProtectedRouter;
+
+const FullscreenSpinner = styled.div`
+  width: 100%;
+  min-height: 100vh;
+`;

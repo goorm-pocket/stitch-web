@@ -6,6 +6,7 @@ import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
 import { useCreateCommentMutation, useGetCommentsQuery } from "@/shared/hooks/useComment";
 import { useRef, useState } from "react";
 import { useInfiniteScroll } from "@/shared/hooks/useInfiniteScroll";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 const PostDetailPage = () => {
   const { id } = useParams();
@@ -19,12 +20,13 @@ const PostDetailPage = () => {
   const [replyTargetName, setReplyTargetName] = useState<string>("");
 
   // query
-  const { data: post } = useGetPostByIdQuery({ postId: id! });
+  const { data: post, isLoading: isPostLoading } = useGetPostByIdQuery({ postId: id! });
   const {
     data: commentsPages,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    isLoading: isCommentsLoading,
   } = useGetCommentsQuery({ postId: id! });
 
   // mutate
@@ -67,7 +69,12 @@ const PostDetailPage = () => {
   return (
     <Container>
       <ContentSection>
-        <PostCard>{post && <PostForm post={post} mode="detail" />}</PostCard>
+        {isPostLoading && (
+          <PostLoadingContainer>
+            <LoadingSpinner size="lg" message="게시글을 불러오는 중..." />
+          </PostLoadingContainer>
+        )}
+        {!isPostLoading && <PostCard>{post && <PostForm post={post} mode="detail" />}</PostCard>}
 
         <CommentSection>
           <CommentHeader>
@@ -97,12 +104,22 @@ const PostDetailPage = () => {
           </CommentInputBox>
 
           <CommentList ref={commentListRef}>
-            {comments.map((comment) => (
-              <CommentItem key={comment.commentId} comment={comment} onReply={handleReply} />
-            ))}
+            {isCommentsLoading ? (
+              <InlineSpinnerContainer>
+                <LoadingSpinner size="md" message="댓글을 불러오는 중..." />
+              </InlineSpinnerContainer>
+            ) : (
+              comments.map((comment) => (
+                <CommentItem key={comment.commentId} comment={comment} onReply={handleReply} />
+              ))
+            )}
             <LoadMoreTrigger ref={loadMoreRef} />
 
-            {isFetchingNextPage && <LoadMoreText>Loading...</LoadMoreText>}
+            {isFetchingNextPage && (
+              <InlineSpinnerContainer>
+                <LoadingSpinner size="sm" message="댓글 더 불러오는 중..." />
+              </InlineSpinnerContainer>
+            )}
           </CommentList>
         </CommentSection>
       </ContentSection>
@@ -133,6 +150,10 @@ const PostCard = styled.section`
   border-radius: ${({ theme }) => theme.radii.xxl};
   box-shadow: ${({ theme }) => theme.shadows.xs};
   overflow: hidden;
+`;
+
+const PostLoadingContainer = styled(PostCard)`
+  min-height: 320px;
 `;
 
 const CommentSection = styled.section`
@@ -271,9 +292,7 @@ const LoadMoreTrigger = styled.div`
   height: 1px;
 `;
 
-const LoadMoreText = styled.div`
-  padding: 8px 0;
-  text-align: center;
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.text_secondary};
+const InlineSpinnerContainer = styled.div`
+  width: 100%;
+  min-height: 72px;
 `;

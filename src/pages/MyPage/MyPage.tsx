@@ -20,13 +20,12 @@ const MyPage = () => {
             <ProfileDescription>{profile?.realName}</ProfileDescription>
             <StatsRow>
               <StatItem>
-                <StatNumber>{profile?.friendCount}</StatNumber>
-                <StatLabel>FRIENDS</StatLabel>
+                <StatNumber>{profile?.friendCount || 0}</StatNumber>
+                <StatLabel>&nbsp;FRIENDS</StatLabel>
               </StatItem>
-              <StatDivider>·</StatDivider>
               <StatItem>
-                <StatNumber>{profile?.postCount}</StatNumber>
-                <StatLabel>POCKET</StatLabel>
+                <StatNumber>{profile?.postCount || 0}</StatNumber>
+                <StatLabel>&nbsp;POCKET</StatLabel>
               </StatItem>
             </StatsRow>
           </ProfileTextBox>
@@ -216,16 +215,6 @@ const StatLabel = styled.span`
 
   @media (max-width: 768px) {
     font-size: 10px;
-  }
-`;
-
-const StatDivider = styled.span`
-  color: ${({ theme }) => theme.colors.text_secondary};
-  font-size: ${({ theme }) => theme.fontSize.sm};
-  line-height: 1;
-
-  @media (max-width: 768px) {
-    display: none;
   }
 `;
 

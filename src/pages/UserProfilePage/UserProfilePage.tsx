@@ -20,12 +20,12 @@ const UserProfilePage = () => {
             <ProfileDescription>{profile?.realName}</ProfileDescription>
             <BadgeContainer>
               <Badge>
-                <BadgeNumber>{profile?.friendCount}</BadgeNumber>
-                <span>FRIENDS</span>
+                <BadgeNumber>{profile?.friendCount || 0}</BadgeNumber>
+                <span>&nbsp;FRIENDS</span>
               </Badge>
               <Badge>
-                <BadgeNumber>{profile?.postCount}</BadgeNumber>
-                <span>POCKET</span>
+                <BadgeNumber>{profile?.postCount || 0}</BadgeNumber>
+                <span>&nbsp;POCKET</span>
               </Badge>
             </BadgeContainer>
           </ProfileTextBox>

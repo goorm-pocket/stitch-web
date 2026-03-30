@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import styled from "styled-components";
 import PostForm from "../PostForm/PostForm";
 import { useGetPostByIdQuery } from "@/shared/hooks/usePost";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 interface ArchivePostSliderProps {
   selectedDate: string | null;
@@ -18,8 +19,7 @@ const ArchivePostSlider = ({
 }: ArchivePostSliderProps) => {
   const [currentIdx, setCurrendIdx] = useState<number>(0);
   const currentPostId = postIds[currentIdx];
-  const { data: post } = useGetPostByIdQuery({ postId: currentPostId });
-  console.log(post);
+  const { data: post, isLoading } = useGetPostByIdQuery({ postId: currentPostId });
 
   const title = useMemo(() => {
     if (!selectedDate) return "";
@@ -67,7 +67,13 @@ const ArchivePostSlider = ({
         ) : (
           <SliderViewport>
             <PostCard onClick={() => onPostClick(currentPostId)}>
-              {post && <PostForm post={post} />}
+              {isLoading ? (
+                <LoadingSpinner size="md" message="게시글 불러오는 중..." />
+              ) : post ? (
+                <PostForm post={post} />
+              ) : (
+                <EmptyText>게시글을 불러오지 못했습니다.</EmptyText>
+              )}
             </PostCard>
           </SliderViewport>
         )}
@@ -144,11 +150,11 @@ const ArrowButton = styled.button`
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.icon};
   font-size: 24px;
+  line-height: 1;
   cursor: pointer;
   box-shadow: ${({ theme }) => theme.shadows.xs};
 
   display: flex;
-  align-items: center;
   justify-content: center;
 
   transition:
