@@ -31,7 +31,7 @@ export function createPocketBodies({
     const body = Matter.Bodies.circle(x, y, itemSize / 2, {
       restitution: 0.7, // 탄성
       friction: 0.02, // 벽이나 바닥이 얼마나 미끄러운지
-      frictionAir: 0.07, // 공기 저항
+      frictionAir: 0.04, // 공기 저항
       density: 0.002, // 밀도
     });
 
