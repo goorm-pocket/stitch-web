@@ -5,6 +5,8 @@ import { fetchMe } from "@/shared/api/auth";
 import { getProfile } from "@/shared/api/user";
 import { useQueryClient } from "@tanstack/react-query";
 import { sendToApp } from "@/shared/webview/webview";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
+import styled from "styled-components";
 
 const CallbackPage = () => {
   const navigate = useNavigate();
@@ -58,7 +60,16 @@ const CallbackPage = () => {
 
     run();
   }, [oauthLogin, navigate, queryClient]);
-  return <div>로딩 스피너</div>;
+  return (
+    <Container>
+      <LoadingSpinner size="lg" />
+    </Container>
+  );
 };
 
 export default CallbackPage;
+
+const Container = styled.div`
+  width: 100%;
+  height: 100vh;
+`;
