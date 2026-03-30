@@ -14,6 +14,7 @@ import type { Friend } from "@/shared/types/friend.type";
 import { useNavigate } from "react-router";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
 import LoadingSpinner from "@/shared/components/LoadingSpinner";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
 const FriendPage = () => {
   const navigate = useNavigate();
@@ -23,9 +24,12 @@ const FriendPage = () => {
   const [showSearchList, setShowSearchList] = useState<boolean>(false);
   const [selectList, setSelectList] = useState<"friend" | "sent" | "received">("friend");
   const [searchName, setSearchName] = useState<string>("");
+  const debouncedSearchName = useDebounce(searchName, 300);
 
   // query
-  const { data: searchUserListRes, isLoading } = useGetProfileByNameQuery({ query: searchName });
+  const { data: searchUserListRes, isLoading } = useGetProfileByNameQuery({
+    query: debouncedSearchName,
+  });
 
   const { data: friendsPages } = useGetFriendsQuery();
   const { data: sentRequestsRes } = useGetSentRequestsQuery();
