@@ -7,25 +7,36 @@ interface CreatePocketWallsParams {
 }
 
 export function createPocketWalls({ width, height, wallThickness }: CreatePocketWallsParams) {
-  const leftWall = Matter.Bodies.rectangle(wallThickness / 2, height / 2, wallThickness, height, {
-    isStatic: true,
-  });
-  const rightWall = Matter.Bodies.rectangle(
-    width - wallThickness / 2,
+  const offset = 20;
+
+  const leftWall = Matter.Bodies.rectangle(
+    offset - wallThickness / 2,
     height / 2,
     wallThickness,
     height,
-    { isStatic: true }, // 고정된 위치라는 뜻
+    { isStatic: true },
   );
 
-  const topWall = Matter.Bodies.rectangle(width / 2, wallThickness / 2, width, wallThickness, {
-    isStatic: true,
-  });
+  const rightWall = Matter.Bodies.rectangle(
+    width - offset + wallThickness / 2,
+    height / 2,
+    wallThickness,
+    height,
+    { isStatic: true },
+  );
+
+  const topWall = Matter.Bodies.rectangle(
+    width / 2,
+    offset - wallThickness / 2,
+    width - offset * 2 + wallThickness * 2,
+    wallThickness,
+    { isStatic: true },
+  );
 
   const bottomWall = Matter.Bodies.rectangle(
     width / 2,
-    height - wallThickness / 2,
-    width,
+    height - offset + wallThickness / 2,
+    width - offset * 2 + wallThickness * 2,
     wallThickness,
     { isStatic: true },
   );
