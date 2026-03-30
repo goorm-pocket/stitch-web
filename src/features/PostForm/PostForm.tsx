@@ -1,7 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { Post } from "../../shared/types/post.type";
-import { useCreatePostLikeMutation, useDeletePostLikeMutation } from "@/shared/hooks/usePost";
+import {
+  useCreatePostLikeMutation,
+  useDeletePostLikeMutation,
+  useDeletePostMutation,
+} from "@/shared/hooks/usePost";
+import { useNavigate } from "react-router";
 
 interface PostFormProps {
   post: Post;
@@ -9,9 +14,11 @@ interface PostFormProps {
 }
 
 const PostForm = ({ post, mode = "default" }: PostFormProps) => {
+  const navigate = useNavigate();
   // mutate
   const { mutate: createPostLike } = useCreatePostLikeMutation({ postId: post.postId });
   const { mutate: deletePostLike } = useDeletePostLikeMutation({ postId: post.postId });
+  const { mutateAsync: deletePost, isPending: isDeleting } = useDeletePostMutation();
 
   const images = post.images ?? [];
   const representativeImage = images[0]?.imageUrl;
@@ -19,22 +26,39 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
   const isDetailMode = mode === "detail";
   const shouldShowSlider = isDetailMode && images.length > 1;
   const hasImage = Boolean(representativeImage);
+  const shouldShowMoreMenu = isDetailMode && post.isEditable;
 
   const hasMarker =
     (post.markerType === "EMOJI" && Boolean(post.markerEmoji)) ||
     (post.markerType === "IMAGE" && Boolean(post.markerImageUrl));
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
+
   const swipeStartXRef = useRef<number | null>(null);
   const swipeStartYRef = useRef<number | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
+
     if (post.likedByMe) {
       deletePostLike({ postId: post.postId });
     } else {
       createPostLike({ postId: post.postId });
     }
+  };
+
+  const handleDeletePost = () => {
+    deletePost(
+      { postId: post.postId },
+      {
+        onSuccess: () => {
+          setShowMenu(false);
+          navigate("/pocket");
+        },
+      },
+    );
   };
 
   const handlePrev = () => {
@@ -69,6 +93,23 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
     swipeStartYRef.current = null;
   };
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
+
   return (
     <Container>
       <Header>
@@ -83,9 +124,27 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
           </AuthorInfo>
         </AuthorRow>
 
-        <LikeButton $liked={post.likedByMe} onClick={handleLike} type="button">
-          <HeartIcon $liked={post.likedByMe}>❤</HeartIcon>
-        </LikeButton>
+        <HeaderActionRow>
+          <LikeButton $liked={post.likedByMe} onClick={handleLike} type="button">
+            <HeartIcon $liked={post.likedByMe}>❤</HeartIcon>
+          </LikeButton>
+
+          {shouldShowMoreMenu && (
+            <MenuWrapper ref={menuRef}>
+              <MenuButton type="button" onClick={() => setShowMenu((prev) => !prev)}>
+                ⋯
+              </MenuButton>
+
+              {showMenu && (
+                <MenuDropdown>
+                  <DeleteButton type="button" onClick={handleDeletePost} disabled={isDeleting}>
+                    {isDeleting ? "삭제 중..." : "삭제"}
+                  </DeleteButton>
+                </MenuDropdown>
+              )}
+            </MenuWrapper>
+          )}
+        </HeaderActionRow>
       </Header>
 
       {!hasImage && hasMarker && (
@@ -156,12 +215,21 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+  gap: 12px;
 `;
 
 const AuthorRow = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space.md};
+  min-width: 0;
+`;
+
+const HeaderActionRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 `;
 
 const Avatar = styled.img`
@@ -217,6 +285,73 @@ const HeartIcon = styled.span<{ $liked: boolean }>`
   font-size: ${({ theme }) => theme.fontSize.sm};
   line-height: 1;
   filter: ${({ $liked }) => ($liked ? "drop-shadow(0 2px 4px rgba(255, 77, 79, 0.25))" : "none")};
+`;
+
+const MenuWrapper = styled.div`
+  position: relative;
+`;
+
+const MenuButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+    border-color: ${({ theme }) => theme.colors.sub};
+    color: ${({ theme }) => theme.colors.text_primary};
+  }
+`;
+
+const MenuDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 92px;
+  padding: 6px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  background: ${({ theme }) => theme.colors.surface};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  z-index: 20;
+`;
+
+const DeleteButton = styled.button`
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  text-align: left;
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
 `;
 
 const MetaRow = styled.div`
@@ -304,6 +439,7 @@ const NavButton = styled.button<{ $left?: boolean }>`
 
   display: flex;
   justify-content: center;
+  align-items: center;
 
   transition:
     background 0.2s ease,
