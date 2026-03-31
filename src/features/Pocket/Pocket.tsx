@@ -28,101 +28,118 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   });
 
   useEffect(() => {
-    const applyMotion = (rawData: unknown) => {
-      if (!rawData || typeof rawData !== "object") return;
+  const applyMotion = (rawData: unknown) => {
+    if (!rawData || typeof rawData !== "object") return;
 
-      const message = rawData as {
-        type?: string;
-        payload?: {
-          gravity?: { x?: number; y?: number; z?: number };
-          tilt?: { x?: number; y?: number };
-          rotation?: { x?: number; y?: number; z?: number };
-          orientation?: {
-            gravityDirection?: 1 | -1;
-            isUpsideDown?: boolean;
-          };
-          x?: number;
-          y?: number;
+    const message = rawData as {
+      type?: string;
+      payload?: {
+        gravity?: { x?: number; y?: number; z?: number };
+        tilt?: { x?: number; y?: number };
+        rotation?: { x?: number; y?: number; z?: number };
+        orientation?: {
+          gravityDirection?: 1 | -1;
+          isUpsideDown?: boolean;
         };
+        x?: number;
+        y?: number;
       };
+    };
 
-      if (message.type === "DEVICE_MOTION" && message.payload) {
-        // const gravityDirection = message.payload.orientation?.gravityDirection ?? 1;
-        const nextGravityX = clamp(
-          -(message.payload.gravity?.x ?? message.payload.tilt?.x ?? 0),
-          -MAX_ROTATION,
-          MAX_ROTATION,
-        );
+    if (message.type === "DEVICE_MOTION" && message.payload) {
+      const gravityDirection = message.payload.orientation?.gravityDirection ?? 1;
 
-        const nextGravityY = clamp(
-          -(message.payload.gravity?.y ?? message.payload.tilt?.y ?? 0),
-          -MAX_ROTATION,
-          MAX_ROTATION,
-        );
+      const rawX = message.payload.gravity?.x ?? message.payload.tilt?.x ?? 0;
+      const rawY = message.payload.gravity?.y ?? message.payload.tilt?.y ?? 0;
 
-        const nextGravityZ = clamp(message.payload.gravity?.z ?? 0, -MAX_TILT, MAX_TILT);
-        const nextRotationX = clamp(message.payload.rotation?.x ?? 0, -MAX_ROTATION, MAX_ROTATION);
-        const nextRotationY = clamp(message.payload.rotation?.y ?? 0, -MAX_ROTATION, MAX_ROTATION);
-        const nextRotationZ = clamp(message.payload.rotation?.z ?? 0, -MAX_ROTATION, MAX_ROTATION);
+      const nextGravityX = clamp(-rawX, -1, 1);
+      const nextGravityY = clamp(rawY * gravityDirection, -1, 1);
+      const nextGravityZ = clamp(message.payload.gravity?.z ?? 0, -MAX_TILT, MAX_TILT);
 
-        setMotion((prev) => ({
-          gravity: {
-            x: prev.gravity.x + (nextGravityX - prev.gravity.x) * WEBVIEW_TILT_SMOOTHING,
-            y: prev.gravity.y + (nextGravityY - prev.gravity.y) * WEBVIEW_TILT_SMOOTHING,
-            z: prev.gravity.z + (nextGravityZ - prev.gravity.z) * WEBVIEW_TILT_SMOOTHING,
-          },
-          rotation: {
-            x: prev.rotation.x + (nextRotationX - prev.rotation.x) * WEBVIEW_ROTATION_SMOOTHING,
-            y: prev.rotation.y + (nextRotationY - prev.rotation.y) * WEBVIEW_ROTATION_SMOOTHING,
-            z: prev.rotation.z + (nextRotationZ - prev.rotation.z) * WEBVIEW_ROTATION_SMOOTHING,
-          },
-        }));
+      const nextRotationX = clamp(message.payload.rotation?.x ?? 0, -MAX_ROTATION, MAX_ROTATION);
+      const nextRotationY = clamp(message.payload.rotation?.y ?? 0, -MAX_ROTATION, MAX_ROTATION);
+      const nextRotationZ = clamp(message.payload.rotation?.z ?? 0, -MAX_ROTATION, MAX_ROTATION);
 
-        return;
-      }
-
-      if (message.type !== "TILT" || !message.payload) return;
-
-      const nextX = clamp(message.payload.x ?? 0, -MAX_TILT, MAX_TILT);
-      const nextY = clamp(1 + (message.payload.y ?? 0), -MAX_ROTATION, MAX_ROTATION);
+      setDebugText(
+        [
+          "[DEVICE_MOTION]",
+          `rawX=${rawX.toFixed(2)}`,
+          `rawY=${rawY.toFixed(2)}`,
+          `gravityDirection=${gravityDirection}`,
+          `nextGX=${nextGravityX.toFixed(2)}`,
+          `nextGY=${nextGravityY.toFixed(2)}`,
+          `upside=${String(message.payload.orientation?.isUpsideDown)}`,
+        ].join(" | ")
+      );
 
       setMotion((prev) => ({
         gravity: {
-          x: prev.gravity.x + (nextX - prev.gravity.x) * WEBVIEW_TILT_SMOOTHING,
-          y: prev.gravity.y + (nextY - prev.gravity.y) * WEBVIEW_TILT_SMOOTHING,
-          z: prev.gravity.z,
+          x: prev.gravity.x + (nextGravityX - prev.gravity.x) * WEBVIEW_TILT_SMOOTHING,
+          y: prev.gravity.y + (nextGravityY - prev.gravity.y) * WEBVIEW_TILT_SMOOTHING,
+          z: prev.gravity.z + (nextGravityZ - prev.gravity.z) * WEBVIEW_TILT_SMOOTHING,
         },
-        rotation: prev.rotation,
+        rotation: {
+          x: prev.rotation.x + (nextRotationX - prev.rotation.x) * WEBVIEW_ROTATION_SMOOTHING,
+          y: prev.rotation.y + (nextRotationY - prev.rotation.y) * WEBVIEW_ROTATION_SMOOTHING,
+          z: prev.rotation.z + (nextRotationZ - prev.rotation.z) * WEBVIEW_ROTATION_SMOOTHING,
+        },
       }));
-    };
 
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const rawData = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-        applyMotion(rawData);
-      } catch {
-        // Ignore non-bridge messages.
-      }
-    };
+      return;
+    }
 
-    const handleCustomMotion = (event: Event) => {
-      applyMotion((event as CustomEvent).detail);
-    };
+    if (message.type !== "TILT" || !message.payload) return;
 
-    window.addEventListener("message", handleMessage);
-    document.addEventListener("message", handleMessage as EventListener);
-    window.addEventListener("stitch:device-motion", handleCustomMotion as EventListener);
+    const nextX = clamp(-(message.payload.x ?? 0), -1, 1);
+    const nextY = clamp(message.payload.y ?? 0, -1, 1);
 
-    applyMotion(
-      (window as Window & { __STITCH_DEVICE_MOTION__?: unknown }).__STITCH_DEVICE_MOTION__,
+    setDebugText(
+      [
+        "[TILT]",
+        `rawX=${Number(message.payload.x ?? 0).toFixed(2)}`,
+        `rawY=${Number(message.payload.y ?? 0).toFixed(2)}`,
+        `nextGX=${nextX.toFixed(2)}`,
+        `nextGY=${nextY.toFixed(2)}`,
+      ].join(" | ")
     );
 
-    return () => {
-      window.removeEventListener("message", handleMessage);
-      document.removeEventListener("message", handleMessage as EventListener);
-      window.removeEventListener("stitch:device-motion", handleCustomMotion as EventListener);
-    };
-  }, []);
+    setMotion((prev) => ({
+      gravity: {
+        x: prev.gravity.x + (nextX - prev.gravity.x) * WEBVIEW_TILT_SMOOTHING,
+        y: prev.gravity.y + (nextY - prev.gravity.y) * WEBVIEW_TILT_SMOOTHING,
+        z: prev.gravity.z,
+      },
+      rotation: prev.rotation,
+    }));
+  };
+
+  const handleMessage = (event: MessageEvent) => {
+    try {
+      const rawData = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      applyMotion(rawData);
+    } catch {
+      // Ignore non-bridge messages.
+    }
+  };
+
+  const handleCustomMotion = (event: Event) => {
+    applyMotion((event as CustomEvent).detail);
+  };
+
+  window.addEventListener("message", handleMessage);
+  document.addEventListener("message", handleMessage as EventListener);
+  window.addEventListener("stitch:device-motion", handleCustomMotion as EventListener);
+
+  applyMotion((window as Window & { __STITCH_DEVICE_MOTION__?: unknown }).__STITCH_DEVICE_MOTION__);
+
+  return () => {
+    window.removeEventListener("message", handleMessage);
+    document.removeEventListener("message", handleMessage as EventListener);
+    window.removeEventListener("stitch:device-motion", handleCustomMotion as EventListener);
+  };
+}, []);
+
+
   // Ref
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -139,6 +156,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   // state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [debugText, setDebugText] = useState("debug: waiting...");
 
   // mutate
   const { mutateAsync: readBoardPost } = useReadBoardPostMutation();
@@ -199,7 +217,28 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
 
   return (
     <Container>
+      <div
+          style={{
+            position: "fixed",
+            top: 12,
+            left: 12,
+            zIndex: 99999,
+            background: "rgba(0, 0, 0, 0.8)",
+            color: "#fff",
+            padding: "8px 10px",
+            borderRadius: "8px",
+            fontSize: "12px",
+            lineHeight: 1.4,
+            maxWidth: "90vw",
+            whiteSpace: "pre-wrap",
+            pointerEvents: "none",
+          }}
+        >
+          {debugText}
+        </div>
+
       <PocketWrapper ref={wrapperRef}>
+        
         <PocketArea
           ref={sceneRef}
           style={{
