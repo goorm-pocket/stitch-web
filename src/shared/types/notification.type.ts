@@ -4,7 +4,8 @@ export type NotificationType =
   | "POST_LIKE"
   | "COMMENTED"
   | "MENTIONED"
-  | "WEEKLY_RECAP";
+  | "WEEKLY_RECAP"
+  | "BIRTHDAY";
 
 export interface NotificationSender {
   userId: string;
