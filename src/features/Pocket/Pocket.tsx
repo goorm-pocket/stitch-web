@@ -50,14 +50,14 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
         // const gravityDirection = message.payload.orientation?.gravityDirection ?? 1;
         const nextGravityX = clamp(
           -(message.payload.gravity?.x ?? message.payload.tilt?.x ?? 0),
-          -MAX_TILT,
-          MAX_TILT,
+          -MAX_ROTATION,
+          MAX_ROTATION,
         );
 
         const nextGravityY = clamp(
           -(message.payload.gravity?.y ?? message.payload.tilt?.y ?? 0),
-          -MAX_TILT,
-          MAX_TILT,
+          -MAX_ROTATION,
+          MAX_ROTATION,
         );
 
         const nextGravityZ = clamp(message.payload.gravity?.z ?? 0, -MAX_TILT, MAX_TILT);
