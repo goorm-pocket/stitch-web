@@ -20,7 +20,7 @@ const RecapPage = () => {
           <>
             <Subtitle $expanded={isExpanded}>{board.summary}</Subtitle>
             <DateRange>
-              {board?.weekStartDate} ~ {board?.weekEndDate} 날짜입니다
+              {board?.weekStartDate} ~ {board?.weekEndDate} 기록입니다.
             </DateRange>
             <ToggleButton type="button" onClick={() => setIsExpanded((prev) => !prev)}>
               {isExpanded ? "접기" : "더보기"}
