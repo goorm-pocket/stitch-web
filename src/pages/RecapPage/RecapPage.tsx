@@ -19,7 +19,9 @@ const RecapPage = () => {
         {hasSummary && (
           <>
             <Subtitle $expanded={isExpanded}>{board.summary}</Subtitle>
-
+            <DateRange>
+              {board?.weekStartDate} ~ {board?.weekEndDate} 날짜입니다
+            </DateRange>
             <ToggleButton type="button" onClick={() => setIsExpanded((prev) => !prev)}>
               {isExpanded ? "접기" : "더보기"}
             </ToggleButton>
@@ -78,6 +80,19 @@ const Subtitle = styled.p<{ $expanded: boolean }>`
       overflow: hidden;
       text-overflow: ellipsis;
     `}
+`;
+
+const DateRange = styled.div`
+  margin-top: 14px;
+  padding: 8px 14px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 `;
 
 const ToggleButton = styled.button`
