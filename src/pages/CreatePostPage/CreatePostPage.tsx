@@ -13,7 +13,6 @@ import { getCroppedImg } from "./imageCrop";
 import { useGetProfileQuery } from "@/shared/hooks/useUser";
 import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
 import heic2any from "heic2any";
-import imageCompression from "browser-image-compression";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
