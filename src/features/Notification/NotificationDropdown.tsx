@@ -84,7 +84,12 @@ const NotificationDropdown = () => {
   // 알림 클릭
   const handleClickNotification = async (clickedNotification: Notification) => {
     await readNotification(clickedNotification.notificationId);
-    navigate(getNotificationRedirectUrl(clickedNotification));
+    const url = getNotificationRedirectUrl(clickedNotification);
+
+    if (url) {
+      navigate(url);
+    }
+
     setIsOpen(false);
   };
 
