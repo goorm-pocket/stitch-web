@@ -13,17 +13,18 @@ const ActionSection = () => {
     localStorage.clear();
     sessionStorage.clear();
 
+    //앱 WebView에 로그아웃 완료를 알려 네이티브 상태를 정리
     window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "LOGOUT" }));
     navigate("/");
   };
 
   const handleWithdraw = async () => {
     await withdraw();
-    // 1. 저장된 인증 정보 제거
+    //저장된 인증 정보 제거
     localStorage.clear();
     sessionStorage.clear();
 
-    // 2. 앱(WebView)에게 탈퇴 알림
+    //앱 WebView에도 탈퇴 완료 전송
     window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "USER_DELETED" }));
     navigate("/");
   };

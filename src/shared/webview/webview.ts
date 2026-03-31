@@ -1,3 +1,4 @@
+//웹에서 실행 중인 코드를 앱 쪽으로 전달
 export const sendToApp = (data: unknown) => {
   const message = JSON.stringify(data);
 
@@ -17,6 +18,7 @@ export type HapticStyle =
   | "warning"
   | "error";
 
+//앱에서는 네이티브 햅틱을, 웹에서는 진동 API를 사용해 동일한 피드백
 export const triggerHaptic = (style: HapticStyle = "selection") => {
   if (window.ReactNativeWebView) {
     sendToApp({

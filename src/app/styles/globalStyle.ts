@@ -71,6 +71,7 @@ export const GlobalStyle = createGlobalStyle`
     background-clip: padding-box;
   }
 
+  /* safe-area 여백을 body에 적용 */
   body.app-webview {
     min-height: var(--app-height);
     padding-top: var(--app-safe-top);
