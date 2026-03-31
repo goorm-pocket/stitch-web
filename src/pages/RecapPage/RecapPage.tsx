@@ -1,40 +1,28 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
 import { useGetRecapBoardQuery } from "@/shared/hooks/useBoard";
 
 const RecapPage = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const [isOverflow, setIsOverflow] = useState(false);
 
   const date = new Date().toISOString().slice(0, 10);
   const { data: board } = useGetRecapBoardQuery(date);
-
   const hasSummary = !!board?.summary;
-
-  useEffect(() => {
-    const el = subtitleRef.current;
-    if (!el) return;
-
-    setIsOverflow(el.scrollHeight > el.clientHeight);
-  }, [board?.summary]);
 
   return (
     <Container>
       <TitleContainer>
         <Title>Recap</Title>
-
         {hasSummary && (
           <>
-            <Subtitle $expanded={isExpanded}>{board.summary}</Subtitle>
             <DateRange>
-              {board?.weekStartDate} ~ {board?.weekEndDate} 날짜입니다
+              {board?.weekStartDate} ~ {board?.weekEndDate.slice(0, 10)} 기록입니다.
             </DateRange>
+            <Subtitle $expanded={isExpanded}>{board.summary}</Subtitle>
             <ToggleButton type="button" onClick={() => setIsExpanded((prev) => !prev)}>
               {isExpanded ? "접기" : "더보기"}
             </ToggleButton>
-          )}
           </>
         )}
       </TitleContainer>
