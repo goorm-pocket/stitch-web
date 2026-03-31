@@ -8,20 +8,19 @@ const RecapPage = () => {
 
   const date = new Date().toISOString().slice(0, 10);
   const { data: board } = useGetRecapBoardQuery(date);
-
   const hasSummary = !!board?.summary;
 
   return (
     <Container>
       <TitleContainer>
         <Title>Recap</Title>
-
+        <DateRange>
+          {board?.weekStartDate} ~ {board?.weekEndDate.slice(0, 10)} 기록입니다.
+        </DateRange>
         {hasSummary && (
           <>
             <Subtitle $expanded={isExpanded}>{board.summary}</Subtitle>
-            <DateRange>
-              {board?.weekStartDate} ~ {board?.weekEndDate} 기록입니다.
-            </DateRange>
+
             <ToggleButton type="button" onClick={() => setIsExpanded((prev) => !prev)}>
               {isExpanded ? "접기" : "더보기"}
             </ToggleButton>
