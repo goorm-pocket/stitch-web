@@ -165,7 +165,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   const itemSize = Math.max(size.width * 0.15, 50);
   const wallThickness = 1000;
 
-  const positions = usePocketMatter({
+  const { registerBubbleElement } = usePocketMatter({
     sceneRef,
     items,
     width: size.width,
@@ -243,17 +243,12 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
           }}
         >
           {items.map((item) => {
-            const pos = positions[item.postId];
-            if (!pos) return null;
-
             return (
               <PocketBubble
                 key={item.postId}
                 item={item}
                 size={itemSize}
-                x={pos.x}
-                y={pos.y}
-                angle={pos.angle}
+                registerElement={registerBubbleElement}
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
               />
