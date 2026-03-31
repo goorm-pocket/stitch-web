@@ -5,6 +5,7 @@ import {
   deletePost,
   deletePostLike,
   getCalendarById,
+  updatePost,
 } from "../api/post";
 import { useQuery } from "@tanstack/react-query";
 import { getCalendar, getPostById } from "../api/post";
@@ -16,6 +17,20 @@ export function useCreatePostMutation() {
     mutationFn: createPost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+}
+
+export function useUpdatePostMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updatePost,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["recap-board"] });
+      queryClient.invalidateQueries({ queryKey: ["post", variables.postId] });
     },
   });
 }
