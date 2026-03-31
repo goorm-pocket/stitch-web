@@ -11,19 +11,6 @@ type PocketBubbleProps = {
   onPointerUp: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
 };
 
-const TWEMOJI_BASE_URL = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg";
-
-const toEmojiCode = (value: string) =>
-  Array.from(value.trim())
-    .map((char) => char.codePointAt(0)?.toString(16))
-    .filter(Boolean)
-    .join("-");
-
-const getEmojiImageUrl = (value: string) => {
-  const code = toEmojiCode(value);
-  return code ? `${TWEMOJI_BASE_URL}/${code}.svg` : null;
-};
-
 const PocketBubble = ({
   item,
   size,
@@ -35,7 +22,6 @@ const PocketBubble = ({
 }: PocketBubbleProps) => {
   const { postId, representative, read, ownerType } = item;
   const hasImage = representative.type === "IMAGE";
-  const emojiImageUrl = !hasImage ? getEmojiImageUrl(representative.value) : null;
 
   return (
     <Container
@@ -52,8 +38,6 @@ const PocketBubble = ({
     >
       {representative.type === "IMAGE" ? (
         <BubbleImage src={representative.value} alt={`bubble-${postId}`} draggable={false} />
-      ) : emojiImageUrl ? (
-        <EmojiImage src={emojiImageUrl} alt={representative.value} draggable={false} />
       ) : (
         <Emoji>{representative.value}</Emoji>
       )}
@@ -96,21 +80,13 @@ const BubbleImage = styled.img`
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 `;
 
-const EmojiImage = styled.img`
-  width: 72%;
-  height: 72%;
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
-`;
-
 const Emoji = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(20px, 7vw, 50px);
+  font-size: clamp(20px, 8vw, 60px);
   pointer-events: none;
   user-select: none;
 `;

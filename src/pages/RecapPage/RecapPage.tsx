@@ -1,43 +1,28 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import Pocket from "../../features/Pocket/Pocket";
 import { useGetRecapBoardQuery } from "@/shared/hooks/useBoard";
 
 const RecapPage = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const [isOverflow, setIsOverflow] = useState(false);
 
   const date = new Date().toISOString().slice(0, 10);
   const { data: board } = useGetRecapBoardQuery(date);
-
   const hasSummary = !!board?.summary;
-
-  useEffect(() => {
-    const el = subtitleRef.current;
-    if (!el) return;
-
-    setIsOverflow(el.scrollHeight > el.clientHeight);
-  }, [board?.summary]);
 
   return (
     <Container>
       <TitleContainer>
         <Title>Recap</Title>
-
         {hasSummary && (
           <>
-            <Subtitle ref={subtitleRef} $expanded={isExpanded}>
-              {board.summary}
-            </Subtitle>
-            {hasSummary && isOverflow && (
-            <ToggleButton
-              type="button"
-              onClick={() => setIsExpanded((prev) => !prev)}
-            >
+            <DateRange>
+              {board?.weekStartDate} ~ {board?.weekEndDate.slice(0, 10)} 기록입니다.
+            </DateRange>
+            <Subtitle $expanded={isExpanded}>{board.summary}</Subtitle>
+            <ToggleButton type="button" onClick={() => setIsExpanded((prev) => !prev)}>
               {isExpanded ? "접기" : "더보기"}
             </ToggleButton>
-          )}
           </>
         )}
       </TitleContainer>
@@ -93,6 +78,19 @@ const Subtitle = styled.p<{ $expanded: boolean }>`
       overflow: hidden;
       text-overflow: ellipsis;
     `}
+`;
+
+const DateRange = styled.div`
+  margin-top: 14px;
+  padding: 8px 14px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text_secondary};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 `;
 
 const ToggleButton = styled.button`
