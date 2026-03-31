@@ -58,16 +58,16 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
       const nextRotationY = clamp(message.payload.rotation?.y ?? 0, -MAX_ROTATION, MAX_ROTATION);
       const nextRotationZ = clamp(message.payload.rotation?.z ?? 0, -MAX_ROTATION, MAX_ROTATION);
 
-      setDebugText(
-        [
-          "[DEVICE_MOTION]",
-          `rawX=${rawX.toFixed(2)}`,
-          `rawY=${rawY.toFixed(2)}`,
-          `nextGX=${nextGravityX.toFixed(2)}`,
-          `nextGY=${nextGravityY.toFixed(2)}`,
-          `upside=${String(message.payload.orientation?.isUpsideDown)}`,
-        ].join(" | ")
-      );
+      // setDebugText(
+      //   [
+      //     "[DEVICE_MOTION]",
+      //     `rawX=${rawX.toFixed(2)}`,
+      //     `rawY=${rawY.toFixed(2)}`,
+      //     `nextGX=${nextGravityX.toFixed(2)}`,
+      //     `nextGY=${nextGravityY.toFixed(2)}`,
+      //     `upside=${String(message.payload.orientation?.isUpsideDown)}`,
+      //   ].join(" | ")
+      // );
 
       setMotion((prev) => ({
         gravity: {
@@ -90,15 +90,15 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
     const nextX = clamp(-(message.payload.x ?? 0), -1, 1);
     const nextY = clamp(message.payload.y ?? 0, -1, 1);
 
-    setDebugText(
-      [
-        "[TILT]",
-        `rawX=${Number(message.payload.x ?? 0).toFixed(2)}`,
-        `rawY=${Number(message.payload.y ?? 0).toFixed(2)}`,
-        `nextGX=${nextX.toFixed(2)}`,
-        `nextGY=${nextY.toFixed(2)}`,
-      ].join(" | ")
-    );
+    // setDebugText(
+    //   [
+    //     "[TILT]",
+    //     `rawX=${Number(message.payload.x ?? 0).toFixed(2)}`,
+    //     `rawY=${Number(message.payload.y ?? 0).toFixed(2)}`,
+    //     `nextGX=${nextX.toFixed(2)}`,
+    //     `nextGY=${nextY.toFixed(2)}`,
+    //   ].join(" | ")
+    // );
 
     setMotion((prev) => ({
       gravity: {
@@ -153,7 +153,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
   // state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const [debugText, setDebugText] = useState("debug: waiting...");
+  // const [debugText, setDebugText] = useState("debug: waiting...");
 
   // mutate
   const { mutateAsync: readBoardPost } = useReadBoardPostMutation();
@@ -214,7 +214,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
 
   return (
     <Container>
-      <div
+      {/* <div
           style={{
             position: "fixed",
             top: 12,
@@ -232,7 +232,7 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
           }}
         >
           {debugText}
-        </div>
+        </div> */}
 
       <PocketWrapper ref={wrapperRef}>
         
