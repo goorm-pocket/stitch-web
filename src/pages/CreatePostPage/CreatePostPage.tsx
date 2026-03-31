@@ -12,6 +12,8 @@ import { useCreatePostMutation } from "../../shared/hooks/usePost";
 import { getCroppedImg } from "./imageCrop";
 import { useGetProfileQuery } from "@/shared/hooks/useUser";
 import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
+import heic2any from "heic2any";
+import imageCompression from "browser-image-compression";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
@@ -20,10 +22,116 @@ type UploadItem = {
   key: string;
 };
 
-//글자수 제한
+// 글자수 제한
 const MAX_LENGTH = 500;
-//이미지 제한
+// 이미지 제한
 const MAX_IMAGES = 10;
+
+const isHeicLikeFile = (file: File) => {
+  const type = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+
+  return (
+    type === "image/heic" ||
+    type === "image/heif" ||
+    type === "image/heic-sequence" ||
+    type === "image/heif-sequence" ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  );
+};
+
+const replaceExtensionToJpg = (name: string) => {
+  if (!name.includes(".")) return `${name}.jpg`;
+  return name.replace(/\.(heic|heif)$/i, ".jpg");
+};
+
+const fileToDataUrl = (file: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("FILE_READ_FAILED"));
+    reader.readAsDataURL(file);
+  });
+
+const loadImageElement = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("IMAGE_LOAD_FAILED"));
+    img.src = src;
+  });
+
+const convertViaCanvas = async (file: File): Promise<File> => {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const img = await loadImageElement(objectUrl);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("CANVAS_CONTEXT_FAILED");
+    }
+
+    ctx.drawImage(img, 0, 0);
+
+    const jpegBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("CANVAS_TO_BLOB_FAILED"));
+            return;
+          }
+          resolve(blob);
+        },
+        "image/jpeg",
+        0.92,
+      );
+    });
+
+    return new File([jpegBlob], replaceExtensionToJpg(file.name), {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
+const normalizeImageFile = async (file: File): Promise<File> => {
+  if (!isHeicLikeFile(file)) {
+    return file;
+  }
+
+  try {
+    const converted = await heic2any({
+      blob: file,
+      toType: "image/jpeg",
+      quality: 0.92,
+    });
+
+    const blob = Array.isArray(converted) ? converted[0] : converted;
+
+    return new File([blob], replaceExtensionToJpg(file.name), {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+  } catch (error) {
+    console.warn("heic2any failed:", error);
+  }
+
+  try {
+    return await convertViaCanvas(file);
+  } catch (error) {
+    console.error("Canvas fallback failed:", error);
+    throw new Error("UNSUPPORTED_HEIC");
+  }
+};
 
 export default function CreatePocketPost() {
   const navigate = useNavigate();
@@ -45,7 +153,7 @@ export default function CreatePocketPost() {
 
   const { mutate: createPost } = useCreatePostMutation();
 
-  //사용자 정보 조회
+  // 사용자 정보 조회
   const { data: profileData } = useGetProfileQuery();
   useEffect(() => {
     if (!profileData?.userId) {
@@ -55,15 +163,16 @@ export default function CreatePocketPost() {
       console.log("모달 정보 조회", profileData);
     }
   }, [profileData]);
-  //디폴트 이모지
+
+  // 디폴트 이모지
   const [selectedEmoji, setSelectedEmoji] = useState(profileData?.profileEmoji ?? "");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
 
   const dataURLtoBlob = (dataurl: string) => {
-    const arr = dataurl.split(","),
-      mime = arr[0].match(/:(.*?);/)![1];
+    const arr = dataurl.split(",");
+    const mime = arr[0].match(/:(.*?);/)![1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
@@ -114,19 +223,18 @@ export default function CreatePocketPost() {
           files: images.map((file, idx) => ({
             clientFileId: `file-${idx}`,
             contentType: file.type,
-            fileExtension: file.name.split(".").pop() || "png",
+            fileExtension: file.name.split(".").pop() || "jpg",
             fileSize: file.size,
           })),
         });
 
         if (multipleRes.uploads) {
-          //S3에 업로드
           await Promise.all(
             multipleRes.uploads.map((u: UploadItem, idx: number) =>
               uploadFileToS3(u.uploadUrl, images[idx]),
             ),
           );
-          //key 추출
+
           postImageKeys = multipleRes.uploads.map((u: UploadItem) => u.key);
         }
       }
@@ -160,15 +268,30 @@ export default function CreatePocketPost() {
     setSavedMarkIsRound(true);
   };
 
-  const handleMarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMarkImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
+
+    try {
+      setFormMessage(null);
+
+      const normalizedFile = await normalizeImageFile(file);
+      const previewUrl = await fileToDataUrl(normalizedFile);
+
+      setCropImage(previewUrl);
+    } catch (error) {
+      console.error("Marker image normalize error:", error);
+
+      if (error instanceof Error && error.message === "UNSUPPORTED_HEIC") {
+        setFormMessage(
+          "이 HEIC 이미지는 변환할 수 없습니다. 설정 > 카메라 > 포맷에서 '높은 호환성'으로 변경하거나 JPG/PNG 이미지로 다시 선택해주세요.",
+        );
+      } else {
+        setFormMessage("마커 이미지를 처리하는 중 오류가 발생했습니다.");
+      }
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const onCropComplete = (_: Area, croppedAreaPixels: Area) => {
@@ -185,33 +308,43 @@ export default function CreatePocketPost() {
     }
   };
 
-  //공개 범위
+  // 공개 범위
   const toggleVisibility = () => {
     setVisibility((prev) => (prev === "FRIENDS" ? "PRIVATE" : "FRIENDS"));
   };
 
-  //이미지 업로드
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 이미지 업로드
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
     if (images.length + files.length > MAX_IMAGES) {
       setFormMessage(`사진은 최대 ${MAX_IMAGES}장까지 업로드 가능합니다.`);
+      e.target.value = "";
       return;
     }
 
-    setFormMessage(null);
-    const newImages = [...images, ...files];
-    setImages(newImages);
+    try {
+      setFormMessage(null);
 
-    //미리보기 URL 생성 및 추가
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrls((prev) => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+      const normalizedFiles = await Promise.all(files.map(normalizeImageFile));
+      const previewDataUrls = await Promise.all(normalizedFiles.map(fileToDataUrl));
+
+      setImages((prev) => [...prev, ...normalizedFiles]);
+      setPreviewUrls((prev) => [...prev, ...previewDataUrls]);
+    } catch (error) {
+      console.error("Image normalize error:", error);
+
+      if (error instanceof Error && error.message === "UNSUPPORTED_HEIC") {
+        setFormMessage(
+          "일부 사진은 변환할 수 없습니다. 설정 > 카메라 > 포맷에서 '높은 호환성'으로 변경 후 다시 시도해주세요.",
+        );
+      } else {
+        setFormMessage("이미지 처리 중 오류가 발생했습니다.");
+      }
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const removeImage = (index: number) => {
@@ -229,6 +362,7 @@ export default function CreatePocketPost() {
         <Title>Create New Pocket Post</Title>
         <SubTitle>주머니 속 일상의 조각을 기록해보세요.</SubTitle>
       </HeaderSection>
+
       <Box>
         <MarkContainer>
           <SectionTitle>Bubble Icon</SectionTitle>
@@ -240,8 +374,10 @@ export default function CreatePocketPost() {
                 <span className="emoji-display">{selectedEmoji}</span>
               )}
             </MarkPreview>
+
             <MarkButtons>
               <MarkBtn
+                type="button"
                 $active={markType === "emoji"}
                 onClick={() => {
                   setMarkType("emoji");
@@ -251,17 +387,24 @@ export default function CreatePocketPost() {
                 <MarkIcon as={EmojiIcon} />
                 Emoji Icon
               </MarkBtn>
-              <MarkBtn $active={markType === "image"} onClick={() => markInputRef.current?.click()}>
+
+              <MarkBtn
+                type="button"
+                $active={markType === "image"}
+                onClick={() => markInputRef.current?.click()}
+              >
                 <MarkIcon as={ImageIcon} />
                 Image Icon
               </MarkBtn>
             </MarkButtons>
+
             {showEmojiPicker && (
               <EmojiPickerWrapper>
                 <div className="overlay" onClick={() => setShowEmojiPicker(false)} />
                 <EmojiPicker onEmojiClick={onEmojiClick} autoFocusSearch={false} />
               </EmojiPickerWrapper>
             )}
+
             {cropImage && (
               <CropModal>
                 <CropContainer>
@@ -280,16 +423,17 @@ export default function CreatePocketPost() {
 
                   <ControlBottom>
                     <ShapeButtons>
-                      <ShapeBtn $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
+                      <ShapeBtn type="button" $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
                         Circle
                       </ShapeBtn>
-                      <ShapeBtn $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
+                      <ShapeBtn type="button" $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
                         Square
                       </ShapeBtn>
                     </ShapeButtons>
 
                     <ActionButtons>
                       <CancelBtn
+                        type="button"
                         onClick={() => {
                           setCropImage(null);
                           setIsRoundCrop(true);
@@ -297,7 +441,9 @@ export default function CreatePocketPost() {
                       >
                         Cancel
                       </CancelBtn>
-                      <SaveBtn onClick={saveCroppedImage}>Apply</SaveBtn>
+                      <SaveBtn type="button" onClick={saveCroppedImage}>
+                        Apply
+                      </SaveBtn>
                     </ActionButtons>
                   </ControlBottom>
                 </CropContainer>
@@ -309,7 +455,7 @@ export default function CreatePocketPost() {
             type="file"
             ref={markInputRef}
             onChange={handleMarkImageUpload}
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             hidden
           />
         </MarkContainer>
@@ -334,20 +480,22 @@ export default function CreatePocketPost() {
               {previewUrls.map((url, index) => (
                 <PreviewItem key={index}>
                   <PreviewImage src={url} alt={`preview-${index}`} />
-                  <DeleteBtn onClick={() => removeImage(index)}>×</DeleteBtn>
+                  <DeleteBtn type="button" onClick={() => removeImage(index)}>
+                    ×
+                  </DeleteBtn>
                 </PreviewItem>
               ))}
 
               {previewUrls.length < MAX_IMAGES && (
                 <AddMoreBtn onClick={() => fileInputRef.current?.click()}>
-                  <UploadIcon as={ImageUploadIcon}></UploadIcon>
+                  <UploadIcon as={ImageUploadIcon} />
                   <span>Add More</span>
                 </AddMoreBtn>
               )}
             </PreviewGrid>
           ) : (
             <UploadBox onClick={() => fileInputRef.current?.click()} $hasImage={false}>
-              <UploadIcon as={ImageUploadIcon}></UploadIcon>
+              <UploadIcon as={ImageUploadIcon} />
               <UploadText>Upload photos (Max 10)</UploadText>
               <UploadSub>Drag and drop or click to browse files</UploadSub>
             </UploadBox>
@@ -357,7 +505,7 @@ export default function CreatePocketPost() {
             type="file"
             ref={fileInputRef}
             onChange={handleImageUpload}
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             multiple
             hidden
           />
@@ -381,7 +529,9 @@ export default function CreatePocketPost() {
           }}
         />
       </Box>
+
       {formMessage && <FormMessage>{formMessage}</FormMessage>}
+
       <PublishBtn onClick={handleSubmit}>Publish to Pocket</PublishBtn>
     </Container>
   );
@@ -437,7 +587,6 @@ const SubTitle = styled.p`
   font-size: ${({ theme }) => theme.fontSize.lg};
 `;
 
-//Bubble Icon
 const MarkContainer = styled.div``;
 
 const MarkSettings = styled.div`
@@ -499,13 +648,11 @@ const MarkBtn = styled.button<{ $active: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 12px;
   border-radius: ${({ theme }) => theme.radii.md};
   border: 1px solid
     ${(props) => (props.$active ? props.theme.colors.primary : props.theme.colors.border)};
   cursor: pointer;
-
   font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 500;
   line-height: 1;
@@ -628,6 +775,7 @@ const ShapeBtn = styled.button<{ $active: boolean }>`
   border-radius: ${({ theme }) => theme.radii.xl};
   cursor: pointer;
   transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
+
   &:hover {
     border-color: ${(props) => props.theme.colors.primary};
   }
@@ -654,6 +802,7 @@ const CancelBtn = styled.button`
   border: none;
   font-weight: 600;
   cursor: pointer;
+
   &:hover {
     background: #868e96;
   }
@@ -669,7 +818,6 @@ const SaveBtn = styled.button`
   cursor: pointer;
 `;
 
-//Pocket Image
 const SubContainer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -755,13 +903,13 @@ const PreviewGrid = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.space.xl};
   padding: ${({ theme }) => theme.space.xl};
-  overflow-x: auto; /* 가로 스크롤 가능하게 */
+  overflow-x: auto;
   align-items: center;
 
-  /* 스크롤바 디자인 (선택사항) */
   &::-webkit-scrollbar {
     height: 8px;
   }
+
   &::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 10px;
@@ -807,6 +955,7 @@ const DeleteBtn = styled.button`
   align-items: center;
   justify-content: center;
   font-size: 16px;
+
   &:hover {
     background: rgba(0, 0, 0, 0.7);
   }
@@ -825,6 +974,7 @@ const AddMoreBtn = styled.div`
   color: #adb5bd;
   cursor: pointer;
   background: ${({ theme }) => theme.colors.surface};
+
   &:hover {
     background: ${({ theme }) => theme.colors.hover};
   }
@@ -852,7 +1002,6 @@ const UploadSub = styled.div`
   margin-top: 4px;
 `;
 
-//Pocket Story
 const LengthCount = styled.span<{ $isMax: boolean }>`
   font-size: ${({ theme }) => theme.fontSize.xs};
   display: flex;
@@ -875,6 +1024,7 @@ const StoryBox = styled.textarea<{ $hasError?: boolean }>`
   resize: none;
   outline: none;
   box-sizing: border-box;
+
   &:focus {
     border-color: ${(props) => (props.$hasError ? "#ff6b6b" : props.theme.colors.border3)};
     box-shadow: ${(props) =>
@@ -900,13 +1050,10 @@ const PublishBtn = styled(StitchedBox)`
   width: 100%;
   height: 60px;
   margin: 20px 0;
-
   color: white;
   font-size: ${({ theme }) => theme.fontSize.xl};
   font-weight: bold;
-
   border-radius: ${({ theme }) => theme.radii.lg};
-
   cursor: pointer;
   transition: transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
   display: flex;
@@ -917,6 +1064,7 @@ const PublishBtn = styled(StitchedBox)`
   &:active {
     transform: scale(0.98);
   }
+
   &:disabled {
     background: #d1d5db;
     cursor: not-allowed;
