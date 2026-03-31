@@ -21,7 +21,10 @@ export function getNotificationRedirectUrl(notification: Notification) {
     case "WEEKLY_RECAP":
       return `/recap`;
 
+    case "BIRTHDAY":
+      return "/null";
+
     default:
-      return "/";
+      return "/null";
   }
 }
