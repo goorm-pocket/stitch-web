@@ -31,7 +31,7 @@ const CallbackPage = () => {
         const me = await fetchMe();
         queryClient.setQueryData(["me"], me);
 
-        //앱에 로그인 성공 메시지 전송
+        // 앱 WebView에 로그인 완료 상태 전달
         sendToApp({
           type: "LOGIN_SUCCESS",
           payload: {

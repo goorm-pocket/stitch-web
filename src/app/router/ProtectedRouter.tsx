@@ -8,7 +8,7 @@ import styled from "styled-components";
 const ProtectedRouter = () => {
   const { data, isPending, isError } = useFetchMeQuery();
 
-  //앱에 로그인 성공 전송
+  //새로고침 이후에도 앱 WebView 로그인 상태 동기화
   const hasSentLoginSuccessRef = useRef(false);
 
   useEffect(() => {
