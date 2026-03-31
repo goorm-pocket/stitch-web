@@ -1,6 +1,6 @@
 import type { Notification } from "@/shared/types/notification.type";
 
-export function getNotificationRedirectUrl(notification: Notification) {
+export function getNotificationRedirectUrl(notification: Notification): string | null {
   console.log(notification);
   switch (notification.type) {
     case "FRIEND_REQUEST":
@@ -21,7 +21,10 @@ export function getNotificationRedirectUrl(notification: Notification) {
     case "WEEKLY_RECAP":
       return `/recap`;
 
+    case "BIRTHDAY":
+      return null;
+
     default:
-      return "/";
+      return null;
   }
 }

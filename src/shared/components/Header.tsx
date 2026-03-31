@@ -8,8 +8,11 @@ import { NavLink, useNavigate } from "react-router";
 import { useState } from "react";
 import { useGetProfileQuery } from "../hooks/useUser";
 import Notification from "@/features/Notification/NotificationDropdown";
+import { useFetchMeQuery } from "../hooks/useAuth";
+import { handleKakaoLogin } from "../utils/login";
 
 const Header = () => {
+  const { isError } = useFetchMeQuery();
   const { data: profile } = useGetProfileQuery();
 
   const navigate = useNavigate();
@@ -42,12 +45,20 @@ const Header = () => {
         </NavBar>
       </Mid>
       <Right>
-        <Notification />
-        <AvatorBox>
-          <AvatorButton onClick={openModal}>
-            <Avator src={profile?.profileImageUrl} />
-          </AvatorButton>
-        </AvatorBox>
+        {!isError ? (
+          <>
+            <Notification />
+            <AvatorBox>
+              <AvatorButton onClick={openModal}>
+                <Avator src={profile?.profileImageUrl} />
+              </AvatorButton>
+            </AvatorBox>
+          </>
+        ) : (
+          <ButtonContainer>
+            <LoginButton onClick={handleKakaoLogin}>Login</LoginButton>
+          </ButtonContainer>
+        )}
       </Right>
 
       {isModalOpen && (
@@ -209,4 +220,44 @@ const ModalOverlay = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 1000;
+`;
+
+const ButtonContainer = styled.section`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const LoginButton = styled.button`
+  background: ${({ theme }) => theme.colors.sub};
+  border: none;
+  border-radius: ${({ theme }) => theme.radii.xs};
+  color: white;
+  font-size: ${({ theme }) => theme.fontSize.xs};
+  font-weight: bold;
+
+  box-shadow: ${({ theme }) => theme.shadows.xs};
+  cursor: pointer;
+
+  padding: ${({ theme }) => theme.space.md};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @media (max-width: 768px) {
+    padding: 6px 9px;
+    font-size: 11px;
+    height: 32px;
+  }
 `;
