@@ -47,13 +47,11 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
     };
 
     if (message.type === "DEVICE_MOTION" && message.payload) {
-      const gravityDirection = message.payload.orientation?.gravityDirection ?? 1;
-
       const rawX = message.payload.gravity?.x ?? message.payload.tilt?.x ?? 0;
       const rawY = message.payload.gravity?.y ?? message.payload.tilt?.y ?? 0;
 
       const nextGravityX = clamp(-rawX, -1, 1);
-      const nextGravityY = clamp(rawY * gravityDirection, -1, 1);
+      const nextGravityY = clamp(rawY, -1, 1);
       const nextGravityZ = clamp(message.payload.gravity?.z ?? 0, -MAX_TILT, MAX_TILT);
 
       const nextRotationX = clamp(message.payload.rotation?.x ?? 0, -MAX_ROTATION, MAX_ROTATION);
@@ -65,7 +63,6 @@ const Pocket = ({ board, mode = "BOARD" }: PocketProps) => {
           "[DEVICE_MOTION]",
           `rawX=${rawX.toFixed(2)}`,
           `rawY=${rawY.toFixed(2)}`,
-          `gravityDirection=${gravityDirection}`,
           `nextGX=${nextGravityX.toFixed(2)}`,
           `nextGY=${nextGravityY.toFixed(2)}`,
           `upside=${String(message.payload.orientation?.isUpsideDown)}`,
