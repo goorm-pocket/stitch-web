@@ -79,19 +79,12 @@ const Container = styled.div<{
   display: flex;
   align-items: center;
   justify-content: center;
-  border: ${({ $hasImage, theme, $read, $ownerType }) => {
-    if ($hasImage) return "none";
-    const color = !$read
-      ? theme.colors.primary
-      : $ownerType === "ME"
-        ? theme.colors.sub
-        : theme.colors.border;
-    return `2px solid ${color}`;
-  }};
   box-shadow: ${({ $hasImage, theme }) => ($hasImage ? "none" : theme.shadows.sm)};
   &:active {
     cursor: grabbing;
   }
+  filter: ${({ $read }) => ($read ? "grayscale(100%)" : "none")};
+  opacity: ${({ $read }) => ($read ? 0.6 : 1)};
 `;
 
 const BubbleImage = styled.img`

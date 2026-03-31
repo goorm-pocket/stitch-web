@@ -4,3 +4,10 @@ export interface ApiResponse<T> {
   data: T;
   timestamp: string;
 }
+
+export interface ApiErrorResponse {
+  status: string;
+  message: string;
+  data: string;
+  timestamp: string;
+}
