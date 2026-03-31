@@ -7,7 +7,7 @@ interface CreatePocketWallsParams {
 }
 
 export function createPocketWalls({ width, height, wallThickness }: CreatePocketWallsParams) {
-  const offset = 20;
+  const offset = 30;
 
   const leftWall = Matter.Bodies.rectangle(
     offset - wallThickness / 2,
