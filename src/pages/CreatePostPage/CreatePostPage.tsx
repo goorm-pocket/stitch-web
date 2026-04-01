@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import Cropper, { type Area } from "react-easy-crop";
+import "react-easy-crop/react-easy-crop.css";
 import ImageUploadIcon from "../../assets/upload-icon.svg";
 import ImageIcon from "../../assets/Image-icon.svg";
 import EmojiIcon from "../../assets/Emoji-icon.svg";
@@ -197,6 +199,7 @@ export default function CreatePocketPost() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
   const previewUrls = imageItems.map((item) => item.previewUrl);
+  const cropPortalTarget = typeof document !== "undefined" ? document.body : null;
   const isEditExpired = isEditMode && editPost ? !editPost.isEditable : false;
   const canEditLimitedFields = !isEditMode || !isEditExpired;
   const isSubmitting = isCreating || isUpdating;
@@ -238,6 +241,22 @@ export default function CreatePocketPost() {
 
     initializedRef.current = true;
   }, [editPost, isEditMode, profileData?.profileEmoji]);
+
+  useEffect(() => {
+    if (!cropImage) return;
+
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction;
+
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction;
+    };
+  }, [cropImage]);
 
   const imageSourceToBlob = async (imageSource: string) => {
     if (!imageSource.startsWith("data:")) {
@@ -609,50 +628,6 @@ export default function CreatePocketPost() {
               </EmojiPickerWrapper>
             )}
 
-            {cropImage && (
-              <CropModal>
-                <CropContainer>
-                  <CropView>
-                    <Cropper
-                      image={cropImage}
-                      crop={crop}
-                      zoom={zoom}
-                      aspect={1}
-                      cropShape={isRoundCrop ? "round" : "rect"}
-                      onCropChange={setCrop}
-                      onCropComplete={onCropComplete}
-                      onZoomChange={setZoom}
-                    />
-                  </CropView>
-
-                  <ControlBottom>
-                    <ShapeButtons>
-                      <ShapeBtn type="button" $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
-                        Circle
-                      </ShapeBtn>
-                      <ShapeBtn type="button" $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
-                        Square
-                      </ShapeBtn>
-                    </ShapeButtons>
-
-                    <ActionButtons>
-                      <CancelBtn
-                        type="button"
-                        onClick={() => {
-                          setCropImage(null);
-                          setIsRoundCrop(true);
-                        }}
-                      >
-                        Cancel
-                      </CancelBtn>
-                      <SaveBtn type="button" onClick={saveCroppedImage}>
-                        Apply
-                      </SaveBtn>
-                    </ActionButtons>
-                  </ControlBottom>
-                </CropContainer>
-              </CropModal>
-            )}
           </MarkSettings>
 
           <input
@@ -759,6 +734,59 @@ export default function CreatePocketPost() {
       >
         {isSubmitting ? (isEditMode ? "Saving..." : "Publishing...") : isEditMode ? "Save" : "Publish to Pocket"}
       </PublishBtn>
+
+      {cropImage &&
+        cropPortalTarget &&
+        createPortal(
+          <CropModal
+            onClick={() => {
+              setCropImage(null);
+              setIsRoundCrop(true);
+            }}
+          >
+            <CropContainer onClick={(event) => event.stopPropagation()}>
+              <CropView>
+                <Cropper
+                  image={cropImage}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  cropShape={isRoundCrop ? "round" : "rect"}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                />
+              </CropView>
+
+              <ControlBottom>
+                <ShapeButtons>
+                  <ShapeBtn type="button" $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
+                    Circle
+                  </ShapeBtn>
+                  <ShapeBtn type="button" $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
+                    Square
+                  </ShapeBtn>
+                </ShapeButtons>
+
+                <ActionButtons>
+                  <CancelBtn
+                    type="button"
+                    onClick={() => {
+                      setCropImage(null);
+                      setIsRoundCrop(true);
+                    }}
+                  >
+                    Cancel
+                  </CancelBtn>
+                  <SaveBtn type="button" onClick={saveCroppedImage}>
+                    Apply
+                  </SaveBtn>
+                </ActionButtons>
+              </ControlBottom>
+            </CropContainer>
+          </CropModal>,
+          cropPortalTarget,
+        )}
     </Container>
   );
 }
@@ -951,23 +979,28 @@ const EmojiPickerWrapper = styled.div`
 
 const CropModal = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: ${({ theme }) => theme.colors.overlay};
   z-index: 3000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  width: 100vw;
+  min-height: var(--app-height);
+  padding:
+    max(20px, var(--app-safe-top))
+    max(20px, var(--app-safe-right))
+    max(20px, var(--app-safe-bottom))
+    max(20px, var(--app-safe-left));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const CropContainer = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   width: 580px;
   max-width: 100%;
-  max-height: 90vh;
+  max-height: calc(var(--app-height) - var(--app-safe-top) - var(--app-safe-bottom) - 40px);
   padding: 30px;
   border-radius: ${({ theme }) => theme.radii.lg};
   position: relative;
@@ -975,16 +1008,29 @@ const CropContainer = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 20px;
+  }
 `;
 
 const CropView = styled.div`
   position: relative;
   width: 100%;
-  height: 400px;
+  height: clamp(280px, 48vh, 400px);
+  min-height: 280px;
   background: #333;
   border-radius: ${({ theme }) => theme.radii.xs};
   overflow: hidden;
   flex-shrink: 0;
+  touch-action: none;
+
+  .reactEasyCrop_Container,
+  .reactEasyCrop_Image,
+  .reactEasyCrop_CropArea {
+    touch-action: none;
+  }
 
   @media (max-width: 480px) {
     height: 280px;
