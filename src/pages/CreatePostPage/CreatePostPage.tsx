@@ -1,24 +1,34 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { StitchedBox } from "../../shared/ui/StitchedBox";
 import Cropper, { type Area } from "react-easy-crop";
+import "react-easy-crop/react-easy-crop.css";
 import ImageUploadIcon from "../../assets/upload-icon.svg";
 import ImageIcon from "../../assets/Image-icon.svg";
 import EmojiIcon from "../../assets/Emoji-icon.svg";
 import EmojiPicker from "emoji-picker-react";
 import type { EmojiClickData } from "emoji-picker-react";
-import { useCreatePostMutation } from "../../shared/hooks/usePost";
+import { useCreatePostMutation, useGetPostByIdQuery, useUpdatePostMutation } from "../../shared/hooks/usePost";
 import { getCroppedImg } from "./imageCrop";
 import { useGetProfileQuery } from "@/shared/hooks/useUser";
 import { MultiplePresignedUrls, SinglePresignedUrl, uploadFileToS3 } from "@/shared/api/uploads";
 import heic2any from "heic2any";
+import LoadingSpinner from "@/shared/components/LoadingSpinner";
 
 type MarkType = "image" | "emoji";
 type VisibilityType = "FRIENDS" | "PRIVATE";
 type UploadItem = {
   uploadUrl: string;
   key: string;
+};
+
+type ImageDraft = {
+  id: string;
+  previewUrl: string;
+  file?: File;
+  key?: string;
 };
 
 // 글자수 제한
@@ -132,45 +142,129 @@ const normalizeImageFile = async (file: File): Promise<File> => {
   }
 };
 
+const createDraftId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+const extractS3KeyFromUrl = (url?: string | null) => {
+  if (!url) return undefined;
+
+  try {
+    const parsed = new URL(url);
+    return decodeURIComponent(parsed.pathname.replace(/^\/+/, "")) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export default function CreatePocketPost() {
   const navigate = useNavigate();
-  const [images, setImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [searchParams] = useSearchParams();
+  const editPostId = searchParams.get("postId");
+  const isEditMode = Boolean(editPostId);
+
+  const [imageItems, setImageItems] = useState<ImageDraft[]>([]);
   const [story, setStory] = useState("");
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [markType, setMarkType] = useState<MarkType>("emoji");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [markImage, setMarkImage] = useState<string | null>(null);
+  const [markImageKey, setMarkImageKey] = useState<string | undefined>(undefined);
   const [savedMarkIsRound, setSavedMarkIsRound] = useState(true);
   const [visibility, setVisibility] = useState<VisibilityType>("FRIENDS");
+  const [selectedEmoji, setSelectedEmoji] = useState("");
 
   const [cropImage, setCropImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isRoundCrop, setIsRoundCrop] = useState(true);
+  const initializedRef = useRef(false);
 
-  const { mutate: createPost } = useCreatePostMutation();
+  const { mutate: createPost, isPending: isCreating } = useCreatePostMutation();
+  const { mutate: updatePost, isPending: isUpdating } = useUpdatePostMutation();
 
   // 사용자 정보 조회
   const { data: profileData } = useGetProfileQuery();
-  useEffect(() => {
-    if (!profileData?.userId) {
-      return;
-    }
-    if (profileData) {
-      console.log("모달 정보 조회", profileData);
-    }
-  }, [profileData]);
-
-  // 디폴트 이모지
-  const [selectedEmoji, setSelectedEmoji] = useState(profileData?.profileEmoji ?? "");
+  const {
+    data: editPost,
+    isLoading: isEditPostLoading,
+    isError: isEditPostError,
+  } = useGetPostByIdQuery({ postId: editPostId ?? "" });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const markInputRef = useRef<HTMLInputElement>(null);
+  const previewUrls = imageItems.map((item) => item.previewUrl);
+  const cropPortalTarget = typeof document !== "undefined" ? document.body : null;
+  const isEditExpired = isEditMode && editPost ? !editPost.isEditable : false;
+  const canEditLimitedFields = !isEditMode || !isEditExpired;
+  const isSubmitting = isCreating || isUpdating;
 
-  const dataURLtoBlob = (dataurl: string) => {
-    const arr = dataurl.split(",");
+  useEffect(() => {
+    if (isEditMode || selectedEmoji || !profileData?.profileEmoji) {
+      return;
+    }
+
+    setSelectedEmoji(profileData.profileEmoji);
+  }, [isEditMode, profileData?.profileEmoji, selectedEmoji]);
+
+  useEffect(() => {
+    if (!isEditMode || !editPost || initializedRef.current) {
+      return;
+    }
+
+    setStory(editPost.content ?? "");
+    setVisibility(editPost.visibility === "PRIVATE" ? "PRIVATE" : "FRIENDS");
+
+    if (editPost.markerType === "IMAGE" && editPost.markerImageUrl) {
+      setMarkType("image");
+      setMarkImage(editPost.markerImageUrl);
+      setMarkImageKey(extractS3KeyFromUrl(editPost.markerImageUrl));
+    } else {
+      setMarkType("emoji");
+      setSelectedEmoji(editPost.markerEmoji ?? profileData?.profileEmoji ?? "");
+      setMarkImage(null);
+      setMarkImageKey(undefined);
+    }
+
+    setImageItems(
+      (editPost.images ?? []).map((image, index) => ({
+        id: image.imageId ?? `${editPost.postId}-image-${index}`,
+        previewUrl: image.imageUrl ?? "",
+        key: image.imageKey ?? extractS3KeyFromUrl(image.imageUrl),
+      })),
+    );
+
+    initializedRef.current = true;
+  }, [editPost, isEditMode, profileData?.profileEmoji]);
+
+  useEffect(() => {
+    if (!cropImage) return;
+
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction;
+
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction;
+    };
+  }, [cropImage]);
+
+  const imageSourceToBlob = async (imageSource: string) => {
+    if (!imageSource.startsWith("data:")) {
+      const response = await fetch(imageSource);
+      return await response.blob();
+    }
+
+    const arr = imageSource.split(",");
     const mime = arr[0].match(/:(.*?);/)![1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
@@ -185,12 +279,12 @@ export default function CreatePocketPost() {
       return;
     }
 
-    if (story.length > MAX_LENGTH) {
+    if (canEditLimitedFields && story.length > MAX_LENGTH) {
       setFormMessage(`글자 수는 ${MAX_LENGTH}자를 초과할 수 없습니다.`);
       return;
     }
 
-    if (!story.trim() && images.length === 0) {
+    if (canEditLimitedFields && !story.trim() && imageItems.length === 0) {
       setFormMessage("내용 또는 사진을 최소 하나 이상 포함해야 합니다.");
       return;
     }
@@ -201,8 +295,94 @@ export default function CreatePocketPost() {
       let markerKey = undefined;
       let postImageKeys: string[] = [];
 
+      if (canEditLimitedFields && markType === "image" && markImage) {
+        if (markImageKey && markImage === editPost?.markerImageUrl) {
+          markerKey = markImageKey;
+        } else {
+          const blob = await imageSourceToBlob(markImage);
+          const singleRes = await SinglePresignedUrl(profileData.userId, {
+            uploadType: "TEMP_POST_MARKER",
+            contentType: blob.type,
+            fileExtension: blob.type.split("/")[1],
+            fileSize: blob.size,
+          });
+
+          if (singleRes.uploadUrl) {
+            await uploadFileToS3(singleRes.uploadUrl, blob);
+            markerKey = singleRes.key;
+          }
+        }
+      }
+
+      if (canEditLimitedFields && imageItems.some((item) => item.file)) {
+        const newImageItems = imageItems.filter((item) => item.file);
+        const multipleRes = await MultiplePresignedUrls(profileData.userId, {
+          uploadType: "TEMP_POST_IMAGE",
+          files: newImageItems.map((item, idx) => ({
+            clientFileId: `file-${idx}`,
+            contentType: item.file!.type,
+            fileExtension: item.file!.name.split(".").pop() || "jpg",
+            fileSize: item.file!.size,
+          })),
+        });
+
+        if (multipleRes.uploads) {
+          await Promise.all(
+            multipleRes.uploads.map((u: UploadItem, idx: number) =>
+              uploadFileToS3(u.uploadUrl, newImageItems[idx].file!),
+            ),
+          );
+        }
+
+        const uploadedKeys = new Map(
+          newImageItems.map((item, index) => [item.id, multipleRes.uploads?.[index]?.key ?? ""]),
+        );
+
+        postImageKeys = imageItems
+          .map((item) => item.key ?? uploadedKeys.get(item.id) ?? "")
+          .filter(Boolean);
+      } else if (canEditLimitedFields) {
+        postImageKeys = imageItems.map((item) => item.key ?? "").filter(Boolean);
+      }
+
+      if (isEditMode && editPostId) {
+        updatePost(
+          {
+            postId: editPostId,
+            visibility,
+            ...(canEditLimitedFields
+              ? {
+                  content: story || undefined,
+                  markerType: markType === "emoji" ? "EMOJI" : "IMAGE",
+                  markerEmoji: markType === "emoji" ? selectedEmoji : undefined,
+                  markerImageKey: markType === "image" ? markerKey : undefined,
+                  imageKeys: postImageKeys,
+                }
+              : {}),
+          },
+          {
+            onSuccess: () => {
+              navigate(`/posts/${editPostId}`);
+            },
+            onError: (error: any) => {
+              const errorCode = error?.response?.data?.code;
+              setFormMessage(
+                errorCode === "EDIT_TIME_EXPIRED"
+                  ? "수정 가능 시간이 지나 공개 범위만 변경할 수 있어요."
+                  : "포스트 수정 중 오류가 발생했습니다.",
+              );
+            },
+          },
+        );
+
+        return;
+      }
+
+      let createMarkerKey: string | undefined;
+      let createPostImageKeys: string[] = [];
+
       if (markType === "image" && markImage) {
-        const blob = dataURLtoBlob(markImage);
+        const blob = await imageSourceToBlob(markImage);
         const singleRes = await SinglePresignedUrl(profileData.userId, {
           uploadType: "TEMP_POST_MARKER",
           contentType: blob.type,
@@ -212,29 +392,29 @@ export default function CreatePocketPost() {
 
         if (singleRes.uploadUrl) {
           await uploadFileToS3(singleRes.uploadUrl, blob);
-          markerKey = singleRes.key;
+          createMarkerKey = singleRes.key;
         }
       }
 
-      if (images.length > 0) {
+      const newImageItems = imageItems.filter((item) => item.file);
+      if (newImageItems.length > 0) {
         const multipleRes = await MultiplePresignedUrls(profileData.userId, {
           uploadType: "TEMP_POST_IMAGE",
-          files: images.map((file, idx) => ({
+          files: newImageItems.map((item, idx) => ({
             clientFileId: `file-${idx}`,
-            contentType: file.type,
-            fileExtension: file.name.split(".").pop() || "jpg",
-            fileSize: file.size,
+            contentType: item.file!.type,
+            fileExtension: item.file!.name.split(".").pop() || "jpg",
+            fileSize: item.file!.size,
           })),
         });
 
         if (multipleRes.uploads) {
           await Promise.all(
             multipleRes.uploads.map((u: UploadItem, idx: number) =>
-              uploadFileToS3(u.uploadUrl, images[idx]),
+              uploadFileToS3(u.uploadUrl, newImageItems[idx].file!),
             ),
           );
-
-          postImageKeys = multipleRes.uploads.map((u: UploadItem) => u.key);
+          createPostImageKeys = multipleRes.uploads.map((u: UploadItem) => u.key);
         }
       }
 
@@ -244,8 +424,8 @@ export default function CreatePocketPost() {
           visibility,
           markerType: markType === "emoji" ? "EMOJI" : "IMAGE",
           markerEmoji: markType === "emoji" ? selectedEmoji : undefined,
-          markerImageKey: markerKey,
-          imageKeys: postImageKeys,
+          markerImageKey: createMarkerKey,
+          imageKeys: createPostImageKeys,
         },
         {
           onSuccess: () => {
@@ -261,13 +441,19 @@ export default function CreatePocketPost() {
   };
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
+    if (!canEditLimitedFields) return;
+
     setSelectedEmoji(emojiData.emoji);
     setShowEmojiPicker(false);
     setMarkType("emoji");
     setSavedMarkIsRound(true);
+    setMarkImage(null);
+    setMarkImageKey(undefined);
   };
 
   const handleMarkImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEditLimitedFields) return;
+
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -301,6 +487,7 @@ export default function CreatePocketPost() {
     if (cropImage && croppedAreaPixels) {
       const croppedResult = await getCroppedImg(cropImage, croppedAreaPixels, isRoundCrop);
       setMarkImage(croppedResult);
+      setMarkImageKey(undefined);
       setSavedMarkIsRound(isRoundCrop);
       setMarkType("image");
       setCropImage(null);
@@ -314,10 +501,12 @@ export default function CreatePocketPost() {
 
   // 이미지 업로드
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEditLimitedFields) return;
+
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    if (images.length + files.length > MAX_IMAGES) {
+    if (imageItems.length + files.length > MAX_IMAGES) {
       setFormMessage(`사진은 최대 ${MAX_IMAGES}장까지 업로드 가능합니다.`);
       e.target.value = "";
       return;
@@ -329,8 +518,14 @@ export default function CreatePocketPost() {
       const normalizedFiles = await Promise.all(files.map(normalizeImageFile));
       const previewDataUrls = await Promise.all(normalizedFiles.map(fileToDataUrl));
 
-      setImages((prev) => [...prev, ...normalizedFiles]);
-      setPreviewUrls((prev) => [...prev, ...previewDataUrls]);
+      setImageItems((prev) => [
+        ...prev,
+        ...normalizedFiles.map((file, index) => ({
+          id: createDraftId(),
+          file,
+          previewUrl: previewDataUrls[index],
+        })),
+      ]);
     } catch (error) {
       console.error("Image normalize error:", error);
 
@@ -347,20 +542,43 @@ export default function CreatePocketPost() {
   };
 
   const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    if (!canEditLimitedFields) return;
+
+    setImageItems((prev) => prev.filter((_, i) => i !== index));
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
+  if (isEditMode && isEditPostLoading) {
+    return (
+      <LoadingContainer>
+        <LoadingSpinner size="lg" message="포스트 정보를 불러오는 중..." />
+      </LoadingContainer>
+    );
+  }
+
+  if (isEditMode && (isEditPostError || !editPost)) {
+    return (
+      <LoadingContainer>
+        <FormMessage>수정할 포스트 정보를 불러오지 못했습니다.</FormMessage>
+      </LoadingContainer>
+    );
+  }
+
   return (
     <Container>
       <HeaderSection>
-        <Title>Create New Pocket Post</Title>
-        <SubTitle>주머니 속 일상의 조각을 기록해보세요.</SubTitle>
+        <Title>{isEditMode ? "Edit Pocket Post" : "Create New Pocket Post"}</Title>
+        <SubTitle>
+          {isEditMode ? "기존 포스트를 다시 정리하고 저장해보세요." : "주머니 속 일상의 조각을 기록해보세요."}
+        </SubTitle>
       </HeaderSection>
+
+      {isEditExpired && (
+        <LockedNotice>포스트 작성 후 24시간이 지나 공개 범위만 수정할 수 있어요.</LockedNotice>
+      )}
 
       <Box>
         <MarkContainer>
@@ -378,7 +596,9 @@ export default function CreatePocketPost() {
               <MarkBtn
                 type="button"
                 $active={markType === "emoji"}
+                disabled={!canEditLimitedFields}
                 onClick={() => {
+                  if (!canEditLimitedFields) return;
                   setMarkType("emoji");
                   setShowEmojiPicker(true);
                 }}
@@ -390,7 +610,11 @@ export default function CreatePocketPost() {
               <MarkBtn
                 type="button"
                 $active={markType === "image"}
-                onClick={() => markInputRef.current?.click()}
+                disabled={!canEditLimitedFields}
+                onClick={() => {
+                  if (!canEditLimitedFields) return;
+                  markInputRef.current?.click();
+                }}
               >
                 <MarkIcon as={ImageIcon} />
                 Image Icon
@@ -404,50 +628,6 @@ export default function CreatePocketPost() {
               </EmojiPickerWrapper>
             )}
 
-            {cropImage && (
-              <CropModal>
-                <CropContainer>
-                  <CropView>
-                    <Cropper
-                      image={cropImage}
-                      crop={crop}
-                      zoom={zoom}
-                      aspect={1}
-                      cropShape={isRoundCrop ? "round" : "rect"}
-                      onCropChange={setCrop}
-                      onCropComplete={onCropComplete}
-                      onZoomChange={setZoom}
-                    />
-                  </CropView>
-
-                  <ControlBottom>
-                    <ShapeButtons>
-                      <ShapeBtn type="button" $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
-                        Circle
-                      </ShapeBtn>
-                      <ShapeBtn type="button" $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
-                        Square
-                      </ShapeBtn>
-                    </ShapeButtons>
-
-                    <ActionButtons>
-                      <CancelBtn
-                        type="button"
-                        onClick={() => {
-                          setCropImage(null);
-                          setIsRoundCrop(true);
-                        }}
-                      >
-                        Cancel
-                      </CancelBtn>
-                      <SaveBtn type="button" onClick={saveCroppedImage}>
-                        Apply
-                      </SaveBtn>
-                    </ActionButtons>
-                  </ControlBottom>
-                </CropContainer>
-              </CropModal>
-            )}
           </MarkSettings>
 
           <input
@@ -477,15 +657,19 @@ export default function CreatePocketPost() {
           {previewUrls.length > 0 ? (
             <PreviewGrid>
               {previewUrls.map((url, index) => (
-                <PreviewItem key={index}>
+                <PreviewItem key={imageItems[index]?.id ?? index}>
                   <PreviewImage src={url} alt={`preview-${index}`} />
-                  <DeleteBtn type="button" onClick={() => removeImage(index)}>
+                  <DeleteBtn
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    disabled={!canEditLimitedFields}
+                  >
                     ×
                   </DeleteBtn>
                 </PreviewItem>
               ))}
 
-              {previewUrls.length < MAX_IMAGES && (
+              {canEditLimitedFields && previewUrls.length < MAX_IMAGES && (
                 <AddMoreBtn onClick={() => fileInputRef.current?.click()}>
                   <UploadIcon as={ImageUploadIcon} />
                   <span>Add More</span>
@@ -493,7 +677,14 @@ export default function CreatePocketPost() {
               )}
             </PreviewGrid>
           ) : (
-            <UploadBox onClick={() => fileInputRef.current?.click()} $hasImage={false}>
+            <UploadBox
+              onClick={() => {
+                if (!canEditLimitedFields) return;
+                fileInputRef.current?.click();
+              }}
+              $hasImage={false}
+              $disabled={!canEditLimitedFields}
+            >
               <UploadIcon as={ImageUploadIcon} />
               <UploadText>Upload photos (Max 10)</UploadText>
               <UploadSub>Drag and drop or click to browse files</UploadSub>
@@ -518,9 +709,11 @@ export default function CreatePocketPost() {
         </LengthCount>
         <StoryBox
           $hasError={story.length > MAX_LENGTH}
+          disabled={!canEditLimitedFields}
           placeholder="Tell the story behind this pocket..."
           value={story}
           onChange={(e) => {
+            if (!canEditLimitedFields) return;
             setStory(e.target.value);
             if (formMessage) {
               setFormMessage(null);
@@ -531,7 +724,69 @@ export default function CreatePocketPost() {
 
       {formMessage && <FormMessage>{formMessage}</FormMessage>}
 
-      <PublishBtn onClick={handleSubmit}>Publish to Pocket</PublishBtn>
+      <PublishBtn
+        onClick={() => {
+          if (isSubmitting) return;
+          void handleSubmit();
+        }}
+        $disabled={isSubmitting}
+        aria-disabled={isSubmitting}
+      >
+        {isSubmitting ? (isEditMode ? "Saving..." : "Publishing...") : isEditMode ? "Save" : "Publish to Pocket"}
+      </PublishBtn>
+
+      {cropImage &&
+        cropPortalTarget &&
+        createPortal(
+          <CropModal
+            onClick={() => {
+              setCropImage(null);
+              setIsRoundCrop(true);
+            }}
+          >
+            <CropContainer onClick={(event) => event.stopPropagation()}>
+              <CropView>
+                <Cropper
+                  image={cropImage}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  cropShape={isRoundCrop ? "round" : "rect"}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                />
+              </CropView>
+
+              <ControlBottom>
+                <ShapeButtons>
+                  <ShapeBtn type="button" $active={isRoundCrop} onClick={() => setIsRoundCrop(true)}>
+                    Circle
+                  </ShapeBtn>
+                  <ShapeBtn type="button" $active={!isRoundCrop} onClick={() => setIsRoundCrop(false)}>
+                    Square
+                  </ShapeBtn>
+                </ShapeButtons>
+
+                <ActionButtons>
+                  <CancelBtn
+                    type="button"
+                    onClick={() => {
+                      setCropImage(null);
+                      setIsRoundCrop(true);
+                    }}
+                  >
+                    Cancel
+                  </CancelBtn>
+                  <SaveBtn type="button" onClick={saveCroppedImage}>
+                    Apply
+                  </SaveBtn>
+                </ActionButtons>
+              </ControlBottom>
+            </CropContainer>
+          </CropModal>,
+          cropPortalTarget,
+        )}
     </Container>
   );
 }
@@ -540,6 +795,16 @@ const Container = styled.div`
   width: min(100%, 1000px);
   margin: 0 auto;
   padding: ${({ theme }) => theme.space.md} 0 ${({ theme }) => theme.space.xxxl};
+`;
+
+const LoadingContainer = styled.div`
+  width: min(100%, 1000px);
+  min-height: 60vh;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.space.xxl} 0;
 `;
 
 const Box = styled.section`
@@ -572,6 +837,12 @@ const FormMessage = styled.div`
   color: #e03131;
   font-size: ${({ theme }) => theme.fontSize.md};
   font-weight: 600;
+`;
+
+const LockedNotice = styled(FormMessage)`
+  border-color: rgba(59, 130, 246, 0.2);
+  background: #eff6ff;
+  color: #1d4ed8;
 `;
 
 const Title = styled.h1`
@@ -663,6 +934,12 @@ const MarkBtn = styled.button<{ $active: boolean }>`
     background: ${({ theme }) => theme.colors.hover};
   }
 
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background: ${({ theme }) => theme.colors.surface};
+  }
+
   @media (max-width: 480px) {
     width: 100%;
   }
@@ -702,23 +979,28 @@ const EmojiPickerWrapper = styled.div`
 
 const CropModal = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: ${({ theme }) => theme.colors.overlay};
   z-index: 3000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  width: 100vw;
+  min-height: var(--app-height);
+  padding:
+    max(20px, var(--app-safe-top))
+    max(20px, var(--app-safe-right))
+    max(20px, var(--app-safe-bottom))
+    max(20px, var(--app-safe-left));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const CropContainer = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   width: 580px;
   max-width: 100%;
-  max-height: 90vh;
+  max-height: calc(var(--app-height) - var(--app-safe-top) - var(--app-safe-bottom) - 40px);
   padding: 30px;
   border-radius: ${({ theme }) => theme.radii.lg};
   position: relative;
@@ -726,16 +1008,29 @@ const CropContainer = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 20px;
+  }
 `;
 
 const CropView = styled.div`
   position: relative;
   width: 100%;
-  height: 400px;
+  height: clamp(280px, 48vh, 400px);
+  min-height: 280px;
   background: #333;
   border-radius: ${({ theme }) => theme.radii.xs};
   overflow: hidden;
   flex-shrink: 0;
+  touch-action: none;
+
+  .reactEasyCrop_Container,
+  .reactEasyCrop_Image,
+  .reactEasyCrop_CropArea {
+    touch-action: none;
+  }
 
   @media (max-width: 480px) {
     height: 280px;
@@ -882,17 +1177,18 @@ const UploadBoxContainer = styled.div`
   }
 `;
 
-const UploadBox = styled.div<{ $hasImage: boolean }>`
+const UploadBox = styled.div<{ $hasImage: boolean; $disabled?: boolean }>`
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: ${(props) => (props.$disabled ? "not-allowed" : "pointer")};
+  opacity: ${(props) => (props.$disabled ? 0.6 : 1)};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.hover};
+    background: ${(props) => (props.$disabled ? "transparent" : props.theme.colors.hover)};
   }
 `;
 
@@ -957,6 +1253,11 @@ const DeleteBtn = styled.button`
 
   &:hover {
     background: rgba(0, 0, 0, 0.7);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
   }
 `;
 
@@ -1030,6 +1331,12 @@ const StoryBox = styled.textarea<{ $hasError?: boolean }>`
       props.$hasError ? "0 0 0 3px rgba(255, 107, 107, 0.1)" : props.theme.shadows.xs};
   }
 
+  &:disabled {
+    cursor: not-allowed;
+    background: #f8fafc;
+    color: ${({ theme }) => theme.colors.text_secondary};
+  }
+
   @media (max-width: 480px) {
     height: 240px;
     padding: 16px;
@@ -1045,7 +1352,7 @@ const SectionTitle = styled.h3`
   margin: 0 0 ${({ theme }) => theme.space.sm};
 `;
 
-const PublishBtn = styled(StitchedBox)`
+const PublishBtn = styled(StitchedBox)<{ $disabled?: boolean }>`
   width: 100%;
   height: 60px;
   margin: 20px 0;
@@ -1053,19 +1360,19 @@ const PublishBtn = styled(StitchedBox)`
   font-size: ${({ theme }) => theme.fontSize.xl};
   font-weight: bold;
   border-radius: ${({ theme }) => theme.radii.lg};
-  cursor: pointer;
+  cursor: ${(props) => (props.$disabled ? "not-allowed" : "pointer")};
   transition: transform ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: ${({ theme }) => theme.shadows.sm};
+  opacity: ${(props) => (props.$disabled ? 0.6 : 1)};
 
   &:active {
-    transform: scale(0.98);
+    transform: ${(props) => (props.$disabled ? "none" : "scale(0.98)")};
   }
 
-  &:disabled {
+  &[aria-disabled="true"] {
     background: #d1d5db;
-    cursor: not-allowed;
   }
 `;

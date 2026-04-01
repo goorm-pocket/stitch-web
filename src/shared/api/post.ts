@@ -12,12 +12,27 @@ export interface CreatePostReq {
   imageKeys?: string[];
 }
 
+export interface UpdatePostReq {
+  postId: string;
+  content?: string;
+  visibility?: Extract<PostVisibility, "FRIENDS" | "PRIVATE">;
+  markerType?: MarkerType;
+  markerEmoji?: string;
+  markerImageKey?: string;
+  imageKeys?: string[];
+}
+
 export interface CreatePostRes {
   postId: string;
 }
 
 export async function createPost(body: CreatePostReq): Promise<CreatePostRes> {
   const res = await apiClient.post<ApiResponse<CreatePostRes>>("/api/v1/posts", body);
+  return res.data.data;
+}
+
+export async function updatePost({ postId, ...body }: UpdatePostReq): Promise<CreatePostRes> {
+  const res = await apiClient.patch<ApiResponse<CreatePostRes>>(`/api/v1/posts/${postId}`, body);
   return res.data.data;
 }
 
