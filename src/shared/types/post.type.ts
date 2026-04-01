@@ -60,6 +60,9 @@ export interface PostAuthor {
 }
 
 export interface PostImage {
+  imageId?: string;
+  orderIndex?: number;
+  imageKey?: string;
   imageUrl?: string;
 }
 

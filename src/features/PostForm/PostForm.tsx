@@ -8,6 +8,7 @@ import {
 } from "@/shared/hooks/usePost";
 import { useNavigate } from "react-router";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { useGetProfileQuery } from "@/shared/hooks/useUser";
 
 interface PostFormProps {
   post: Post;
@@ -29,6 +30,7 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
   const { mutate: createPostLike } = useCreatePostLikeMutation({ postId: post.postId });
   const { mutate: deletePostLike } = useDeletePostLikeMutation({ postId: post.postId });
   const { mutateAsync: deletePost, isPending: isDeleting } = useDeletePostMutation();
+  const { data: profile } = useGetProfileQuery();
 
   // 커스텀 훅
   useClickOutside({ ref: menuRef, onClickOutside: () => setShowMenu(false) });
@@ -39,7 +41,8 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
   const isDetailMode = mode === "detail";
   const shouldShowSlider = isDetailMode && images.length > 1;
   const hasImage = Boolean(representativeImage);
-  const shouldShowMoreMenu = isDetailMode && post.isEditable;
+  const isMine = profile?.userId === post.author.userId;
+  const shouldShowMoreMenu = isDetailMode && isMine;
 
   const hasMarker =
     (post.markerType === "EMOJI" && Boolean(post.markerEmoji)) ||
@@ -66,6 +69,11 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
         },
       },
     );
+  };
+
+  const handleEditPost = () => {
+    navigate(`/createpost?postId=${post.postId}`);
+    setShowMenu(false);
   };
 
   const handlePrev = () => {
@@ -127,6 +135,9 @@ const PostForm = ({ post, mode = "default" }: PostFormProps) => {
 
               {showMenu && (
                 <MenuDropdown>
+                  <EditButton type="button" onClick={handleEditPost}>
+                    수정
+                  </EditButton>
                   <DeleteButton type="button" onClick={handleDeletePost} disabled={isDeleting}>
                     {isDeleting ? "삭제 중..." : "삭제"}
                   </DeleteButton>
@@ -320,6 +331,23 @@ const MenuDropdown = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   box-shadow: ${({ theme }) => theme.shadows.sm};
   z-index: 20;
+`;
+
+const EditButton = styled.button`
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  text-align: left;
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text_primary};
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.hover};
+  }
 `;
 
 const DeleteButton = styled.button`
