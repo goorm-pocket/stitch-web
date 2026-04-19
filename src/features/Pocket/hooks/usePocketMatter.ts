@@ -1,9 +1,9 @@
 import type { PocketBubbleType } from "@/shared/types/post.type";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPocketBodies } from "../utils/createPocketBodies";
 import Matter from "matter-js";
 import { createPocketWalls } from "../utils/createPocketWalls";
-import type { BodyMap, PositionMap } from "../types/matter.type";
+import type { BodyMap } from "../types/matter.type";
 
 interface UsePocketMatterParams {
   sceneRef: React.RefObject<HTMLDivElement | null>;
@@ -35,11 +35,35 @@ export function usePocketMatter({
   wallThickness,
   motion,
 }: UsePocketMatterParams) {
-  const [positions, setPositions] = useState<PositionMap>({}); // bubble들 위치 저장
   const runnerRef = useRef<Matter.Runner | null>(null); // 공들 계속 움직히게 함
   const animationRef = useRef<number | null>(null); // 화면 업데이트 타이머
   const bodyMapRef = useRef<BodyMap>({}); // bubble들의 Ref
   const engineRef = useRef<Matter.Engine | null>(null);
+  const elementMapRef = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const applyBodyTransform = (postId: string) => {
+    const body = bodyMapRef.current[postId];
+    const element = elementMapRef.current[postId];
+    if (!body || !element) return;
+
+    const radius = body.circleRadius ?? 0;
+    element.style.transform = `translate(${body.position.x - radius}px, ${
+      body.position.y - radius
+    }px) rotate(${body.angle}rad)`;
+    element.style.visibility = "visible";
+  };
+
+  const registerBubbleElement = (postId: string, element: HTMLDivElement | null) => {
+    elementMapRef.current[postId] = element;
+
+    if (!element) {
+      delete elementMapRef.current[postId];
+      return;
+    }
+
+    element.style.willChange = "transform";
+    applyBodyTransform(postId);
+  };
 
   useEffect(() => {
     if (!sceneRef.current || width === 0 || height === 0 || items.length === 0) return;
@@ -87,20 +111,10 @@ export function usePocketMatter({
     runnerRef.current = runner;
     Matter.Runner.run(runner, engine);
     const updatePositions = () => {
-      const next: PositionMap = {};
-
       items.forEach((item) => {
-        const body = bodyMapRef.current[item.postId];
-        if (!body) return;
-
-        next[item.postId] = {
-          x: body.position.x,
-          y: body.position.y,
-          angle: body.angle,
-        };
+        applyBodyTransform(item.postId);
       });
 
-      setPositions(next);
       animationRef.current = requestAnimationFrame(updatePositions);
     };
 
@@ -145,5 +159,7 @@ export function usePocketMatter({
     });
   }, [motion]);
 
-  return positions;
+  return {
+    registerBubbleElement,
+  };
 }

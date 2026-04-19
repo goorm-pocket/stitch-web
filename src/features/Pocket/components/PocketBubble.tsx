@@ -1,12 +1,11 @@
+import { memo } from "react";
 import styled from "styled-components";
 import type { PocketBubbleType } from "../../../shared/types/post.type";
 
 type PocketBubbleProps = {
   item: PocketBubbleType;
   size: number;
-  x: number;
-  y: number;
-  angle: number;
+  registerElement: (postId: string, element: HTMLDivElement | null) => void;
   onPointerDown: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
   onPointerUp: (id: string, e: React.PointerEvent<HTMLDivElement>) => void;
 };
@@ -14,9 +13,7 @@ type PocketBubbleProps = {
 const PocketBubble = ({
   item,
   size,
-  x,
-  y,
-  angle,
+  registerElement,
   onPointerDown,
   onPointerUp,
 }: PocketBubbleProps) => {
@@ -25,13 +22,14 @@ const PocketBubble = ({
 
   return (
     <Container
+      ref={(element) => registerElement(postId, element)}
       $read={read}
       $ownerType={ownerType}
       $hasImage={hasImage}
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        transform: `translate(${x - size / 2}px, ${y - size / 2}px) rotate(${angle}rad)`,
+        visibility: "hidden",
       }}
       onPointerDown={(e) => onPointerDown(postId, e)}
       onPointerUp={(e) => onPointerUp(postId, e)}
@@ -45,7 +43,10 @@ const PocketBubble = ({
   );
 };
 
-export default PocketBubble;
+export default memo(
+  PocketBubble,
+  (prev, next) => prev.item === next.item && prev.size === next.size,
+);
 
 const Container = styled.div<{
   $read: boolean;
